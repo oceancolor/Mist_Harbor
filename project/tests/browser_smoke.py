@@ -24,6 +24,12 @@ def artifact_directory(value: str | None = None) -> Path:
     return Path(value).expanduser().resolve() if value else PROJECT / ".codebuddy" / "artifacts" / "browser"
 
 
+def expected_model_count() -> int:
+    """Derive the GLB count from the build palette so new assets never break the check."""
+    palette = json.loads((PROJECT / "data" / "palette.json").read_text(encoding="utf-8"))
+    return sum(1 for item in palette.get("items", []) if str(item.get("mesh", "cube")) != "cube")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", default=os.environ.get("HARBOR_PREVIEW", "http://127.0.0.1:8184/index.html"))
@@ -38,6 +44,7 @@ def main() -> int:
 
     out = artifact_directory(args.artifacts)
     out.mkdir(parents=True, exist_ok=True)
+    expected_models = expected_model_count()
     checks = []
     logs = []
     with sync_playwright() as p:
@@ -72,7 +79,8 @@ def main() -> int:
                                  rect["y"] + (y + h / 2) * rect["height"] / vh)
                 page.wait_for_timeout(450)
 
-            check("8 actual Blender GLB modules loaded", lambda: len(state()["assets"]) == 8)
+            check(f"{expected_models} actual Blender GLB modules loaded",
+                  lambda: len(state()["assets"]) == expected_models)
             check("Real terrain faces rendered", lambda: state()["faces"] > 500)
             page.mouse.move(1100, 640)
             page.wait_for_timeout(4000)

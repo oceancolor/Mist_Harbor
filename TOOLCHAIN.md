@@ -21,6 +21,16 @@ python tools/dev.py export-web    # Web 导出到 project/build
 python tools/dev.py preview       # 本地预览 8188
 python tools/dev.py package       # 打 source/seed/web 三个 zip
 python tools/blender_mcp.py       # 启动 Blender 并自动连上 MCP（需保持窗口）
+python tools/fetch_templates.py   # 换机器时下载 Godot 4.7 导出模板（分块续传，反复执行至 complete）
+```
+
+三层验收（提交前至少跑前两层）：
+
+```powershell
+python tools/dev.py test                 # 模型单测 + 场景冒烟（引擎内）
+python tools/dev.py export-web           # Web 导出到 project/build
+python -m http.server 8184 --bind 127.0.0.1 --directory project/build
+python project/tests/browser_smoke.py --base http://127.0.0.1:8184/index.html   # 真实浏览器 21 项
 ```
 
 ## MCP
@@ -86,10 +96,9 @@ python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑
 
 ## 已知坑
 
-- **4.7 导出模板未安装**：`%APPDATA%\Godot\export_templates` 目前只有 `4.4.stable`。
-  升级后 `python tools/dev.py export-web` 会因缺少 4.7 模板失败；
-  需下载 `Godot_v4.7-stable_export_templates.tpz`（约 1.2 GB）并解包到
-  `%APPDATA%\Godot\export_templates\4.7.stable\`。
+- ~~**4.7 导出模板未安装**~~ 已解决：模板已装到 `%APPDATA%\Godot\export_templates\4.7.stable`
+  （`python tools/fetch_templates.py` 分块续传下载 tpz，再解包 `templates/` 到版本目录）。
+  换机器时重复该流程，或直接用 Godot 编辑器自带的模板下载。
 - **uv 在本机不可用**：`uvx` / `uv venv` 创建 Windows trampoline 时被拦截（拒绝访问）。blender-mcp 改用标准库 `python -m venv .venv-mcp` + pip 安装。
 - **Blender 不能后台跑 MCP**：插件明确拒绝 `blender -b`（主循环定时器不执行，命令会挂），必须 GUI，见 `tools/blender_mcp_autostart.py`。
 - **Blender 遥测**：已通过 `BLENDER_MCP_DISABLE_TELEMETRY=true` 关闭（MCP 条目里设置）。
