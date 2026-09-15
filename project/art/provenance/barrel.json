@@ -1,0 +1,11 @@
+{
+  "id": "barrel",
+  "version": 1,
+  "task_id": "mist-harbor-barrel-v1",
+  "script": "tools/art/barrel.py",
+  "script_sha256": "a52aa92e845a68ea8c3a41d243fd3f67cc550b183bcce792f4ef3bcd9645232c",
+  "glb_sha256": "1eedf6add1b505e963606f199c42d24189518cb5577c053d67f09e7c0b1a307f",
+  "bytes": 44580,
+  "triangles": 632,
+  "generated_at": "2026-09-15T15:24:33"
+}

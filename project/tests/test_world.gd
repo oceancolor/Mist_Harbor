@@ -19,7 +19,11 @@ func _run() -> void:
 	var model := Model.new()
 	model.reset(240910, false)
 	var initial := JSON.stringify(model.to_document())
-	check(model.palette.size() == 13, "13 buildable materials")
+	var palette_file: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/palette.json"))
+	var expected_materials := 0
+	if palette_file is Dictionary:
+		expected_materials = (palette_file as Dictionary).get("items", []).size()
+	check(model.palette.size() == expected_materials and expected_materials > 0, "palette matches data/palette.json")
 	check(model.cells.size() > 500 and model.cells.size() < Model.MAX_CELLS, "bounded real terrain")
 	check(model.placed_count() == 0, "natural terrain does not count as learner work")
 	var other := Model.new()

@@ -1,0 +1,11 @@
+{
+  "blender": {
+    "url": "http://21.130.210.97:18765/mcp",
+    "token": "<blender-pilot-token>"
+  },
+  "godot": {
+    "url": "http://21.130.210.97:28766/mcp",
+    "token": "<godot-pilot-token>"
+  },
+  "note": "Copy to .codebuddy/local/pilot.json (gitignored). Env override: PILOT_BLENDER_URL / PILOT_BLENDER_TOKEN."
+}

@@ -1,18 +1,131 @@
 {
   "schema_version": 1,
   "items": [
-    {"id":"grass","name":"草地","category":"地形","color":"8ab18c","height":1,"mesh":"cube","tip":"铺一块绿地，让岛屿自由生长。"},
-    {"id":"stone","name":"石基","category":"地形","color":"b9bcad","height":1,"mesh":"cube","tip":"堆叠石块，塑造山丘与地基。"},
-    {"id":"wood","name":"木栈道","category":"地形","color":"bb946c","height":1,"mesh":"cube","tip":"从海岸延伸栈道，连接散落的岛屿。"},
-    {"id":"brick","name":"陶砖","category":"地形","color":"c8856b","height":1,"mesh":"cube","tip":"用陶土色砌起属于你的高塔。"},
-    {"id":"cottage","name":"海湾小屋","category":"建筑","color":"d1826b","height":1,"mesh":"cottage","tip":"小屋可以堆叠；R 旋转入口朝向。"},
-    {"id":"roof","name":"坡屋顶","category":"建筑","color":"c67360","height":1,"mesh":"roof","tip":"为石块、木块加上一片红屋顶。"},
-    {"id":"arch","name":"桥拱","category":"建筑","color":"d4cfb8","height":1,"mesh":"arch","tip":"沿水面拼接桥拱，营造连绵的长桥。"},
-    {"id":"glass","name":"海蓝玻璃","category":"建筑","color":"82bcc2","height":1,"mesh":"cube","tip":"用海蓝色玻璃，建造一个明亮的空间。"},
-    {"id":"beacon","name":"灯塔","category":"建筑","color":"d08067","height":3,"mesh":"beacon","tip":"高三格的地标；四周留出足够空间。"},
-    {"id":"windmill","name":"风车屋","category":"建筑","color":"dbbca0","height":2,"mesh":"windmill","tip":"朝海放一座风车，给聚落一个方向。"},
-    {"id":"tree","name":"海岛树","category":"自然","color":"73a38b","height":2,"mesh":"tree","tip":"用树丛划分步道、花园与生活空间。"},
-    {"id":"lamp","name":"暖光灯","category":"自然","color":"eac989","height":2,"mesh":"lamp","tip":"切换夜色，看看温暖的岛屿灯火。"},
-    {"id":"flower","name":"花坛","category":"自然","color":"d9aeae","height":1,"mesh":"flower","tip":"给石头与木头之间，留一点柔软。"}
+    {
+      "id": "grass",
+      "name": "草地",
+      "category": "地形",
+      "color": "8ab18c",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "铺一块绿地，让岛屿自由生长。"
+    },
+    {
+      "id": "stone",
+      "name": "石基",
+      "category": "地形",
+      "color": "b9bcad",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "堆叠石块，塑造山丘与地基。"
+    },
+    {
+      "id": "wood",
+      "name": "木栈道",
+      "category": "地形",
+      "color": "bb946c",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "从海岸延伸栈道，连接散落的岛屿。"
+    },
+    {
+      "id": "brick",
+      "name": "陶砖",
+      "category": "地形",
+      "color": "c8856b",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "用陶土色砌起属于你的高塔。"
+    },
+    {
+      "id": "cottage",
+      "name": "海湾小屋",
+      "category": "建筑",
+      "color": "d1826b",
+      "height": 1,
+      "mesh": "cottage",
+      "tip": "小屋可以堆叠；R 旋转入口朝向。"
+    },
+    {
+      "id": "roof",
+      "name": "坡屋顶",
+      "category": "建筑",
+      "color": "c67360",
+      "height": 1,
+      "mesh": "roof",
+      "tip": "为石块、木块加上一片红屋顶。"
+    },
+    {
+      "id": "arch",
+      "name": "桥拱",
+      "category": "建筑",
+      "color": "d4cfb8",
+      "height": 1,
+      "mesh": "arch",
+      "tip": "沿水面拼接桥拱，营造连绵的长桥。"
+    },
+    {
+      "id": "glass",
+      "name": "海蓝玻璃",
+      "category": "建筑",
+      "color": "82bcc2",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "用海蓝色玻璃，建造一个明亮的空间。"
+    },
+    {
+      "id": "beacon",
+      "name": "灯塔",
+      "category": "建筑",
+      "color": "d08067",
+      "height": 3,
+      "mesh": "beacon",
+      "tip": "高三格的地标；四周留出足够空间。"
+    },
+    {
+      "id": "windmill",
+      "name": "风车屋",
+      "category": "建筑",
+      "color": "dbbca0",
+      "height": 2,
+      "mesh": "windmill",
+      "tip": "朝海放一座风车，给聚落一个方向。"
+    },
+    {
+      "id": "barrel",
+      "name": "木桶",
+      "category": "建筑",
+      "color": "b07d4f",
+      "height": 1,
+      "mesh": "barrel",
+      "tip": "码头边的橡木桶，可以一只只堆起来。"
+    },
+    {
+      "id": "tree",
+      "name": "海岛树",
+      "category": "自然",
+      "color": "73a38b",
+      "height": 2,
+      "mesh": "tree",
+      "tip": "用树丛划分步道、花园与生活空间。"
+    },
+    {
+      "id": "lamp",
+      "name": "暖光灯",
+      "category": "自然",
+      "color": "eac989",
+      "height": 2,
+      "mesh": "lamp",
+      "tip": "切换夜色，看看温暖的岛屿灯火。"
+    },
+    {
+      "id": "flower",
+      "name": "花坛",
+      "category": "自然",
+      "color": "d9aeae",
+      "height": 1,
+      "mesh": "flower",
+      "tip": "给石头与木头之间，留一点柔软。"
+    }
   ]
 }

@@ -15,7 +15,13 @@ func _run() -> void:
 	await process_frame
 	await physics_frame
 	await physics_frame
-	check(scene.world.scenes.size() == 8, "all Blender GLBs imported")
+	var palette: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/palette.json"))
+	var expected_models := 0
+	if palette is Dictionary:
+		for item in palette.get("items", []):
+			if str(item.get("mesh", "cube")) != "cube":
+				expected_models += 1
+	check(scene.world.scenes.size() == expected_models, "all Blender GLBs imported")
 	check(scene.world.visible_faces > 0, "real terrain mesh generated")
 	check(scene.world.ground_collision.shape != null, "raycast collision generated")
 	check(scene.model.place(Vector3i(24,0,24), "cottage", 2), "place through game model")

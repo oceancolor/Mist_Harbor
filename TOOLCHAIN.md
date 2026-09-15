@@ -43,13 +43,31 @@ python tools/blender_mcp.py       # 启动 Blender 并自动连上 MCP（需保�
 2. `godot_apply_files` **只接受 UTF-8 文本文件**、只允许相对路径 → 本项目的 8 个 GLB、`harbor-sc.ttf`、`icon.svg` 等二进制资产传不上去。
 3. 它操作的是**服务器上自带的工程根目录**（当前有同事的样例工程与 build 产物），不是本地 `E:\Mist_Harbor`。
 
-### 本机（stdio）
-
-- **godot**：`npx -y @coding-solo/godot-mcp`，`GODOT_PATH` 指向 4.4 console 版，`cwd=project`。
-  已验证 14 个工具（`launch_editor, run_project, get_debug_output, stop_project, get_godot_version, list_projects, get_project_info, create_scene, add_node, load_sprite, export_mesh_library, save_scene, get_uid, update_project_uids`），实测 `get_godot_version` → `4.4.stable.official.4c311cbee`。
-- **blender**（本地版，因远程 pilot 已接管而设为 `disabled`）：`E:\Mist_Harbor\.venv-mcp\Scripts\blender-mcp.exe`（v1.9.1，28 工具），连 `localhost:9876`，实测 `get_scene_info` → 110 对象。需要时改回 `"disabled": false`，并先 `python tools/blender_mcp.py` 起 GUI Blender。
+> 2026-09-15 起**只保留上面两个远程服务**，本地 stdio 版（`godot` = `@coding-solo/godot-mcp`、`blender` = `.venv-mcp/blender-mcp.exe`）已从配置移除。
+> 需要回滚时从 `~/.codebuddy/mcp.json.bak-20260915-140707` 取回；本地 Blender 助手脚本 `tools/blender_mcp.py` 仍在（需配合 `blender` 条目启用）。
 
 调试脚本（均在 `.codebuddy/local/`，不入库）：`probe-http-mcp.mjs`（列工具/出 schema）、`call-http-mcp.mjs`（调单个工具）、`blender_pilot_run.mjs`（提交→轮询→下载产物）。
+
+## 资产管线（`tools/asset_pipeline.py`）
+
+一条命令完成"造资产 → 进工程"：
+
+```powershell
+python tools/asset_pipeline.py list                       # 资产清单 + 是否已注册
+python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑 \
+       --color b07d4f --tip "码头边的橡木桶，可以一只只堆起来。"
+```
+
+流程：`tools/art/<id>.py`（受版本控制的 bpy 脚本）→ 远程 `web-cb-blender-pilot` → 产物落盘
+`project/assets/models/<id>.glb`（sha256 校验）、`project/art/previews/<id>.png`、
+`project/art/provenance/<id>.json`（任务 id/脚本摘要/三角面）→ 更新
+`assets/models/manifest.json`（bounds/triangles/bytes）→ 本地 Godot 4.4 headless 导入生成
+`.import` → 写入 `data/palette.json` 成为可放置建材（`--no-register` 可只出资产不注册）。
+
+约定：脚本按 pilot 模板写（米制 / Z-up / 只建几何与材质，导出与预览由执行器负责）；
+任务 id = `mist-harbor-<id>-v<n>-<script sha256 前 8 位>`（远端拒绝重复 id）。
+凭据在 `.codebuddy/local/pilot.json`（不入库），模板 `tools/pilot.example.json`。
+两个数量断言（材质数、GLB 数）已改为从 `palette.json` 推导，新增资产无需改测试。
 
 ## 已知坑
 
@@ -60,11 +78,11 @@ python tools/blender_mcp.py       # 启动 Blender 并自动连上 MCP（需保�
 
 ## 尚未完成（商业化路线）
 
-1. ~~`git init` + 首次提交~~ 已完成：`c461437`（分支 `main`，66 个文件，工作区干净）。
-   **尚未设置远端仓库**，需要时执行 `git remote add origin <URL>` + `git push -u origin main`。
-2. 导出预设只有 Web：需补 Windows Desktop、Android（JDK17 + Android SDK + 构建模板），iOS 需 macOS。
-3. Web 产物 43.6MB wasm，需体积优化/加载进度。
-4. 资产管线：Blender → GLB → `assets/models/manifest.json` → `build_world.gd` 建材表，目前只有整体重建式 `art/generate_harbor.py`。
+1. ~~版本控制~~ 已完成：`c461437` 起，分支 `main`，远端 `origin = https://github.com/oceancolor/Mist_Harbor`（尚未 push）。
+2. ~~资产管线~~ 已完成：`tools/asset_pipeline.py`（远程 Blender pilot → GLB / manifest / Godot 导入 / palette 注册），首件资产 `barrel` 已进游戏。
+3. 导出预设只有 Web：需补 Windows Desktop、Android（JDK17 + Android SDK + 构建模板），iOS 需 macOS。
+4. Web 产物 43.6MB wasm，需体积优化/加载进度。
+5. 存量 8 件资产仍是 Blender 4.2 脚本 `art/generate_harbor.py` 整体重建式产出，可逐步迁到 `tools/art/<id>.py` 逐个走管线。
 
 ## 版本控制约定
 
