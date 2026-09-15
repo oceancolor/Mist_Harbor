@@ -1,0 +1,214 @@
+schema_version: 1
+id: mist-harbor-3d
+title: 雾港造物记：从 3D 自由建造到可复现的学习作品
+summary: >
+  使用完整的 Godot 4.4 海岛建造样板，在真实游戏中理解网格、射线拾取、命令撤销与安全存档；
+  用 Blender 制作原创模块，完成性能测试、Web 导出和有证据的学习反思。
+audience: university
+course_type: harbor-build3d
+duration_minutes: 360
+starter:
+  engine: godot
+  project_name: 雾港造物记
+capabilities:
+  - godot.import
+  - godot.smoke
+  - godot.export
+requirements:
+  - docs/requirements.md
+  - docs/learning-guide.md
+steps:
+  - key: seed-check
+    title: 检查独立样板工程
+    kind: validate
+    description: >
+      教师或运维先把本教程 project 目录复制到学习者自己的新会话。实例化教程本身不会复制工程。
+      这里仅验证资源与配置已备齐，不把文件存在误当成游戏行为验收。
+    validators:
+      - name: file-exists
+        params:
+          paths: [project.godot, main.tscn, scripts/world_model.gd, scripts/build_world.gd, scripts/main.gd, assets/models/manifest.json, art/generate_harbor.py, docs/learning-guide.md]
+          min_bytes: 20
+      - name: json-valid
+        params:
+          path: data/palette.json
+          required_keys: [schema_version, items]
+  - key: import-baseline
+    title: 导入 Blender glTF 与 Godot 资源
+    kind: capability
+    capability: godot.import
+    depends_on: [seed-check]
+    description: 导入已生成的 GLB；Blender 建模源文件由学习者离线编辑，不通过教程执行任意脚本。
+    validators:
+      - name: godot-imported
+  - key: explore
+    title: 试玩并观察六个建造目标
+    kind: manual
+    approval: learner
+    depends_on: [import-baseline]
+    description: >
+      完成一次拼搭、拆除、旋转、撤销、重做、保存与刷新恢复；观察昼夜和微缩地图。
+      将自练截图与未满足的操作写入 docs/play-observations.md，再确认本步。
+    outputs: [docs/play-observations.md]
+    validators:
+      - name: file-exists
+        params:
+          paths: [docs/play-observations.md]
+          min_bytes: 120
+  - key: grid-design
+    title: 解释网格与高模型占位规则
+    kind: manual
+    approval: teacher
+    depends_on: [explore]
+    description: >
+      阅读 world_model.gd 和 build_world.gd，画出世界坐标、格坐标和射线法线的转换。
+      解释三格灯塔如何拒绝重叠、空中格子为什么需要支撑。教师依据设计说明与演示确认，不仅看文件存在。
+    outputs: [docs/grid-design.md]
+    validators:
+      - name: file-exists
+        params:
+          paths: [docs/grid-design.md]
+          min_bytes: 200
+  - key: build-remix
+    title: 设计一座有路径和地标的小聚落
+    kind: manual
+    approval: learner
+    depends_on: [grid-design]
+    description: >
+      不改示范岛原存档，导出自己的 JSON：至少三座新房、一段连续桥拱或栈道、一座灯塔和一个花园。
+      绕岛检查结构。提交存档和日夜两张截图，说明自己新增的部分与样板预置部分。
+    outputs: [submissions/my-island.json, docs/build-notes.md]
+    validators:
+      - name: json-valid
+        params:
+          path: submissions/my-island.json
+          required_keys: [schema_version, game, seed, cells, stats]
+      - name: file-exists
+        params:
+          paths: [docs/build-notes.md]
+          min_bytes: 120
+  - key: blender-module
+    title: 用 Blender 创作并接入一个新模块
+    kind: manual
+    approval: learner
+    depends_on: [build-remix]
+    description: >
+      在 art/mist-harbor-kit.blend 的副本中制作原创长椅、拱窗或凉亭。应用缩放、设定地面原点、
+      导出 GLB 并扩展 palette.json。不得只改文件后缀或复制商业游戏素材。提交面数、尺度与导入后的截图。
+    outputs: [assets/models/extra-module.glb, docs/module-notes.md]
+    validators:
+      - name: file-exists
+        params:
+          paths: [assets/models/extra-module.glb, docs/module-notes.md]
+          min_bytes: 100
+      - name: json-valid
+        params:
+          path: data/palette.json
+          required_keys: [schema_version, items]
+  - key: test-controls
+    title: 用证据验证建造和撤销行为
+    kind: manual
+    approval: learner
+    depends_on: [blender-module]
+    description: >
+      在本地运行 tests/test_world.gd 与 tests/smoke_scene.gd，保存真实输出。
+      另用鼠标实测旋转、拆除、撤销和重做；添加一个自己发现的边界案例。
+      平台白名单验证器不代执行自定义测试命令，本步由学习者提供运行证据。
+    outputs: [submissions/test-output.txt, docs/control-test.md]
+    validators:
+      - name: file-exists
+        params:
+          paths: [submissions/test-output.txt, docs/control-test.md]
+          min_bytes: 80
+  - key: save-safety
+    title: 检验存档与恢复的安全边界
+    kind: manual
+    approval: teacher
+    depends_on: [test-controls]
+    description: >
+      用自建坏存档测试错误 JSON、未知版本、越界、重复格和超大文件，确认每次拒绝都不改变当前作品。
+      同时验证保存后刷新、跨浏览器导入 JSON。教师核对前后场景与测试日志。
+    outputs: [docs/save-review.md]
+    validators:
+      - name: file-exists
+        params:
+          paths: [docs/save-review.md]
+          min_bytes: 200
+  - key: performance
+    title: 记录渲染预算并完成一次优化
+    kind: manual
+    approval: learner
+    depends_on: [save-safety]
+    description: >
+      阅读可见面剔除与合并网格逻辑。记录相同浏览器、视角、建材数量下的帧率和 draw call，
+      对比优化前后。记录低性能设备限制，不凭一个高性能机器截图宣称全端 60 FPS。
+    outputs: [docs/performance.md]
+    validators:
+      - name: file-exists
+        params:
+          paths: [docs/performance.md]
+          min_bytes: 160
+  - key: reimport
+    title: 重新导入学习者的资源修改
+    kind: capability
+    capability: godot.import
+    depends_on: [performance]
+    validators:
+      - name: godot-imported
+  - key: engine-smoke
+    title: 运行 Godot 引擎冒烟
+    kind: capability
+    capability: godot.smoke
+    params:
+      frames: 180
+    depends_on: [reimport]
+    description: 本步骤检查引擎与场景能启动；不替代前面的交互、存档与性能实测。
+  - key: export-web
+    title: 导出 WebGL 2 试玩版
+    kind: capability
+    capability: godot.export
+    depends_on: [engine-smoke]
+    description: 使用 GL Compatibility 与单线程 Web 预设；真实 EdgeOne 托管不在此课程前置条件内。
+    validators:
+      - name: godot-exported
+      - name: file-exists
+        params:
+          paths: [build/index.html, build/index.pck, build/index.wasm]
+          min_bytes: 100
+  - key: preview
+    title: 检查本服务预览入口
+    kind: validate
+    depends_on: [export-web]
+    validators:
+      - name: preview-ok
+    description: HTTP 200 只证明入口可达。学习者仍需在浏览器检查模型、输入与保存，不得把本步当作完整玩法验收。
+  - key: reflect
+    title: 提交作品说明与下一次 Remix 计划
+    kind: manual
+    approval: learner
+    depends_on: [preview]
+    description: >
+      提交原创改动、失败案例与恢复方法、测试证据、素材来源和下一次 Remix 计划。
+      学习报告由本人撰写；不要让模型虚构体验或代填已完成状态。教师使用 rubric 人工评分。
+    outputs: [docs/reflection.md]
+    validators:
+      - name: file-exists
+        params:
+          paths: [docs/reflection.md]
+          min_bytes: 240
+rubric:
+  - name: 建造体验与原创场景
+    weight: 25
+    description: 路径、地标、花园形成有组织的聚落，能分清原创与预置内容。
+  - name: 网格与交互理解
+    weight: 25
+    description: 能解释拾取、占位、旋转与命令撤销，并展示边界案例。
+  - name: Blender 资产规范
+    weight: 20
+    description: 原点、尺度、轴向、法线与面数合理，GLB 进入 Godot 后可正常使用。
+  - name: 测试与存档可靠性
+    weight: 20
+    description: 测试可复现，坏存档不破坏作品，浏览器恢复与导出可验证。
+  - name: 反思与过程证据
+    weight: 10
+    description: 有真实失败和取舍记录，不虚构验证结果或自动代交报告。

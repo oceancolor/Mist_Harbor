@@ -1,0 +1,5 @@
+{
+  "godot": "D:/Godot_v4.4/Godot_v4.4-stable_win64_console.exe",
+  "blender": "D:/Blender/blender-4.2.0-windows-x64/blender.exe",
+  "note": "Copy this file to .codebuddy/local/tools.json (gitignored, machine specific) and adjust the paths."
+}

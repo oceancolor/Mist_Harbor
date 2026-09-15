@@ -1,0 +1,11 @@
+.godot/
+build/
+.codebuddy/
+.weaver/
+.pytest_cache/
+__pycache__/
+submissions/
+learning_reports/
+*.blend1
+*.blend2
+*.tmp

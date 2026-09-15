@@ -1,0 +1,15 @@
+logs/
+releases/
+.codebuddy/local/
+.codebuddy/
+**/.godot/
+**/__pycache__/
+**/.venv/
+**/.venv-mcp/
+**/build/
+.env
+.env.*
+*.pem
+*.key
+*.blend1
+*.blend2

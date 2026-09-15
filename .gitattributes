@@ -1,0 +1,48 @@
+# 行尾规范化 —— 防「脚本在 Linux 上报 bad interpreter」
+#
+# 背景：本仓库在 Windows 上开发、部署到 Linux。若 core.autocrlf 把 shell 脚本
+# 检出成 CRLF，bash 会把 \r 当成命令的一部分，报出
+#   `bash: /root/deploy.sh: /bin/bash^M: bad interpreter`
+# 这类看起来毫无头绪的错误。用 eol=lf 强制这些文件在任何平台都检出为 LF。
+
+# 默认交给 git 自行判断文本/二进制
+* text=auto
+
+# 必须 LF：会在 Linux 上被执行或解析的文件
+*.sh        text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.py        text eol=lf
+Dockerfile  text eol=lf
+*.env       text eol=lf
+.env.example text eol=lf
+
+# 必须 CRLF：Windows 批处理（用 LF 会导致部分 cmd 解析异常）
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+
+# 二进制：不做任何行尾转换，也不参与 diff
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.svg       text eol=lf
+*.ico       binary
+*.pptx      binary
+*.pdf       binary
+*.zip       binary
+*.tar.gz    binary
+*.wasm      binary
+*.pck       binary
+*.glb       binary
+*.blend     binary
+*.ttf       binary
+*.otf       binary
+
+# Godot 导入配置与脚本属于源码，不是 .godot 缓存。
+*.gd        text eol=lf
+*.tscn      text eol=lf
+*.tres      text eol=lf
+*.gd.uid    text eol=lf
+*.import    text eol=lf

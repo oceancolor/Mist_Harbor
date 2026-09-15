@@ -1,0 +1,61 @@
+# 仅用于已有的单人开发实例；X-Weaver-User 是兼容身份，不是生产鉴权。
+# 正式课堂须替换为服务端验证的身份上下文，不得信任学习者自报此头。
+# 先部署含本目录的 BFF，再将 mist-harbor-seed.zip 解压到新的学习会话。
+# 必须逐条执行并检查响应；不要对所有请求执行“全部发送”。
+@baseUrl = https://benjamin-any5.devcloud.woa.com:8090
+@demoUser = demo-user
+@sessionId = REPLACE_WITH_NEW_SESSION_ID
+@versionId = REPLACE_WITH_PUBLISHED_VERSION_ID
+@planId = REPLACE_WITH_PLAN_ID
+
+### 1. 检查 tutorial / docs_ingest / course / godot.enabled
+GET {{baseUrl}}/health
+
+### 2. 确认部署后的内置目录有 dir=mist-harbor
+GET {{baseUrl}}/api/tutorials/builtin
+X-Weaver-User: {{demoUser}}
+
+### 3. 查看当前用户已有教程；已有版本优先复用，勿反复导入产生额外修订号
+GET {{baseUrl}}/api/tutorials
+X-Weaver-User: {{demoUser}}
+
+### 4. 仅在本门课程尚未导入或准备发布新修订时执行
+POST {{baseUrl}}/api/tutorials/import
+X-Weaver-User: {{demoUser}}
+Content-Type: application/json
+
+{"builtin":"mist-harbor","slug":"mist-harbor-3d","version":"1.0.0","course_type":"harbor-build3d"}
+
+### 5. 审阅版本后由教程属主发布；把返回的 version_id 填入上方变量
+POST {{baseUrl}}/api/tutorial-versions/{{versionId}}/publish
+X-Weaver-User: {{demoUser}}
+Content-Type: application/json
+
+{}
+
+### 6. 已复制独立种子工程且已确认属主后才实例化；此 API 不复制工程
+POST {{baseUrl}}/api/tutorial-versions/{{versionId}}/instantiate
+X-Weaver-User: {{demoUser}}
+Content-Type: application/json
+
+{"session_id":"{{sessionId}}","course_type":"harbor-build3d","title":"雾港造物记 · 我的学习任务"}
+
+### 7. 阅读计划，确认 14 步、当前状态和确认人要求
+GET {{baseUrl}}/api/plans/{{planId}}
+X-Weaver-User: {{demoUser}}
+
+### 8. 仅新计划第一次运行：推进种子检查/引擎导入两个技术前置，不代做人工任务
+POST {{baseUrl}}/api/plans/{{planId}}/run
+X-Weaver-User: {{demoUser}}
+Content-Type: application/json
+Accept: text/event-stream
+
+{"max_steps":2}
+
+### 9. 检查真实运行历史；学习者作业必须保持待完成
+GET {{baseUrl}}/api/plans/{{planId}}/runs
+X-Weaver-User: {{demoUser}}
+
+### 10. 教师查看本课进度；非教师返回 403 是预期安全行为
+GET {{baseUrl}}/api/courses/harbor-build3d/plans
+X-Weaver-User: {{demoUser}}

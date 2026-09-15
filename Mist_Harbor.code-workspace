@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "name": "Mist Harbor",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.encoding": "utf8",
+    "files.exclude": {
+      "**/.godot": true,
+      "**/__pycache__": true
+    }
+  }
+}

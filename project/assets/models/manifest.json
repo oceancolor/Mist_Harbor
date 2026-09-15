@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "generator": "Blender 4.2.0",
+  "origin": "Original procedural meshes authored for Mist Harbor; no external game assets",
+  "seed": 240910,
+  "license": "CC0-1.0",
+  "units": "meters",
+  "gltf_up_axis": "Y",
+  "assets": [
+    {
+      "id": "cottage",
+      "file": "cottage.glb",
+      "triangles": 272,
+      "bounds": {
+        "blender_min": [
+          -0.5149999856948853,
+          -0.5299999713897705,
+          0.0
+        ],
+        "blender_max": [
+          0.5149999856948853,
+          0.5,
+          1.0
+        ],
+        "godot_size": [
+          1.03,
+          1.0,
+          1.03
+        ]
+      },
+      "bytes": 31480
+    },
+    {
+      "id": "roof",
+      "file": "roof.glb",
+      "triangles": 44,
+      "bounds": {
+        "blender_min": [
+          -0.54749995470047,
+          -0.5400000214576721,
+          0.0
+        ],
+        "blender_max": [
+          0.54749995470047,
+          0.5400000214576721,
+          0.6549999713897705
+        ],
+        "godot_size": [
+          1.095,
+          0.655,
+          1.08
+        ]
+      },
+      "bytes": 6572
+    },
+    {
+      "id": "arch",
+      "file": "arch.glb",
+      "triangles": 208,
+      "bounds": {
+        "blender_min": [
+          -0.5,
+          -0.5,
+          0.0
+        ],
+        "blender_max": [
+          0.5,
+          0.5,
+          1.0
+        ],
+        "godot_size": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "bytes": 22036
+    },
+    {
+      "id": "tree",
+      "file": "tree.glb",
+      "triangles": 72,
+      "bounds": {
+        "blender_min": [
+          -0.4582161009311676,
+          -0.4234553575515747,
+          0.0
+        ],
+        "blender_max": [
+          0.4582161009311676,
+          0.4699999988079071,
+          1.8000000715255737
+        ],
+        "godot_size": [
+          0.9164,
+          1.8,
+          0.8935
+        ]
+      },
+      "bytes": 9064
+    },
+    {
+      "id": "beacon",
+      "file": "beacon.glb",
+      "triangles": 524,
+      "bounds": {
+        "blender_min": [
+          -0.4300000071525574,
+          -0.4300000071525574,
+          0.0
+        ],
+        "blender_max": [
+          0.4300000071525574,
+          0.4300000071525574,
+          2.799999952316284
+        ],
+        "godot_size": [
+          0.86,
+          2.8,
+          0.86
+        ]
+      },
+      "bytes": 47920
+    },
+    {
+      "id": "lamp",
+      "file": "lamp.glb",
+      "triangles": 134,
+      "bounds": {
+        "blender_min": [
+          -0.20999999344348907,
+          -0.20999999344348907,
+          0.0
+        ],
+        "blender_max": [
+          0.20999999344348907,
+          0.20999999344348907,
+          1.25
+        ],
+        "godot_size": [
+          0.42,
+          1.25,
+          0.42
+        ]
+      },
+      "bytes": 16384
+    },
+    {
+      "id": "windmill",
+      "file": "windmill.glb",
+      "triangles": 276,
+      "bounds": {
+        "blender_min": [
+          -0.4699999988079071,
+          -0.5130000114440918,
+          0.0
+        ],
+        "blender_max": [
+          0.4699999988079071,
+          0.4399999976158142,
+          1.709012746810913
+        ],
+        "godot_size": [
+          0.94,
+          1.709,
+          0.953
+        ]
+      },
+      "bytes": 32392
+    },
+    {
+      "id": "flower",
+      "file": "flower.glb",
+      "triangles": 560,
+      "bounds": {
+        "blender_min": [
+          -0.42500001192092896,
+          -0.42500001192092896,
+          0.0
+        ],
+        "blender_max": [
+          0.42500001192092896,
+          0.42500001192092896,
+          0.3199999928474426
+        ],
+        "godot_size": [
+          0.85,
+          0.32,
+          0.85
+        ]
+      },
+      "bytes": 71856
+    }
+  ]
+}

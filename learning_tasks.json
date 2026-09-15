@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "mist-harbor-3d",
+  "title": "雾港造物记 · 分层学习任务",
+  "course_type": "harbor-build3d",
+  "schedule": {
+    "core_minutes": 360,
+    "required_task_minutes": 305,
+    "setup_minutes": 25,
+    "review_minutes": 30,
+    "optional_task_keys": ["chunk-remix"],
+    "optional_minutes": 90,
+    "note": "必修9项305分钟，加环境准备25分钟和演示评审30分钟，共360分钟；第10项为另加90分钟的选修挑战。"
+  },
+  "grading": "游戏目标用于自练；以下提交物和过程证据由教师依据 rubric 评估。未自动填写任何完成状态。",
+  "tasks": [
+    {"key":"explore","level":"A 基础","minutes":20,"objective":"掌握建造与场景观察","files":["docs/play-observations.md"],"steps":["用鼠标放置三种建材","试拆除与撤销重做","切换昼夜并保存后刷新"],"acceptance":["演示实际场景变化而非 UI 选中","区分预置建筑与自己添加的建筑"],"evidence":["操作前后截图","一次失败操作及原因"]},
+    {"key":"grid-design","level":"A 基础","minutes":35,"objective":"理解世界坐标与网格占位","files":["scripts/world_model.gd","scripts/build_world.gd","docs/grid-design.md"],"steps":["标注射线命中点、法线与格坐标","解释三格灯塔如何占据空间","画出在侧面与顶部放置的差异"],"acceptance":["坐标推导与实际场景一致","能解释越界、重叠与无支撑为何被拒"],"evidence":["坐标草图","教师口头问答记录"]},
+    {"key":"build-remix","level":"A 基础","minutes":35,"objective":"形成有组织的岛屿聚落","files":["submissions/my-island.json","docs/build-notes.md"],"steps":["新建三间房屋和一个花园","使用桥拱或木栈道形成连续路径","用灯塔形成地标并导出存档"],"acceptance":["作品可导入恢复","新增内容能与初始示范区区分","使用至少三类建材"],"evidence":["本人岛屿 JSON","昼夜截图","路线说明"]},
+    {"key":"blender-module","level":"B 进阶","minutes":60,"objective":"完成 Blender 到 Godot 的资产流程","files":["art/mist-harbor-kit.blend","assets/models/extra-module.glb","data/palette.json","docs/module-notes.md"],"steps":["在副本制作原创长椅或凉亭","应用缩放，底部原点，校验尺度与法线","导出 GLB 并扩展建材表"],"acceptance":["Godot 中材质和方向正常","不超出声明的高度占位","报告三角面数与原创来源"],"evidence":["Blender 截图","Godot 实际放置截图","GLB 与建材数据"]},
+    {"key":"test-controls","level":"B 进阶","minutes":35,"objective":"把交互行为变成可复现测试","files":["tests/test_world.gd","tests/smoke_scene.gd","submissions/test-output.txt","docs/control-test.md"],"steps":["运行现有模型与场景测试","新增一个旋转/重叠/撤销案例","在浏览器用真实鼠标复核"],"acceptance":["测试输出有真实命令退出码","能说明为什么场景冒烟不等于交互验收"],"evidence":["原始运行输出","新增案例 diff","浏览器操作截图"]},
+    {"key":"save-safety","level":"B 进阶","minutes":35,"objective":"保证坏存档不能破坏作品","files":["scripts/world_model.gd","docs/save-review.md"],"steps":["在副本构造格式错误、越界、重复格和超量输入","记录拒绝前后场景摘要","跨浏览器导入一个合法 JSON"],"acceptance":["所有拒绝均保留原场景","合法存档正确保留建材和旋转","不从存档加载任意资源或执行代码"],"evidence":["坏输入样例","原场景未变证明","合法恢复截图"]},
+    {"key":"performance","level":"B 进阶","minutes":40,"objective":"理解面剔除与批量网格","files":["scripts/build_world.gd","docs/performance.md"],"steps":["观察相邻实心格如何隐藏内部面","在相同设备和视角测量三种规模场景","优化一次刷新或重复绘制并比较"],"acceptance":["对比条件一致且保留原始测量","优化不改变碰撞或建造结果","诚实说明硬件限制"],"evidence":["帧率/draw call 表","代码 diff","边界回归输出"]},
+    {"key":"export-web","level":"A 基础","minutes":25,"objective":"完成可分享的 Web 试玩产物","files":["export_presets.cfg","build/index.html","build/index.pck","build/index.wasm"],"steps":["重新导入新资源","headless 冒烟后导出 Web","使用 HTTP/HTTPS 服务打开而非 file://"],"acceptance":["无脚本解析错误","实际加载 Blender 模型","浏览器拼搭及存档仍能工作"],"evidence":["导出日志","试玩地址","浏览器操作证据"]},
+    {"key":"reflect","level":"A 基础","minutes":20,"objective":"表达设计取舍和学习过程","files":["docs/reflection.md"],"steps":["列明原创部分与引用来源","解释一次真实失败及修复","提出一个有验收标准的后续目标"],"acceptance":["不虚构测试与体验","能引用自己的提交证据","下一步目标可被观察或测量"],"evidence":["本人反思","课堂分享"]},
+    {"key":"chunk-remix","level":"C 挑战","minutes":90,"objective":"将样板改造成分块加载的更大世界","files":["scripts/world_model.gd","scripts/build_world.gd","docs/chunk-design.md"],"steps":["先 Fork 独立工程与存档","设计固定大小 chunk 与局部重建","比较相同场景的修改延迟并处理块边界"],"acceptance":["相邻 chunk 不漏面或重复面","存档版本迁移显式而不静默","保留原样板回归测试"],"evidence":["设计说明","性能对比","边界场景录屏"]}
+  ]
+}

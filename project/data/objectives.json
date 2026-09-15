@@ -1,0 +1,13 @@
+{
+  "schema_version":1,
+  "title":"一座岛屿，六个小目标",
+  "note":"仅用于本地自练；进度由当前作品与操作记录计算，不自动代替教师评分。",
+  "objectives":[
+    {"id":"boardwalk","title":"延伸一段木栈道","description":"亲手放置 8 块木栈道","kind":"wood","target":8},
+    {"id":"neighborhood","title":"迎接新的邻居","description":"为岛屿新建 3 间小屋","kind":"cottage","target":3},
+    {"id":"bridge","title":"把灵感连成桥","description":"拼搭 3 段桥拱","kind":"arch","target":3},
+    {"id":"landmark","title":"点亮你的地标","description":"建造 1 座属于自己的灯塔","kind":"beacon","target":1},
+    {"id":"garden","title":"留一块海边花园","description":"种下 3 棵树与 3 块花坛","kind":"garden","target":6},
+    {"id":"journal","title":"保存这一次创造","description":"试一次撤销，并保存作品","kind":"journal","target":2}
+  ]
+}

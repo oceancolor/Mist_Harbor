@@ -1,0 +1,2 @@
+# Optional browser acceptance tests; not required to run Godot.
+playwright>=1.40,<2

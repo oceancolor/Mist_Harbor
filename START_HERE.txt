@@ -1,0 +1,34 @@
+雾港造物记 / Mist Harbor 独立开发工作区
+
+1. 在任意代码编辑器打开 E:\Mist_Harbor；支持工作区文件的编辑器可打开 Mist_Harbor.code-workspace。
+2. 在 Godot 4.4 项目管理器导入 project/project.godot。主场景是 project/main.tscn。
+3. Blender 4.2+ 打开 project/art/mist-harbor-kit.blend；原创建模脚本是 generate_harbor.py。
+4. 源码是独立复制，不是 F 盘目录的链接；以后在 E 盘修改不会自动同步回 web-cb。
+5. 引擎程序不属于源码包。.codebuddy/local/tools.json 记录当前电脑可用程序路径；换机器时修改该文件或使用 --godot。
+6. 不包含云端密钥、web-cb 后端、运行身份、玩家存档或课程提交记录。
+
+从本目录在终端执行（Python 3.11+）：
+  python tools/dev.py editor
+  python tools/dev.py run
+  python tools/dev.py test
+  python tools/dev.py export-web
+  python tools/dev.py preview --port 8188
+  python tools/dev.py package
+
+可覆盖 Godot 路径：
+  python tools/dev.py test --godot "C:/Tools/Godot_v4.4-stable_win64_console.exe"
+Web 导出仍需要当前用户已安装匹配的 Godot 4.4 Web 模板；项目本身不要求 CodeBuddy/BFF 在线。
+
+目录：
+  project/       游戏场景、脚本、数据、模型、Blender源、学习指南、测试
+  tools/         本地开发辅助入口
+  .codebuddy/releases/  重新生成的源码/课程种子/Web包（不入库）
+  logs/                本次独立工程导入和测试日志（不入库）
+  .codebuddy/local/     仅本机工具路径和测试用户目录（不入库）
+  tutorial.yaml  平台教程任务图；独立运行游戏不需要导入平台
+  learning_tasks.json  教学任务，不含成绩和虚构完成状态
+  README.md      从 web-cb 样板带来的完整说明；其中仓库命令路径以原样板位置为准
+  import-manifest.json 来源提交、未提交文件标记、复制文件校验和
+
+本次未创建 Git 提交、未设置远端仓库、未发布或同步线上游戏。
+学习任务和课程UI仍由 web-cb 主线负责，本目录专注游戏开发。
