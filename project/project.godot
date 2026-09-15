@@ -4,7 +4,7 @@ config_version=5
 config/name="雾港造物记 · Mist Harbor"
 config/description="原创 3D 海岛自由建造样板 · Godot + Blender"
 run/main_scene="res://main.tscn"
-config/features=PackedStringArray("4.4", "GL Compatibility")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://assets/icon.svg"
 
 [display]

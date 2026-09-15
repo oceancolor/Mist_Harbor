@@ -1,6 +1,6 @@
 # 雾港造物记 · Mist Harbor
 
-原创的单人 3D 海岛自由建造样板，用 Godot 4.4 与 Blender 4.2 制作。借鉴体素拼搭与微缩聚落的玩法类型，不使用或复制商业游戏资产。目标是可玩、可拆解、可验证的课程样板，而非完整沙盒大作。
+原创的单人 3D 海岛自由建造样板，用 Godot 4.7 与 Blender 4.2 制作。借鉴体素拼搭与微缩聚落的玩法类型，不使用或复制商业游戏资产。目标是可玩、可拆解、可验证的课程样板，而非完整沙盒大作。
 
 ## 交付结构
 
@@ -29,7 +29,7 @@
 
 ## 本地运行与资源再生成
 
-1. 安装 Godot 4.4；浏览器导出需要同版本 Web 模板。
+1. 安装 Godot 4.7；浏览器导出需要同版本 Web 模板。
 2. Godot 导入 `project/project.godot`，等待 GLB/字体导入后运行。
 3. 修改模型时，使用 Blender 4.2+ 打开 `.blend` 副本；运行游戏本身不需要 Blender。
 
@@ -47,7 +47,7 @@ blender --background --factory-startup --python project/art/generate_harbor.py -
 
 成品只需要 Godot 导出的静态文件，不依赖 BFF、Tutorial Runtime、Blender 或模型服务在线运行。
 
-1. 用 Godot 4.4 打开 `project/project.godot`，安装同版本 Web 模板，选择已有 `Web` 预设，导出到 `project/build/index.html`；首次导出先创建 `build/` 目录。
+1. 用 Godot 4.7 打开 `project/project.godot`，安装同版本 Web 模板，选择已有 `Web` 预设，导出到 `project/build/index.html`；首次导出先创建 `build/` 目录。
 2. 在仓库根运行下列打包命令。脚本也随源码 ZIP 分发，解压后可直接用样板目录下的 `package_sample.py`；路径相应改成本机路径。
 
 ```sh

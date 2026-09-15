@@ -128,6 +128,22 @@ def pilot_config() -> dict:
 # ------------------------------------------------------------------- project io
 
 
+def pick_artifact(files: list[dict], roles: set[str], suffixes: tuple[str, ...]) -> dict | None:
+    """Pick an artifact by `role` when the pilot provides it, else by suffix.
+
+    The pilot team accepted the role-field proposal (2026-09-15); until it ships,
+    the suffix fallback keeps this pipeline working against the current response.
+    """
+    for file in files:
+        role = str(file.get("role") or "").lower()
+        if role and role in roles:
+            return file
+    for file in files:
+        if str(file.get("path", "")).lower().endswith(suffixes):
+            return file
+    return None
+
+
 def read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -249,9 +265,10 @@ def build(args: argparse.Namespace) -> None:
 
     artifacts = pilot.call("blender_artifacts", {"task_id": task_id}, call_id=300)
     files = artifacts.get("files") or []
-    glb = next((f for f in files if f["path"].endswith(".glb")), None)
-    inspect_file = next((f for f in files if f["path"].endswith("glb-inspect.json")), None)
-    preview = next((f for f in files if f["path"].endswith(".png")), None)
+    # Prefer the explicit `role` the pilot may attach; fall back to suffixes.
+    glb = pick_artifact(files, {"model", "asset", "glb", "mesh"}, (".glb",))
+    inspect_file = pick_artifact(files, {"inspect", "report"}, ("glb-inspect.json",))
+    preview = pick_artifact(files, {"preview", "render", "image"}, (".png",))
     if not glb or not inspect_file:
         fail(f"artifacts missing GLB or inspection report: {[f['path'] for f in files]}")
 

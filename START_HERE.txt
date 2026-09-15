@@ -1,7 +1,7 @@
 雾港造物记 / Mist Harbor 独立开发工作区
 
 1. 在任意代码编辑器打开 E:\Mist_Harbor；支持工作区文件的编辑器可打开 Mist_Harbor.code-workspace。
-2. 在 Godot 4.4 项目管理器导入 project/project.godot。主场景是 project/main.tscn。
+2. 在 Godot 4.7 项目管理器导入 project/project.godot。主场景是 project/main.tscn。
 3. Blender 4.2+ 打开 project/art/mist-harbor-kit.blend；原创建模脚本是 generate_harbor.py。
 4. 源码是独立复制，不是 F 盘目录的链接；以后在 E 盘修改不会自动同步回 web-cb。
 5. 引擎程序不属于源码包。.codebuddy/local/tools.json 记录当前电脑可用程序路径；换机器时修改该文件或使用 --godot。
@@ -16,8 +16,8 @@
   python tools/dev.py package
 
 可覆盖 Godot 路径：
-  python tools/dev.py test --godot "C:/Tools/Godot_v4.4-stable_win64_console.exe"
-Web 导出仍需要当前用户已安装匹配的 Godot 4.4 Web 模板；项目本身不要求 CodeBuddy/BFF 在线。
+  python tools/dev.py test --godot "C:/Tools/Godot_v4.7-stable_win64_console.exe"
+Web 导出仍需要当前用户已安装匹配的 Godot 4.7 Web 模板；项目本身不要求 CodeBuddy/BFF 在线。
 
 目录：
   project/       游戏场景、脚本、数据、模型、Blender源、学习指南、测试
