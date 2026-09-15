@@ -60,7 +60,15 @@ python tools/blender_mcp.py       # 启动 Blender 并自动连上 MCP（需保�
 
 ## 尚未完成（商业化路线）
 
-1. `git init` + 首次提交（当前 `E:\Mist_Harbor` **还不是 git 仓库**）。
+1. ~~`git init` + 首次提交~~ 已完成：`c461437`（分支 `main`，66 个文件，工作区干净）。
+   **尚未设置远端仓库**，需要时执行 `git remote add origin <URL>` + `git push -u origin main`。
 2. 导出预设只有 Web：需补 Windows Desktop、Android（JDK17 + Android SDK + 构建模板），iOS 需 macOS。
 3. Web 产物 43.6MB wasm，需体积优化/加载进度。
 4. 资产管线：Blender → GLB → `assets/models/manifest.json` → `build_world.gd` 建材表，目前只有整体重建式 `art/generate_harbor.py`。
+
+## 版本控制约定
+
+- 提交前跑 `python tools/dev.py test`（模型单测 42 + 场景冒烟）。
+- 不入库：`.codebuddy/`（本机工具路径与产物）、`logs/`、`**/build/`、`**/.godot/`、`.venv-mcp/`。
+- 换机器时复制 `tools/tools.example.json` 为 `.codebuddy/local/tools.json` 并改路径。
+- 二进制资产（GLB / TTF / .blend）按 `.gitattributes` 以 binary 处理，不做行尾转换。
