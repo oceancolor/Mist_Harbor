@@ -5,6 +5,7 @@ signal changed
 
 const SAVE_VERSION := 1
 const SAVE_PATH := "user://mist_harbor_world_v1.json"
+const SLOT_COUNT := 3
 const MAX_CELLS := 12000
 const MIN_Y := -4
 const MAX_Y := 20
@@ -18,6 +19,7 @@ var undo_stack: Array[Dictionary] = []
 var redo_stack: Array[Dictionary] = []
 var stats: Dictionary = {"rotated": 0, "undone": 0, "saved": 0, "removed": 0}
 var world_seed: int = 240910
+var current_slot: int = 1
 var revision: int = 0
 var dirty: bool = false
 var last_error: String = ""
@@ -293,26 +295,74 @@ func import_json(text: String) -> bool:
 		return false
 	return load_document(parser.data)
 
-func save_local() -> bool:
+static func slot_path(index: int) -> String:
+	return "user://slot_%d.json" % [clampi(index, 1, SLOT_COUNT)]
+
+func slot_info(index: int) -> Dictionary:
+	var path := slot_path(index)
+	var info := {"slot": index, "exists": false, "cells": 0, "seed": 0, "saved_at": ""}
+	if not FileAccess.file_exists(path):
+		return info
+	info["exists"] = true
+	info["saved_at"] = Time.get_datetime_string_from_unix_time(int(FileAccess.get_modified_time(path)), true)
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if parsed is Dictionary:
+		var document := parsed as Dictionary
+		info["cells"] = int((document.get("cells", []) as Array).size())
+		info["seed"] = int(document.get("seed", 0))
+	return info
+
+func save_slot(index: int) -> bool:
 	stats["saved"] += 1
-	var output := FileAccess.open(SAVE_PATH + ".tmp", FileAccess.WRITE)
+	var path := slot_path(index)
+	var output := FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if output == null:
 		stats["saved"] -= 1
-		last_error = "无法写入本地存档，请使用导出 JSON。"
+		last_error = "无法写入存档槽 %d，请使用导出 JSON。" % [index]
 		return false
 	output.store_string(JSON.stringify(to_document()))
 	output.flush()
 	output.close()
-	var result := DirAccess.rename_absolute(SAVE_PATH + ".tmp", SAVE_PATH)
-	if result != OK:
+	if DirAccess.rename_absolute(path + ".tmp", path) != OK:
 		stats["saved"] -= 1
 		last_error = "保存失败，请导出 JSON 备份。"
 		return false
+	current_slot = index
 	dirty = false
 	changed.emit()
 	return true
 
+func load_slot(index: int) -> bool:
+	var path := slot_path(index)
+	if not FileAccess.file_exists(path):
+		last_error = "存档槽 %d 还是空的。" % [index]
+		return false
+	if not import_json(FileAccess.get_file_as_string(path)):
+		return false
+	current_slot = index
+	return true
+
+func delete_slot(index: int) -> bool:
+	var path := slot_path(index)
+	if not FileAccess.file_exists(path):
+		return true
+	if DirAccess.remove_absolute(path) != OK:
+		last_error = "无法删除存档槽 %d。" % [index]
+		return false
+	return true
+
+func migrate_legacy_save() -> bool:
+	"""First run after the slot upgrade: keep the old single save as slot 1."""
+	if not FileAccess.file_exists(SAVE_PATH) or FileAccess.file_exists(slot_path(1)):
+		return false
+	return DirAccess.copy_absolute(SAVE_PATH, slot_path(1)) == OK
+
+func save_local() -> bool:
+	return save_slot(current_slot)
+
 func load_local() -> bool:
+	if load_slot(current_slot):
+		return true
 	if not FileAccess.file_exists(SAVE_PATH):
 		last_error = "还没有本地存档，先保存你的岛屿。"
 		return false

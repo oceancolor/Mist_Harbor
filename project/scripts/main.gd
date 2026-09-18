@@ -42,6 +42,8 @@ var selected_label: Label
 var dock_items: HBoxContainer
 var category_buttons: Dictionary = {}
 var item_buttons: Dictionary = {}
+var item_shots: Dictionary = {}
+var thumbs: ModelThumbnails
 var action_buttons: Dictionary = {}
 var mission_labels: Array[Label] = []
 var mission_bars: Array[ProgressBar] = []
@@ -63,8 +65,12 @@ var paint_screen := Vector2.ZERO
 func _ready() -> void:
 	model = Model.new()
 	model.reset()
-	if FileAccess.file_exists(Model.SAVE_PATH):
+	model.migrate_legacy_save()
+	if FileAccess.file_exists(Model.slot_path(model.current_slot)):
 		model.load_local()
+	thumbs = ModelThumbnails.new()
+	add_child(thumbs)
+	thumbs.thumbnail_ready.connect(_on_thumbnail_ready)
 	world = World.new()
 	add_child(world)
 	world.setup(model)
@@ -79,6 +85,7 @@ func _ready() -> void:
 	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/objectives.json"))
 	objectives = data.get("objectives", []) if data is Dictionary else []
 	_build_ui()
+	thumbs.request(model.palette.keys())
 	model.changed.connect(_refresh_ui)
 	_refresh_ui()
 	get_viewport().size_changed.connect(_layout)
@@ -385,6 +392,7 @@ func _build_palette() -> void:
 		dock_items.remove_child(child)
 		child.queue_free()
 	item_buttons.clear()
+	item_shots.clear()
 	var entries := _category_items()
 	for i in range(entries.size()):
 		var entry := entries[i]
@@ -399,10 +407,24 @@ func _build_palette() -> void:
 		vbox.offset_left = 4
 		vbox.offset_right = -4
 		vbox.offset_top = 4
+		var icon_holder := Control.new()
+		icon_holder.custom_minimum_size = Vector2(48, 39)
+		icon_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		vbox.add_child(icon_holder)
 		var icon := Icon.new()
 		icon.kind = kind
 		icon.color = Color(str(entry["color"]))
-		vbox.add_child(icon)
+		icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		icon_holder.add_child(icon)
+		var shot := TextureRect.new()
+		shot.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		shot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		shot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		shot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		shot.visible = false
+		icon_holder.add_child(shot)
+		item_shots[kind] = [icon, shot]
+		if thumbs.has(kind): _apply_thumbnail(kind)
 		var label := _label(vbox, str(entry["name"]), 11)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_color_override("font_color", INK)
@@ -410,6 +432,21 @@ func _build_palette() -> void:
 		number.position = Vector2(7, 3)
 		item_buttons[kind] = button
 	_refresh_ui()
+
+func _apply_thumbnail(kind: String) -> void:
+	if not item_shots.has(kind):
+		return
+	var pair: Array = item_shots[kind]
+	var texture := thumbs.texture_for(kind)
+	if texture == null:
+		return
+	var shot := pair[1] as TextureRect
+	shot.texture = texture
+	shot.visible = true
+	(pair[0] as Control).visible = false
+
+func _on_thumbnail_ready(kind: String) -> void:
+	_apply_thumbnail(kind)
 
 func _refresh_ui() -> void:
 	if count_label == null:
@@ -504,7 +541,7 @@ func _center_camera() -> void:
 
 func _save() -> void:
 	if model.save_local():
-		_toast("作品已保存到当前设备。跨设备请在作品管理中导出 JSON。", 4.5)
+		_toast("作品已保存到存档槽 %d。跨设备请在作品管理中导出 JSON。" % [model.current_slot], 4.5)
 	else:
 		_toast(model.last_error, 5.0)
 	_refresh_ui()
@@ -520,7 +557,7 @@ func _show_help() -> void:
 func _show_menu() -> void:
 	_show_dialog("作品管理", "存档仅保存在当前浏览器或设备。清理浏览器数据可能丢失作品，\n建议定期导出 JSON。导入时会校验版本、坐标、重叠与体积。\n\n加载或开始新岛会替换当前场景；请先保存或导出。\n样板预置建筑不计入小挑战，只有亲手新增的建材才计数。", [
 		{"text":"保存当前作品", "action":_save},
-		{"text":"读取本地存档", "action":_confirm_load},
+		{"text":"存档槽…", "action":_show_slots},
 		{"text":"导出 JSON", "action":_export_world},
 		{"text":"导入 JSON", "action":_import_world},
 		{"text":"空白群岛", "action":func() -> void: _confirm_reset(false)},
@@ -569,6 +606,44 @@ func _confirm_reset(with_village: bool) -> void:
 		model.reset(240910, with_village)
 		_center_camera()
 		_toast("新的岛屿已经准备好。")
+	}])
+
+func _show_slots() -> void:
+	var options: Array = []
+	for index in range(1, Model.SLOT_COUNT + 1):
+		options.append_array(_slot_options(index))
+	_show_dialog("存档槽", "每个槽是一份独立作品，共 %d 个。切换或读取会替换当前场景，请先保存。\n导出 JSON 仍然是跨设备搬运作品的唯一方式。" % [Model.SLOT_COUNT], options)
+
+func _slot_options(index: int) -> Array:
+	var info := model.slot_info(index)
+	var summary := "空槽" if not bool(info["exists"]) else "%d 件 · SEED %d · %s" % [int(info["cells"]), int(info["seed"]), str(info["saved_at"])]
+	var mark := "（当前）" if index == model.current_slot else ""
+	return [
+		{"text": "槽 %d%s：%s" % [index, mark, summary], "action": func() -> void: _slot_save(index)},
+		{"text": "读取槽 %d" % [index], "action": func() -> void: _slot_load(index)},
+		{"text": "清空槽 %d" % [index], "action": func() -> void: _slot_clear(index)},
+	]
+
+func _slot_save(index: int) -> void:
+	if model.save_slot(index):
+		_toast("已保存到存档槽 %d。" % [index])
+	else:
+		_toast(model.last_error, 5.0)
+	_refresh_ui()
+
+func _slot_load(index: int) -> void:
+	_show_dialog("读取存档槽 %d？" % [index], "当前未保存的更改将被替换。", [{"text":"确认读取", "action":func() -> void:
+		if model.load_slot(index): _toast("已切换到存档槽 %d。" % [index])
+		else: _toast(model.last_error, 5.0)
+	}])
+
+func _slot_clear(index: int) -> void:
+	_show_dialog("清空存档槽 %d？" % [index], "该槽的作品会被删除，且无法恢复。", [{"text":"确认清空", "action":func() -> void:
+		if model.delete_slot(index):
+			_toast("存档槽 %d 已清空。" % [index])
+			_show_slots()
+		else:
+			_toast(model.last_error, 5.0)
 	}])
 
 func _confirm_load() -> void:

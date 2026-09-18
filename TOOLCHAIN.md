@@ -108,9 +108,14 @@ python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑
 
 1. ~~版本控制~~ 已完成：`c461437` 起，分支 `main`，远端 `origin = https://github.com/oceancolor/Mist_Harbor`（尚未 push）。
 2. ~~资产管线~~ 已完成：`tools/asset_pipeline.py`（远程 Blender pilot → GLB / manifest / Godot 导入 / palette 注册），首件资产 `barrel` 已进游戏。
-3. 导出预设只有 Web：需补 Windows Desktop、Android（JDK17 + Android SDK + 构建模板），iOS 需 macOS。
-4. Web 产物 43.6MB wasm，需体积优化/加载进度。
-5. 存量 8 件资产仍是 Blender 4.2 脚本 `art/generate_harbor.py` 整体重建式产出，可逐步迁到 `tools/art/<id>.py` 逐个走管线。
+3. ~~存量资产迁移~~ 已完成：9 件资产全部在 `tools/art/<id>.py`，`art/generate_harbor.py` 仅作历史参考。
+
+## 暂缓（后续专项，不阻塞特性开发）
+
+- Web 体积优化（37.7MB wasm、加载进度页）
+- PC / Android 导出预设（4.7 平台模板已装齐，只差 preset 与 Android SDK/JDK17）
+
+**当前优先级：游戏特性与内容量产。** 上述两项留给专项优化阶段。
 
 ## 版本控制约定
 
