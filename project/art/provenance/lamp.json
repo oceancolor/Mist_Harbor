@@ -1,0 +1,11 @@
+{
+  "id": "lamp",
+  "version": 2,
+  "task_id": "mist-harbor-lamp-v2-65a7138e",
+  "script": "tools/art/lamp.py",
+  "script_sha256": "65a7138e2db900037e3678c8038e7b4b002fc6edeb244ced0feb8f6abc159e39",
+  "glb_sha256": "299fb08645f6fe401eedf10f53b22c1975642a00e796a38f8c0db7159a41f95c",
+  "bytes": 16376,
+  "triangles": 134,
+  "generated_at": "2026-09-18T15:02:36"
+}

@@ -208,19 +208,47 @@ def godot_import() -> None:
         fail(f"Godot import failed; see logs/asset-import.log (exit={result.returncode})")
 
 
-def register_palette(asset_id: str, name: str, category: str, color: str, height: int, tip: str) -> None:
+def register_palette(asset_id: str, name: str | None, category: str | None, color: str | None,
+                     height: int | None, tip: str | None, default_height: int | None = None) -> None:
+    """Register or refresh a palette entry.
+
+    An existing id keeps its slot and keeps any field the caller did not pass, so
+    rebuilding an asset never reorders the build dock or drops its Chinese copy
+    (PowerShell mangling an argument can no longer wipe the stored text).
+    """
     palette = read_json(PALETTE)
-    items = [item for item in palette.get("items", []) if item.get("id") != asset_id]
-    entry = {"id": asset_id, "name": name, "category": category, "color": color,
-             "height": height, "mesh": asset_id, "tip": tip}
-    insert_at = len(items)
-    for index, item in enumerate(items):
-        if item.get("category") == category:
-            insert_at = index + 1
-    items.insert(insert_at, entry)
+    items = list(palette.get("items", []))
+    index = next((i for i, item in enumerate(items) if item.get("id") == asset_id), None)
+
+    if index is None:
+        entry = {"id": asset_id, "name": name or asset_id, "category": category or "建筑",
+                 "color": color or "b07d4f", "height": height or default_height or 1,
+                 "mesh": asset_id, "tip": tip or f"{name or asset_id}（程序化生成的原创资产）"}
+        insert_at = len(items)
+        for position, item in enumerate(items):
+            if item.get("category") == entry["category"]:
+                insert_at = position + 1
+        items.insert(insert_at, entry)
+        action = "registered"
+    else:
+        entry = dict(items[index])
+        if name:
+            entry["name"] = name
+        if category:
+            entry["category"] = category
+        if color:
+            entry["color"] = color
+        if tip:
+            entry["tip"] = tip
+        if height:
+            entry["height"] = height
+        entry["mesh"] = asset_id
+        items[index] = entry
+        action = "updated"
+
     palette["items"] = items
     write_json(PALETTE, palette)
-    print(f"palette: registered '{asset_id}' in {category} (height={height})")
+    print(f"palette: {action} '{asset_id}' in {entry['category']} (height={entry['height']})")
 
 
 # ------------------------------------------------------------------------ build
@@ -302,7 +330,8 @@ def build(args: argparse.Namespace) -> None:
     entry = update_manifest(args.id, glb_bytes, inspect, provenance)
     print(f"manifest: {entry['id']} triangles={entry['triangles']} godot_size={entry['bounds']['godot_size']}")
 
-    height = args.height or max(1, math.ceil(entry["bounds"]["godot_size"][1] - 1e-6))
+    height = args.height  # None lets register_palette keep the stored height
+    suggested_height = max(1, math.ceil(entry["bounds"]["godot_size"][1] - 1e-6))
     if not args.no_import:
         godot_import()
         import_sidecar = MODELS / f"{args.id}.glb.import"
@@ -310,8 +339,8 @@ def build(args: argparse.Namespace) -> None:
             fail(f"Godot did not produce {import_sidecar}")
         print(f"wrote {import_sidecar.name}")
     if not args.no_register:
-        register_palette(args.id, args.name or args.id, args.category, args.color,
-                         height, args.tip or f"{args.name or args.id}（程序化生成的原创资产）")
+        # Pass only what the caller gave: existing entries keep their stored copy.
+        register_palette(args.id, args.name, args.category, args.color, height, args.tip, suggested_height)
     print(f"done: {args.id} (version {version})")
 
 
@@ -336,11 +365,12 @@ def main() -> None:
     build_parser = subparsers.add_parser("build", help="author one asset through the remote Blender pilot")
     build_parser.add_argument("--id", required=True)
     build_parser.add_argument("--version", type=int, help="default: next free version for this id")
-    build_parser.add_argument("--name", help="Chinese display name; default: id")
-    build_parser.add_argument("--category", default="建筑", choices=["地形", "建筑", "自然"])
-    build_parser.add_argument("--color", default="b07d4f", help="UI swatch colour, hex without #")
-    build_parser.add_argument("--tip", help="tooltip shown in the build dock")
-    build_parser.add_argument("--height", type=int, help="grid cells reserved; default: ceil(GLB height)")
+    build_parser.add_argument("--name", help="Chinese display name; existing entries keep theirs")
+    build_parser.add_argument("--category", choices=["地形", "建筑", "自然"],
+                              help="existing entries keep their category")
+    build_parser.add_argument("--color", help="UI swatch colour, hex without #; existing entries keep theirs")
+    build_parser.add_argument("--tip", help="tooltip shown in the build dock; existing entries keep theirs")
+    build_parser.add_argument("--height", type=int, help="grid cells reserved; existing entries keep theirs")
     build_parser.add_argument("--no-register", action="store_true", help="do not touch palette.json")
     build_parser.add_argument("--no-import", action="store_true", help="do not run Godot import")
     build_parser.add_argument("--timeout", type=int, default=300)

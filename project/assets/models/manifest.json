@@ -138,7 +138,7 @@
         "blender_max": [
           0.20999999344348907,
           0.20999999344348907,
-          1.25
+          1.2500000521540642
         ],
         "godot_size": [
           0.42,
@@ -146,7 +146,10 @@
           0.42
         ]
       },
-      "bytes": 16384
+      "bytes": 16376,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/lamp.py",
+      "task_id": "mist-harbor-lamp-v2-65a7138e"
     },
     {
       "id": "roof",
@@ -178,13 +181,13 @@
       "bounds": {
         "blender_min": [
           -0.4582161009311676,
-          -0.4234553575515747,
+          -0.4699999988079071,
           0.0
         ],
         "blender_max": [
           0.4582161009311676,
-          0.4699999988079071,
-          1.8000000715255737
+          0.4234553575515747,
+          1.8000000566244125
         ],
         "godot_size": [
           0.9164,
@@ -192,7 +195,10 @@
           0.8935
         ]
       },
-      "bytes": 9064
+      "bytes": 9060,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/tree.py",
+      "task_id": "mist-harbor-tree-v1-c9874641"
     },
     {
       "id": "windmill",
