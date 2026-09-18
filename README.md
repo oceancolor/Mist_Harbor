@@ -47,7 +47,7 @@ blender --background --factory-startup --python project/art/generate_harbor.py -
 
 成品只需要 Godot 导出的静态文件，不依赖 BFF、Tutorial Runtime、Blender 或模型服务在线运行。
 
-1. 用 Godot 4.7 打开 `project/project.godot`，安装同版本 Web 模板，选择已有 `Web` 预设，导出到 `project/build/index.html`；首次导出先创建 `build/` 目录。
+1. 用 Godot 4.7 打开 `project/project.godot`，安装同版本 Web 模板，选择已有 `Web` 预设，导出到仓库根的 `build/index.html`；首次导出先创建 `build/` 目录（导出目录刻意放在 Godot 工程之外，避免编辑器把产物当资源导入）。
 2. 在仓库根运行下列打包命令。脚本也随源码 ZIP 分发，解压后可直接用样板目录下的 `package_sample.py`；路径相应改成本机路径。
 
 ```sh

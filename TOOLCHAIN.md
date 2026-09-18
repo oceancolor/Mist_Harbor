@@ -17,7 +17,7 @@
 ```powershell
 python tools/dev.py test          # 导入 + 模型单测(42) + 场景冒烟
 python tools/dev.py editor        # 打开编辑器
-python tools/dev.py export-web    # Web 导出到 project/build
+python tools/dev.py export-web    # Web 导出到仓库根 build/（不在 Godot 工程内）
 python tools/dev.py preview       # 本地预览 8188
 python tools/dev.py package       # 打 source/seed/web 三个 zip
 python tools/blender_mcp.py       # 启动 Blender 并自动连上 MCP（需保持窗口）
@@ -28,8 +28,8 @@ python tools/fetch_templates.py   # 换机器时下载 Godot 4.7 导出模板（
 
 ```powershell
 python tools/dev.py test                 # 模型单测 + 场景冒烟（引擎内）
-python tools/dev.py export-web           # Web 导出到 project/build
-python -m http.server 8184 --bind 127.0.0.1 --directory project/build
+python tools/dev.py export-web           # Web 导出到仓库根 build/
+python -m http.server 8184 --bind 127.0.0.1 --directory build
 python project/tests/browser_smoke.py --base http://127.0.0.1:8184/index.html   # 真实浏览器 21 项
 ```
 

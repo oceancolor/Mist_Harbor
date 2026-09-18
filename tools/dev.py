@@ -10,6 +10,9 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / 'project'
+# Exports live outside the Godot project: inside it the editor would import the
+# exported .png/.wasm sidecars as project resources on every scan.
+BUILD = ROOT / 'build'
 
 def engine(explicit):
     local = ROOT / '.codebuddy/local/tools.json'
@@ -49,14 +52,14 @@ def main():
     parser.add_argument('--port', type=int, default=8188)
     args = parser.parse_args()
     if args.action == 'preview':
-        web = PROJECT / 'build'
+        web = BUILD
         if not (web / 'index.html').is_file():
             parser.error('No Web export yet. Run export-web first.')
         return subprocess.call([sys.executable, '-m', 'http.server', str(args.port), '--bind', '127.0.0.1', '--directory', str(web)])
     if args.action == 'package':
         command = [sys.executable, str(ROOT / 'package_sample.py'), '--output', str(ROOT / '.codebuddy/releases')]
-        if (PROJECT / 'build/index.wasm').is_file():
-            command += ['--web-dir', str(PROJECT / 'build')]
+        if (BUILD / 'index.wasm').is_file():
+            command += ['--web-dir', str(BUILD)]
         return subprocess.call(command, cwd=ROOT)
     binary = engine(args.godot)
     if args.action in {'editor', 'run'}:
@@ -70,7 +73,7 @@ def main():
         if 'WORLD_TEST_RESULT passed=42 failed=0' not in model or 'SCENE_SMOKE_RESULT failed=0' not in scene:
             raise RuntimeError('Expected baseline test summaries missing; check logs before changing assertions.')
     elif args.action == 'export-web':
-        web = PROJECT / 'build'
+        web = BUILD
         web.mkdir(exist_ok=True)
         invoke(binary, ['--export-release', 'Web', str(web / 'index.html')], 'web-export')
         if not all((web / name).is_file() for name in ['index.html', 'index.js', 'index.pck', 'index.wasm']):

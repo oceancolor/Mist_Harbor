@@ -91,11 +91,11 @@ Windows PowerShell 的带空格路径使用调用运算符：`& "C:/你的路径
 
 ## 第八课：导出与分享（25 分钟）
 
-重新导入资源，运行测试，使用 `export_presets.cfg` 中的 Web 预设导出。需要匹配的 Godot 4.4 Web 模板。主要产物为 `build/index.html`、`index.js`、`index.wasm`、`index.pck`。
+重新导入资源，运行测试，使用 `export_presets.cfg` 中的 Web 预设导出。需要匹配的 Godot 4.7 Web 模板。主要产物为 `build/index.html`、`index.js`、`index.wasm`、`index.pck`（导出到工程目录之外，避免编辑器把产物当资源导入）。
 
 ```sh
 godot --headless --path . --editor --import --quit
-godot --headless --path . --export-release Web build/index.html
+godot --headless --path . --export-release Web ../build/index.html
 python -m http.server 8184 --directory build --bind 127.0.0.1
 ```
 
