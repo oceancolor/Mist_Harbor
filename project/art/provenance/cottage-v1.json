@@ -1,0 +1,11 @@
+{
+  "id": "cottage",
+  "version": 1,
+  "task_id": "mist-harbor-cottage-v1-e8652c02",
+  "script": "tools/art/cottage.py",
+  "script_sha256": "e8652c02e565a3d7b4e5775fee79cb4f2dc79855a62a3aa23afba62f4685451d",
+  "glb_sha256": "ff5edb28f00dd4337869f89c7a98b7985d86909f2add1335fb4f8519aa0944cb",
+  "bytes": 31464,
+  "triangles": 272,
+  "generated_at": "2026-09-18T15:23:57"
+}

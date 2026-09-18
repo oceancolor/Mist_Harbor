@@ -1,0 +1,11 @@
+{
+  "id": "beacon",
+  "version": 1,
+  "task_id": "mist-harbor-beacon-v1-d0bd5a8d",
+  "script": "tools/art/beacon.py",
+  "script_sha256": "d0bd5a8dcd8f17405d913b4f6fc808640b2ae107e148b34d28717a6b2d4d50f9",
+  "glb_sha256": "fb366f4f2dfa9c6a23c1ac98fed65b66319fd29bac81e6f1bdc2a3e81fceaa70",
+  "bytes": 47896,
+  "triangles": 524,
+  "generated_at": "2026-09-18T15:24:18"
+}

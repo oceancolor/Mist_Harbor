@@ -128,6 +128,32 @@ def pilot_config() -> dict:
 # ------------------------------------------------------------------- project io
 
 
+def explain_failure(pilot: Pilot, task_id: str) -> None:
+    """Print the remote task's own logs; artifacts exist even for failed runs."""
+    try:
+        observed = pilot.call("blender_observe", {"task_id": task_id}, call_id=400)
+        print("OBSERVE:", json.dumps(observed, ensure_ascii=False)[:2000])
+    except SystemExit:
+        pass  # observe itself failed; still try the artifacts/logs below
+    except Exception as exc:
+        print(f"observe unavailable: {exc}")
+    try:
+        artifacts = pilot.call("blender_artifacts", {"task_id": task_id}, call_id=401)
+    except SystemExit:
+        return
+    for file in artifacts.get("files") or []:
+        path = str(file.get("path", ""))
+        if not (path.endswith(".log") or path.endswith(".json")):
+            continue
+        try:
+            raw = pilot.download(file["download_path"])
+        except Exception:
+            continue
+        text = raw.decode("utf-8", errors="replace")
+        print(f"----- {path} -----")
+        print(text[-2000:])
+
+
 def pick_artifact(files: list[dict], roles: set[str], suffixes: tuple[str, ...]) -> dict | None:
     """Pick an artifact by `role` when the pilot provides it, else by suffix.
 
@@ -266,6 +292,9 @@ def build(args: argparse.Namespace) -> None:
     # The pilot rejects duplicate task ids, so bind the id to the script digest:
     # re-running an unchanged script reuses the same remote task, an edited one does not.
     task_id = f"mist-harbor-{args.id}-v{version}-{sha256(script.encode('utf-8')).hexdigest()[:8]}"
+    if args.retry:
+        # A failed task id stays taken on the pilot side, so force a fresh one.
+        task_id += f"-r{int(time.time())}"
     config = pilot_config()
     pilot = Pilot(config["url"], config["token"])
     pilot.initialize()
@@ -287,8 +316,9 @@ def build(args: argparse.Namespace) -> None:
         print(f"  state={state or 'unknown'}")
         time.sleep(5)
     if state != "succeeded":
-        fail(f"task {task_id} ended with state={state or 'unknown'}; "
-             f"run: node .codebuddy/local/call-http-mcp.mjs {config['url']} <token> blender_observe")
+        explain_failure(pilot, task_id)
+        fail(f"task {task_id} ended with state={state or 'unknown'} "
+             f"(script: {script_path}); fix it and rerun with --retry")
     print(f"task {task_id} succeeded")
 
     artifacts = pilot.call("blender_artifacts", {"task_id": task_id}, call_id=300)
@@ -371,6 +401,8 @@ def main() -> None:
     build_parser.add_argument("--color", help="UI swatch colour, hex without #; existing entries keep theirs")
     build_parser.add_argument("--tip", help="tooltip shown in the build dock; existing entries keep theirs")
     build_parser.add_argument("--height", type=int, help="grid cells reserved; existing entries keep theirs")
+    build_parser.add_argument("--retry", action="store_true",
+                              help="force a fresh task id; use after a failed run with an unchanged script")
     build_parser.add_argument("--no-register", action="store_true", help="do not touch palette.json")
     build_parser.add_argument("--no-import", action="store_true", help="do not run Godot import")
     build_parser.add_argument("--timeout", type=int, default=300)

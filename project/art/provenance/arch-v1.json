@@ -1,0 +1,11 @@
+{
+  "id": "arch",
+  "version": 1,
+  "task_id": "mist-harbor-arch-v1-c31bcd14",
+  "script": "tools/art/arch.py",
+  "script_sha256": "c31bcd1457d777d947bac0d5c63b43828a8b26140ebfed818510a6085978b2f2",
+  "glb_sha256": "3977df2506e9139aeb94423a60bd5751d39fd6e9ef6083a069e3154fb031bbce",
+  "bytes": 22008,
+  "triangles": 208,
+  "generated_at": "2026-09-18T15:09:47"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "flower",
+  "version": 1,
+  "task_id": "mist-harbor-flower-v1-63fe23e8",
+  "script": "tools/art/flower.py",
+  "script_sha256": "63fe23e8b07a71235ed959e24d1392e42b5b717ca6ddf4c24d41f49c8ffa6eb3",
+  "glb_sha256": "7fa60a939b03fc5f84da2c7b04c35eb27ac0a9bd51ff28f32636ee66aa41cd64",
+  "bytes": 71836,
+  "triangles": 560,
+  "generated_at": "2026-09-18T15:25:13"
+}

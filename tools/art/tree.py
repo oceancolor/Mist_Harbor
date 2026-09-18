@@ -61,6 +61,7 @@ cylinder('Low crown', (0, 0, 0.93), 0.47, 0.72, 'green_dark', top=0, vertices=7)
 cylinder('Middle crown', (0.025, 0, 1.25), 0.40, 0.67, 'green', top=0, vertices=7)
 cylinder('High crown', (-0.015, 0, 1.57), 0.27, 0.46, 'green_light', top=0, vertices=7)
 
+bpy.context.view_layer.update()
 lowest = min(min((obj.matrix_world @ Vector(corner)).z for corner in obj.bound_box)
              for obj in scene.objects)
 assert abs(lowest) < 1e-6, f'tree must sit on z=0, got {lowest}'

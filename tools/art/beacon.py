@@ -1,14 +1,17 @@
-"""Mist Harbor asset: warm harbour lamp. Executor owns GLB export and preview.
+"""Mist Harbor asset: harbour beacon lighthouse. Executor owns GLB export and preview.
 
-Ported from project/art/generate_harbor.py::lamp (original procedural mesh, CC0).
-Meters, Z-up, origin at the footprint centre, total height 1.25 m (occupies 2 build cells).
+Ported from project/art/generate_harbor.py::beacon (original procedural mesh, CC0).
+Meters, Z-up, origin at the footprint centre, total height 2.8 m (3 build cells).
 Self-contained: the remote pilot submits one inline script, so helpers are inlined.
 """
+import math
+
 import bpy
 from mathutils import Vector
 
 COLORS = {
-    'stone': 'c8c5af', 'teal': '426e69', 'gold': 'f3c888', 'timber': '795d4c',
+    'stone': 'c8c5af', 'roof': 'b96450', 'teal': '426e69',
+    'glass': '91bbbc', 'gold': 'f3c888', 'timber': '795d4c', 'cream': 'f3ead4',
 }
 MATERIALS = {}
 
@@ -34,7 +37,6 @@ def material(name):
             raise RuntimeError(f'Required Principled BSDF input missing: {socket_name}')
         socket.default_value = value
     if name == 'gold':
-        # Warm glow for night mode; optional sockets must exist on this runtime.
         for socket_name, value in (('Emission Color', (*rgb, 1.0)), ('Emission Strength', 0.7)):
             socket = bsdf.inputs.get(socket_name)
             if socket is None:
@@ -70,18 +72,26 @@ scene = bpy.context.scene
 scene.unit_settings.system = 'METRIC'
 scene.unit_settings.scale_length = 1.0
 
-cylinder('Base', (0, 0, 0.04), 0.15, 0.08, 'stone', vertices=8)
-cylinder('Lamp post', (0, 0, 0.48), 0.041, 0.94, 'teal', vertices=8)
-box('Lantern body', (0, 0, 1.015), (0.23, 0.23, 0.25), 'gold')
-cylinder('Lantern hat', (0, 0, 1.195), 0.21, 0.11, 'teal', top=0, vertices=4)
-box('Lantern foot', (0, 0, 0.88), (0.29, 0.29, 0.05), 'teal')
-for x in (-0.11, 0.11):
-    for y in (-0.11, 0.11):
-        box('Lantern frame', (x, y, 1.015), (0.024, 0.024, 0.26), 'timber')
+cylinder('Octagonal base', (0, 0, 0.07), 0.42, 0.14, 'stone', vertices=12)
+for i in range(5):
+    bottom = 0.34 - i * 0.018
+    cylinder('Lighthouse band_%d' % i, (0, 0, 0.16 + i * 0.38 + 0.19), bottom, 0.38,
+             'roof' if i % 2 else 'cream', top=bottom - 0.018, vertices=12)
+box('Tower door', (0, -0.343, 0.35), (0.18, 0.018, 0.4), 'teal')
+for z in (0.95, 1.68):
+    box('Tower window', (0, -0.315, z), (0.095, 0.03, 0.19), 'glass')
+cylinder('Balcony platform', (0, 0, 2.13), 0.43, 0.10, 'teal', vertices=12)
+cylinder('Lantern glass', (0, 0, 2.35), 0.24, 0.34, 'gold', vertices=8)
+for i in range(8):
+    angle = i * math.tau / 8
+    cylinder('Lantern post', (0.25 * math.cos(angle), 0.25 * math.sin(angle), 2.35),
+             0.018, 0.38, 'timber', vertices=5)
+cylinder('Lantern roof', (0, 0, 2.61), 0.39, 0.20, 'roof', top=0, vertices=8)
+cylinder('Finial', (0, 0, 2.74), 0.028, 0.12, 'gold', top=0, vertices=6)
 
 bpy.context.view_layer.update()
 lowest = min(min((obj.matrix_world @ Vector(corner)).z for corner in obj.bound_box)
              for obj in scene.objects)
-assert abs(lowest) < 1e-6, f'lamp must sit on z=0, got {lowest}'
+assert abs(lowest) < 1e-6, f'beacon must sit on z=0, got {lowest}'
 
-print('MIST_HARBOR_LAMP_OK: meters Z-up; geometry + materials only', flush=True)
+print('MIST_HARBOR_BEACON_OK: meters Z-up; geometry + materials only', flush=True)

@@ -1,0 +1,11 @@
+{
+  "id": "windmill",
+  "version": 1,
+  "task_id": "mist-harbor-windmill-v1-d8798697",
+  "script": "tools/art/windmill.py",
+  "script_sha256": "d87986979dde66a5ff97fe265874e2cc63de111939ab50359776d3345459dff7",
+  "glb_sha256": "82826f731ce688f68d7a805327aab768e22f68b8c0f705af4702975a7177e469",
+  "bytes": 32348,
+  "triangles": 276,
+  "generated_at": "2026-09-18T15:24:46"
+}

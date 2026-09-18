@@ -1,14 +1,16 @@
-"""Mist Harbor asset: warm harbour lamp. Executor owns GLB export and preview.
+"""Mist Harbor asset: flower planter. Executor owns GLB export and preview.
 
-Ported from project/art/generate_harbor.py::lamp (original procedural mesh, CC0).
-Meters, Z-up, origin at the footprint centre, total height 1.25 m (occupies 2 build cells).
+Ported from project/art/generate_harbor.py::flower (original procedural mesh, CC0).
+Meters, Z-up, origin at the footprint centre, total height 0.32 m (1 build cell).
+A 3x3 grid of stems, blooms and leaves on a timber planter.
 Self-contained: the remote pilot submits one inline script, so helpers are inlined.
 """
 import bpy
 from mathutils import Vector
 
 COLORS = {
-    'stone': 'c8c5af', 'teal': '426e69', 'gold': 'f3c888', 'timber': '795d4c',
+    'timber': '795d4c', 'soil': '746953', 'green': '698e75', 'green_dark': '4c7969',
+    'pink': 'd5a0a1', 'gold': 'f3c888', 'cream': 'f3ead4',
 }
 MATERIALS = {}
 
@@ -34,7 +36,6 @@ def material(name):
             raise RuntimeError(f'Required Principled BSDF input missing: {socket_name}')
         socket.default_value = value
     if name == 'gold':
-        # Warm glow for night mode; optional sockets must exist on this runtime.
         for socket_name, value in (('Emission Color', (*rgb, 1.0)), ('Emission Strength', 0.7)):
             socket = bsdf.inputs.get(socket_name)
             if socket is None:
@@ -44,44 +45,58 @@ def material(name):
     return mat
 
 
-def finish(obj, name, mat_name):
+def finish(obj, name, mat_name, bevel=0):
     obj.name = name
     obj.data.materials.append(material(mat_name))
     for polygon in obj.data.polygons:
         polygon.use_smooth = False
+    if bevel:
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+        modifier = obj.modifiers.new('Soft handmade edges', 'BEVEL')
+        modifier.width = bevel
+        modifier.segments = 1
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
     return obj
 
 
-def box(name, center, size, mat_name):
+def box(name, center, size, mat_name, bevel=0.012):
     bpy.ops.mesh.primitive_cube_add(size=1, location=Vector(center))
     obj = bpy.context.object
     obj.dimensions = Vector(size)
-    return finish(obj, name, mat_name)
+    return finish(obj, name, mat_name, bevel)
 
 
-def cylinder(name, center, radius, depth, mat_name, top=None, vertices=10):
+def cylinder(name, center, radius, depth, mat_name, vertices=10):
     bpy.ops.mesh.primitive_cone_add(vertices=vertices, radius1=radius,
-                                    radius2=radius if top is None else top,
-                                    depth=depth, location=Vector(center))
+                                    radius2=radius, depth=depth, location=Vector(center))
     return finish(bpy.context.object, name, mat_name)
+
+
+def ico(name, center, scale, mat_name):
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=1, location=Vector(center))
+    obj = bpy.context.object
+    obj.scale = Vector(scale)
+    return finish(obj, name, mat_name)
 
 
 scene = bpy.context.scene
 scene.unit_settings.system = 'METRIC'
 scene.unit_settings.scale_length = 1.0
 
-cylinder('Base', (0, 0, 0.04), 0.15, 0.08, 'stone', vertices=8)
-cylinder('Lamp post', (0, 0, 0.48), 0.041, 0.94, 'teal', vertices=8)
-box('Lantern body', (0, 0, 1.015), (0.23, 0.23, 0.25), 'gold')
-cylinder('Lantern hat', (0, 0, 1.195), 0.21, 0.11, 'teal', top=0, vertices=4)
-box('Lantern foot', (0, 0, 0.88), (0.29, 0.29, 0.05), 'teal')
-for x in (-0.11, 0.11):
-    for y in (-0.11, 0.11):
-        box('Lantern frame', (x, y, 1.015), (0.024, 0.024, 0.26), 'timber')
+box('Planter', (0, 0, 0.065), (0.85, 0.85, 0.13), 'timber', 0.016)
+box('Garden soil', (0, 0, 0.133), (0.74, 0.74, 0.018), 'soil', 0)
+for i in range(9):
+    x = (i % 3 - 1) * 0.23
+    y = (i // 3 - 1) * 0.23
+    z = 0.23 + (i % 2) * 0.025
+    cylinder('Stem_%d' % i, (x, y, 0.195), 0.012, 0.12, 'green_dark', vertices=5)
+    ico('Bloom_%d' % i, (x, y, z), (0.083, 0.078, 0.065), ['pink', 'gold', 'cream'][i % 3])
+    ico('Leaf_%d' % i, (x + 0.07, y, 0.19), (0.095, 0.055, 0.026), 'green')
 
 bpy.context.view_layer.update()
 lowest = min(min((obj.matrix_world @ Vector(corner)).z for corner in obj.bound_box)
              for obj in scene.objects)
-assert abs(lowest) < 1e-6, f'lamp must sit on z=0, got {lowest}'
+assert abs(lowest) < 1e-6, f'flower must sit on z=0, got {lowest}'
 
-print('MIST_HARBOR_LAMP_OK: meters Z-up; geometry + materials only', flush=True)
+print('MIST_HARBOR_FLOWER_OK: meters Z-up; geometry + materials only', flush=True)

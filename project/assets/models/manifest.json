@@ -20,7 +20,7 @@
         "blender_max": [
           0.5,
           0.5,
-          1.0
+          0.9999999776482582
         ],
         "godot_size": [
           1.0,
@@ -28,7 +28,10 @@
           1.0
         ]
       },
-      "bytes": 22036
+      "bytes": 22008,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/arch.py",
+      "task_id": "mist-harbor-arch-v2-c31bcd14"
     },
     {
       "id": "barrel",
@@ -69,7 +72,7 @@
         "blender_max": [
           0.4300000071525574,
           0.4300000071525574,
-          2.799999952316284
+          2.8000000081956387
         ],
         "godot_size": [
           0.86,
@@ -77,7 +80,10 @@
           0.86
         ]
       },
-      "bytes": 47920
+      "bytes": 47896,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/beacon.py",
+      "task_id": "mist-harbor-beacon-v1-d0bd5a8d"
     },
     {
       "id": "cottage",
@@ -86,13 +92,13 @@
       "bounds": {
         "blender_min": [
           -0.5149999856948853,
-          -0.5299999713897705,
+          -0.5,
           0.0
         ],
         "blender_max": [
           0.5149999856948853,
-          0.5,
-          1.0
+          0.5299999862909317,
+          1.000000017695129
         ],
         "godot_size": [
           1.03,
@@ -100,7 +106,10 @@
           1.03
         ]
       },
-      "bytes": 31480
+      "bytes": 31464,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/cottage.py",
+      "task_id": "mist-harbor-cottage-v1-e8652c02"
     },
     {
       "id": "flower",
@@ -123,7 +132,10 @@
           0.85
         ]
       },
-      "bytes": 71856
+      "bytes": 71836,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/flower.py",
+      "task_id": "mist-harbor-flower-v1-63fe23e8"
     },
     {
       "id": "lamp",
@@ -157,14 +169,14 @@
       "triangles": 44,
       "bounds": {
         "blender_min": [
-          -0.54749995470047,
+          -0.5474999714642763,
           -0.5400000214576721,
           0.0
         ],
         "blender_max": [
-          0.54749995470047,
+          0.5474999714642763,
           0.5400000214576721,
-          0.6549999713897705
+          0.6549999853596091
         ],
         "godot_size": [
           1.095,
@@ -172,7 +184,10 @@
           1.08
         ]
       },
-      "bytes": 6572
+      "bytes": 6568,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/roof.py",
+      "task_id": "mist-harbor-roof-v1-c67e3341"
     },
     {
       "id": "tree",
@@ -207,13 +222,13 @@
       "bounds": {
         "blender_min": [
           -0.4699999988079071,
-          -0.5130000114440918,
+          -0.4399999976158142,
           0.0
         ],
         "blender_max": [
           0.4699999988079071,
-          0.4399999976158142,
-          1.709012746810913
+          0.5130000002682209,
+          1.7090127488956406
         ],
         "godot_size": [
           0.94,
@@ -221,7 +236,10 @@
           0.953
         ]
       },
-      "bytes": 32392
+      "bytes": 32348,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/windmill.py",
+      "task_id": "mist-harbor-windmill-v1-d8798697"
     }
   ]
 }
