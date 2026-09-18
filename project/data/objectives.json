@@ -1,13 +1,21 @@
 {
-  "schema_version":1,
-  "title":"一座岛屿，六个小目标",
+  "schema_version":2,
+  "title":"雾港的三章小目标",
   "note":"仅用于本地自练；进度由当前作品与操作记录计算，不自动代替教师评分。",
+  "chapters":[
+    {"id":1,"title":"第一章 · 落脚","hint":"熟悉放置、撤销与保存，先把栈道延伸出去。"},
+    {"id":2,"title":"第二章 · 建造","hint":"用桥、花园和地标，把散落的灵感连成一座聚落。"},
+    {"id":3,"title":"第三章 · 创造","hint":"规模与多样性：造出只属于你的海湾。"}
+  ],
   "objectives":[
-    {"id":"boardwalk","title":"延伸一段木栈道","description":"亲手放置 8 块木栈道","kind":"wood","target":8},
-    {"id":"neighborhood","title":"迎接新的邻居","description":"为岛屿新建 3 间小屋","kind":"cottage","target":3},
-    {"id":"bridge","title":"把灵感连成桥","description":"拼搭 3 段桥拱","kind":"arch","target":3},
-    {"id":"landmark","title":"点亮你的地标","description":"建造 1 座属于自己的灯塔","kind":"beacon","target":1},
-    {"id":"garden","title":"留一块海边花园","description":"种下 3 棵树与 3 块花坛","kind":"garden","target":6},
-    {"id":"journal","title":"保存这一次创造","description":"试一次撤销，并保存作品","kind":"journal","target":2}
+    {"id":"boardwalk","chapter":1,"title":"延伸一段木栈道","description":"亲手放置 8 块木栈道","kind":"wood","target":8},
+    {"id":"journal","chapter":1,"title":"保存这一次创造","description":"试一次撤销，并保存作品","kind":"journal","target":2},
+    {"id":"neighborhood","chapter":2,"title":"迎接新的邻居","description":"为岛屿新建 3 间小屋","kind":"cottage","target":3},
+    {"id":"bridge","chapter":2,"title":"把灵感连成桥","description":"拼搭 3 段桥拱","kind":"arch","target":3},
+    {"id":"landmark","chapter":2,"title":"点亮你的地标","description":"建造 1 座属于自己的灯塔","kind":"beacon","target":1},
+    {"id":"garden","chapter":2,"title":"留一块海边花园","description":"种下 3 棵树与 3 块花坛","kind":"garden","target":6},
+    {"id":"variety","chapter":3,"title":"装满材料架","description":"亲手用满 8 种不同建材","kind":"variety","target":8},
+    {"id":"skyline","chapter":3,"title":"造出海岸线","description":"亲手放置 60 件建材","kind":"total","target":60},
+    {"id":"nightscape","chapter":3,"title":"留住夜色","description":"在夜色里拍一张照片","kind":"night_photo","target":1}
   ]
 }

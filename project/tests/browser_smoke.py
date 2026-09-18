@@ -125,6 +125,10 @@ def main() -> int:
             check("Help overlay opens", lambda: state()["modal"])
             page.keyboard.press("Escape")
             check("Escape closes overlay", lambda: not state()["modal"])
+            click("progress")
+            check("Progress dialog opens", lambda: state()["modal"])
+            page.keyboard.press("Escape")
+            check("Progress dialog closes", lambda: not state()["modal"])
             yaw = state()["camera"][0]
             page.mouse.move(800, 420)
             page.mouse.down(button="right")
@@ -138,7 +142,8 @@ def main() -> int:
             click("save")
             check("Browser save acknowledged", lambda: state()["stats"]["saved"] == 1 and not state()["dirty"])
             saved = state()["placed"]
-            page.wait_for_timeout(2500)
+            # user:// in the Web export is flushed to IndexedDB asynchronously.
+            page.wait_for_timeout(5000)
             page.reload(wait_until="networkidle", timeout=90000)
             page.wait_for_function("!!window.harborState", timeout=90000)
             check("Refresh restores persisted world", lambda: state()["placed"] == saved and state()["stats"]["saved"] == 1)

@@ -1,0 +1,14 @@
+{
+  "schema_version":1,
+  "note":"成就按玩家维度保存（user://achievements.json），不随作品存档导出。",
+  "achievements":[
+    {"id":"first_piece","title":"第一块砖","description":"亲手放下第一件建材","kind":"total","target":1},
+    {"id":"apprentice","title":"熟练学徒","description":"亲手放置 50 件建材","kind":"total","target":50},
+    {"id":"master_builder","title":"造岛大师","description":"亲手放置 200 件建材","kind":"total","target":200},
+    {"id":"collector","title":"材料收藏家","description":"亲手用满 8 种不同建材","kind":"variety","target":8},
+    {"id":"careful_hand","title":"谨慎的手","description":"撤销 10 次操作","kind":"undone","target":10},
+    {"id":"archivist","title":"档案管理员","description":"保存作品 5 次","kind":"saved","target":5},
+    {"id":"bridge_master","title":"桥匠","description":"拼搭 10 段桥拱","kind":"kind:arch","target":10},
+    {"id":"night_owl","title":"夜观察者","description":"在夜色中拍下一张照片","kind":"night_photo","target":1}
+  ]
+}

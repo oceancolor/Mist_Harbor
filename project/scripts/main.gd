@@ -48,6 +48,10 @@ var action_buttons: Dictionary = {}
 var mission_labels: Array[Label] = []
 var mission_bars: Array[ProgressBar] = []
 var objectives: Array = []
+var chapters: Array = []
+var achievements: Achievements
+var photo_stats: Dictionary = {"photos": 0, "night_photos": 0}
+var chapter_title: Label
 var minimap: Control
 var modal: ColorRect
 var sound := AudioStreamPlayer.new()
@@ -71,6 +75,9 @@ func _ready() -> void:
 	thumbs = ModelThumbnails.new()
 	add_child(thumbs)
 	thumbs.thumbnail_ready.connect(_on_thumbnail_ready)
+	achievements = Achievements.new()
+	add_child(achievements)
+	achievements.unlocked.connect(_on_achievement_unlocked)
 	world = World.new()
 	add_child(world)
 	world.setup(model)
@@ -84,6 +91,7 @@ func _ready() -> void:
 	sound.volume_db = -20.0
 	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/objectives.json"))
 	objectives = data.get("objectives", []) if data is Dictionary else []
+	chapters = data.get("chapters", []) if data is Dictionary else []
 	_build_ui()
 	thumbs.request(model.palette.keys())
 	model.changed.connect(_refresh_ui)
@@ -203,6 +211,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_F: _center_camera()
 		elif event.keycode == KEY_H: _show_help()
 		elif event.keycode == KEY_P: hud.visible = not hud.visible
+		elif event.keycode == KEY_C: _capture_photo()
 		elif event.keycode >= KEY_1 and event.keycode <= KEY_9:
 			var items := _category_items()
 			var index: int = event.keycode - KEY_1
@@ -324,7 +333,7 @@ func _build_ui() -> void:
 	_label(lesson, "慢慢建造，不必急着完成。", 12, MUTED)
 	var line := HSeparator.new()
 	lesson.add_child(line)
-	_label(lesson, "岛屿小挑战", 14)
+	chapter_title = _label(lesson, "岛屿小挑战", 14)
 	for goal: Dictionary in objectives:
 		var row := _label(lesson, str(goal["title"]), 12, INK)
 		mission_labels.append(row)
@@ -343,6 +352,7 @@ func _build_ui() -> void:
 		bar.add_theme_stylebox_override("fill", fill)
 		lesson.add_child(bar)
 		mission_bars.append(bar)
+	_button(lesson, "目标与成就", _show_progress, "progress")
 	_label(lesson, "仅统计亲手新建的部分 · 可自由游玩", 10, MUTED)
 	map_panel = _panel(hud)
 	var map_box := _vbox(map_panel, 8)
@@ -356,6 +366,7 @@ func _build_ui() -> void:
 	count_label = _label(map_box, "", 12)
 	_button(map_box, "回到岛屿  F", _center_camera, "center")
 	_button(map_box, "拍照模式  P", func() -> void: hud.visible = false, "photo")
+	_button(map_box, "保存截图  C", _capture_photo, "capture")
 	dock = _panel(hud)
 	var dock_box := _vbox(dock, 8)
 	var selector := _hbox(dock_box, 6)
@@ -433,6 +444,108 @@ func _build_palette() -> void:
 		item_buttons[kind] = button
 	_refresh_ui()
 
+func _check_achievements() -> void:
+	if achievements == null:
+		return
+	for entry in achievements.evaluate(model, photo_stats):
+		achievements.unlocked.emit(entry)
+
+func _update_chapter_title() -> void:
+	if chapter_title == null or chapters.is_empty():
+		return
+	var current := _current_chapter()
+	var counts := model.player_counts()
+	var rows := _chapter_objectives(int(current["id"]))
+	var done := 0
+	for goal in rows:
+		if _objective_amount(goal, counts) >= int(goal["target"]):
+			done += 1
+	chapter_title.text = "%s  %d/%d" % [str(current["title"]), done, rows.size()]
+
+func _objective_amount(goal: Dictionary, counts: Dictionary) -> int:
+	var key := str(goal["kind"])
+	if key == "garden":
+		return mini(3, int(counts.get("tree", 0))) + mini(3, int(counts.get("flower", 0)))
+	if key == "journal":
+		return mini(1, int(model.stats.get("saved", 0))) + mini(1, int(model.stats.get("undone", 0)))
+	if key == "variety":
+		var used := 0
+		for amount in counts.values():
+			if int(amount) > 0:
+				used += 1
+		return used
+	if key == "total":
+		return model.placed_count()
+	if key == "night_photo":
+		return int(photo_stats.get("night_photos", 0))
+	return int(counts.get(key, 0))
+
+func _chapter_objectives(chapter_id: int) -> Array:
+	var result: Array = []
+	for goal in objectives:
+		if int(goal.get("chapter", 1)) == chapter_id:
+			result.append(goal)
+	return result
+
+func _current_chapter() -> Dictionary:
+	for chapter in chapters:
+		for goal in _chapter_objectives(int(chapter["id"])):
+			if _objective_amount(goal, model.player_counts()) < int(goal["target"]):
+				return chapter
+	return chapters[chapters.size() - 1] if not chapters.is_empty() else {}
+
+func _show_progress() -> void:
+	var counts := model.player_counts()
+	var lines: Array = []
+	for chapter in chapters:
+		var rows := _chapter_objectives(int(chapter["id"]))
+		var done := 0
+		lines.append("%s" % [str(chapter["title"])])
+		for goal in rows:
+			var amount := mini(_objective_amount(goal, counts), int(goal["target"]))
+			var target := int(goal["target"])
+			if amount >= target:
+				done += 1
+			lines.append("   %s  %s  %d/%d" % ["已完成" if amount >= target else "进行中", str(goal["title"]), amount, target])
+		lines.append("   本章 %d/%d · %s" % [done, rows.size(), str(chapter.get("hint", ""))])
+	lines.append("")
+	lines.append("成就 %d/%d" % [achievements.unlocked_count(), achievements.entries.size()])
+	for entry in achievements.entries:
+		var reached := achievements.is_unlocked(str(entry["id"]))
+		var target := int(entry.get("target", 1))
+		var value := mini(achievements.progress_value(str(entry["kind"]), model, photo_stats), target)
+		lines.append("   %s  %s：%s  %d/%d" % ["已达成" if reached else "未达成", str(entry["title"]), str(entry["description"]), value, target])
+	_show_dialog("目标与成就", "\n".join(lines), [])
+
+func _on_achievement_unlocked(entry: Dictionary) -> void:
+	_toast("成就达成 · %s：%s" % [str(entry["title"]), str(entry["description"])], 4.5)
+
+func _capture_photo() -> void:
+	var was_visible := hud.visible
+	hud.visible = false
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	hud.visible = was_visible
+	if image == null or image.is_empty():
+		_toast("截图失败，请再试一次。")
+		return
+	DirAccess.make_dir_recursive_absolute("user://photos")
+	var stamp := Time.get_datetime_string_from_system(true).replace(":", "-")
+	var file_name := "mist-harbor-%s.png" % [stamp]
+	if image.save_png("user://photos/" + file_name) != OK:
+		_toast("截图保存失败。")
+		return
+	photo_stats["photos"] = int(photo_stats.get("photos", 0)) + 1
+	if world.night:
+		photo_stats["night_photos"] = int(photo_stats.get("night_photos", 0)) + 1
+	if OS.has_feature("web"):
+		JavaScriptBridge.download_buffer(image.save_png_to_buffer(), file_name, "image/png")
+		_toast("照片已保存并开始下载。")
+	else:
+		_toast("照片已保存：%s" % [ProjectSettings.globalize_path("user://photos/" + file_name)], 5.0)
+	_refresh_ui()
+
 func _apply_thumbnail(kind: String) -> void:
 	if not item_shots.has(kind):
 		return
@@ -455,10 +568,7 @@ func _refresh_ui() -> void:
 	count_label.text = "已新建 %d 件  ·  SEED %d" % [model.placed_count(), model.world_seed]
 	for i in range(objectives.size()):
 		var goal: Dictionary = objectives[i]
-		var key := str(goal["kind"])
-		var amount := int(counts.get(key, 0))
-		if key == "garden": amount = mini(3, int(counts.get("tree",0))) + mini(3, int(counts.get("flower",0)))
-		if key == "journal": amount = mini(1, int(model.stats.get("saved",0))) + mini(1, int(model.stats.get("undone",0)))
+		var amount := _objective_amount(goal, counts)
 		var target := int(goal["target"])
 		mission_labels[i].text = ("完成  " if amount >= target else "%02d  " % [i + 1]) + str(goal["title"]) + "  %d/%d" % [mini(amount, target), target]
 		mission_bars[i].value = float(amount) / target * 100.0
@@ -472,6 +582,8 @@ func _refresh_ui() -> void:
 		action_buttons["redo"].disabled = model.redo_stack.is_empty()
 		action_buttons["save"].text = "保存作品 *" if model.dirty else "保存作品"
 		action_buttons["night"].text = "夜景  N" if world.night else "日景  N"
+	_check_achievements()
+	_update_chapter_title()
 	if selected_label != null:
 		selected_label.text = "拆除模式 · 点击或拖动移除格子，撤销可以恢复" if demolishing else str(model.definition(selected)["tip"]) + "  朝向 %d°" % [piece_rotation * 90]
 	if minimap != null: minimap.queue_redraw()
@@ -552,7 +664,7 @@ func _toast(message: String, seconds: float = 3.5) -> void:
 	toast_time = seconds
 
 func _show_help() -> void:
-	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海湾。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：环绕视角    中键拖动 / WASD：平移\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转下一件建材    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：切换昼夜    P：隐藏界面拍照    Esc：返回\n\n水面可以直接搭地基，空中格子须与既有建材相接。\n高模型占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，双指拖动旋转，使用界面按钮。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
+	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海湾。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：环绕视角    中键拖动 / WASD：平移\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转下一件建材    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：切换昼夜    P：隐藏界面拍照    C：保存截图    Esc：返回\n\n水面可以直接搭地基，空中格子须与既有建材相接。\n高模型占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，双指拖动旋转，使用界面按钮。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
 
 func _show_menu() -> void:
 	_show_dialog("作品管理", "存档仅保存在当前浏览器或设备。清理浏览器数据可能丢失作品，\n建议定期导出 JSON。导入时会校验版本、坐标、重叠与体积。\n\n加载或开始新岛会替换当前场景；请先保存或导出。\n样板预置建筑不计入小挑战，只有亲手新增的建材才计数。", [
@@ -625,6 +737,7 @@ func _slot_options(index: int) -> Array:
 	]
 
 func _slot_save(index: int) -> void:
+	achievements.flush()  # write achievements first: a later write can lose the save on Web
 	if model.save_slot(index):
 		_toast("已保存到存档槽 %d。" % [index])
 	else:
@@ -720,4 +833,4 @@ func qa_snapshot() -> Dictionary:
 	for key in item_buttons:
 		var rect: Rect2 = item_buttons[key].get_global_rect()
 		controls["item-" + key] = [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
-	return {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,"placed":model.placed_count(),"counts":model.player_counts(),"cells":model.cells.size(),"undo":model.undo_stack.size(),"redo":model.redo_stack.size(),"dirty":model.dirty,"stats":model.stats,"faces":world.visible_faces,"assets":world.scenes.keys(),"modal":modal!=null,"buttons":controls,"viewport":[get_viewport().get_visible_rect().size.x,get_viewport().get_visible_rect().size.y],"pick":str(pick_result),"camera":[target_yaw,target_pitch,target_zoom],"revision":model.revision}
+	return {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,"slot":model.current_slot,"save_exists":FileAccess.file_exists(Model.slot_path(model.current_slot)),"last_error":model.last_error,"photos":photo_stats,"placed":model.placed_count(),"counts":model.player_counts(),"cells":model.cells.size(),"undo":model.undo_stack.size(),"redo":model.redo_stack.size(),"dirty":model.dirty,"stats":model.stats,"faces":world.visible_faces,"assets":world.scenes.keys(),"modal":modal!=null,"buttons":controls,"viewport":[get_viewport().get_visible_rect().size.x,get_viewport().get_visible_rect().size.y],"pick":str(pick_result),"camera":[target_yaw,target_pitch,target_zoom],"revision":model.revision}
