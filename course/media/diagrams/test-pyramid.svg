@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="470" viewBox="0 0 900 470" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="900" height="470" fill="#f7f8ed"/>
+  <text x="450" y="34" text-anchor="middle" font-size="20" fill="#2d514b">测试金字塔：91 项断言分三层</text>
+
+  <polygon points="450,60 210,190 690,190" fill="#497c6b"/>
+  <text x="450" y="130" text-anchor="middle" font-size="15" fill="#ffffff">L3 浏览器层 · 23 项</text>
+  <text x="450" y="152" text-anchor="middle" font-size="12" fill="#dff0e6">真实 Chromium + WebGL：成品行为</text>
+  <text x="450" y="172" text-anchor="middle" font-size="12" fill="#dff0e6">1–2 分钟 · 发布前跑</text>
+
+  <polygon points="255,200 645,200 700,300 200,300" fill="#6d9e88"/>
+  <text x="450" y="238" text-anchor="middle" font-size="15" fill="#ffffff">L2 场景层 · 12 项</text>
+  <text x="450" y="260" text-anchor="middle" font-size="12" fill="#eef7f0">实例化 main.tscn：导入 / 地形 / 碰撞 / UI</text>
+  <text x="450" y="280" text-anchor="middle" font-size="12" fill="#eef7f0">数秒 · 需要渲染与物理帧</text>
+
+  <polygon points="200,310 700,310 750,410 150,410" fill="#9dbda9"/>
+  <text x="450" y="348" text-anchor="middle" font-size="15" fill="#ffffff">L1 模型层 · 56 项</text>
+  <text x="450" y="370" text-anchor="middle" font-size="12" fill="#f2f8f3">纯逻辑：放置规则 / 足迹 / 存档 / 撤销 / 成就</text>
+  <text x="450" y="392" text-anchor="middle" font-size="12" fill="#f2f8f3">秒级 · 不依赖 GPU，CI 友好</text>
+
+  <text x="450" y="440" text-anchor="middle" font-size="13" fill="#2d514b">原则：越靠下越快越稳 → 日常跑 L1+L2；越靠上越真实 → 发布前跑 L3</text>
+  <text x="450" y="460" text-anchor="middle" font-size="12" fill="#789087">上层才复现的 bug = 下层覆盖有缺口，先把规则补进 L1</text>
+</svg>

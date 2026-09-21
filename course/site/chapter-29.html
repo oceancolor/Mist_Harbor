@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</h1>
+  <div class="meta">卷 6 · 质量与协作 · 字符数 4139 · 生成于 2026-09-21 13:22</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-29.html" style="color:#2d514b;font-weight:700">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</h1>
+<blockquote><p><strong>本章目标</strong>：理解本实训的<strong>测试金字塔</strong>——哪一层测什么、跑多快、<br>为什么这样分层能让"加一个资产"不再心惊胆战。<br>对应任务：T42 / T46（自动化测试）　|　对应文件：<code>tools/dev.py</code>、<code>project/tests/</code></p></blockquote>
+<hr>
+<h2>14.1 三层，各有分工</h2>
+<table><thead><tr><th>层</th><th>命令 / 文件</th><th>断言数</th><th>耗时</th><th>测什么</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>L1 模型层</strong></td><td><code>tests/test_world.gd</code></td><td><strong>56</strong></td><td>秒级</td><td>纯逻辑：放置规则、足迹、存档、撤销、成就进度</td></tr><tr><td><strong>L2 场景层</strong></td><td><code>tests/smoke_scene.gd</code></td><td><strong>12</strong></td><td>数秒</td><td>真实例化 <code>main.tscn</code>：导入、地形、碰撞、UI 操作</td></tr><tr><td><strong>L3 浏览器层</strong></td><td><code>tests/browser_smoke.py</code></td><td><strong>23</strong></td><td>1–2 分钟</td><td>真实 Chromium + WebGL：最终成品行为</td></tr><tr><td></td><td></td><td><strong>合计 91</strong></td><td></td><td></td></tr></tbody></table>
+<pre><code>python tools/dev.py test        # 跑 L1 + L2（68 项，快）
+# L3 需要先导出并起服务：
+python tools/dev.py export-web
+python -m http.server 8184 --bind 127.0.0.1 --directory project/build
+python project/tests/browser_smoke.py --base http://127.0.0.1:8184/index.html</code></pre>
+<hr>
+<h2>14.2 L1 模型层：不渲染，所以极快</h2>
+<p><code>test_world.gd</code> 直接 <code>extends SceneTree</code>，用 GDScript 跑逻辑断言：</p>
+<pre><code>func check(condition: bool, label: String) -&gt; void:
+	if condition:
+		passed += 1
+		print(&quot;PASS &quot;, label)
+	...
+print(&quot;WORLD_TEST_RESULT passed=&quot;, passed, &quot; failed=&quot;, failed)
+quit(1 if failed else 0)</code></pre>
+<p><strong>关键</strong>：<code>quit(1)</code> —— 非零退出码让 CI / <code>dev.py</code> 能判定失败。这是自动化能成立的前提。</p>
+<p>覆盖内容：世界边界、支撑规则、多格足迹、占位冲突、地形生成、存档往返（save→load→一致）、<br>撤销/重做、统计数据、章节目标进度、成就进度计算……</p>
+<blockquote><p>📌 这一层<strong>完全不依赖渲染</strong>，所以在无 GPU 的机器、CI、云端容器里都能跑——这是它最大的价值。</p></blockquote>
+<hr>
+<h2>14.3 L2 场景层：真跑一遍完整游戏</h2>
+<pre><code>var scene: Node3D = load(&quot;res://main.tscn&quot;).instantiate()
+root.add_child(scene)
+await process_frame
+await physics_frame            # ← 必须等物理帧，碰撞才可用</code></pre>
+<p>断言包括：<code>scenes.size()</code>（GLB 是否都导入成功）、<code>visible_faces &gt; 0</code>（地形真的生成了）、<br><code>ground_collision.shape != null</code>（碰撞存在）、放置→撤销→重做、昼夜、分类切换、帮助弹窗。</p>
+<p><strong>为什么需要这一层</strong>：L1 证明"模型对"，L2 证明"<strong>接进游戏后还是对的</strong>"——<br>导入失败、脚本报错、节点缺失，只有实例化才知道。</p>
+<hr>
+<h2>14.4 L3 浏览器层：只测"最终成品"</h2>
+<p>23 项：GLB 加载数、真实地形面数、画布点击放置、撤销/重做、旋转、分类、拆除、<br>昼夜、弹窗开关、右键旋转、滚轮缩放、<strong>浏览器保存 → 刷新 → 世界还在</strong>、<br>平板视口适配、<strong>无浏览器/引擎错误</strong>。</p>
+<blockquote><p>📌 L3 的价值在于<strong>平台</strong>：Web 的 <code>user://</code> 是 IndexedDB、没有本地文件系统、<br>渲染走 WebGL——这些差异只有真浏览器能暴露（第 13 章的"存档顺序"就是这么发现的）。</p></blockquote>
+<p><img src="assets/diagrams/test-pyramid.svg" alt="测试金字塔"></p>
+<hr>
+<h2>14.5 分层的三条原则</h2>
+<ol><li><strong>越靠下越快、越不依赖环境</strong> → 日常改代码只跑 L1+L2（几十秒）</li><li><strong>越靠上越接近真实</strong> → 发布前才跑 L3</li><li><strong>上层失败时，先补下层断言</strong> → 一个只在 L3 复现的 bug，说明 L1/L2 少了覆盖</li></ol>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>L1 模型层</td><td><code>dev.py test</code></td><td><strong>完全一致</strong>，云端容器无 GPU 也能跑 → 云端 CI 的主力</td></tr><tr><td>L2 场景层</td><td>需要渲染/物理帧</td><td>云端同样可跑（dummy 驱动足够），但<strong>注意缩略图会回退手绘</strong>（第 13 章）</td></tr><tr><td>L3 浏览器层</td><td>本地 Chromium</td><td>云端预览 + Playwright，最贴近学员真实环境</td></tr><tr><td>建议节奏</td><td>每次提交 L1+L2</td><td><strong>云端把 L1+L2 做成提交门禁</strong>，L3 定时或发布前跑</td></tr></tbody></table>
+<blockquote><p>🌩 云端最大的优势：<strong>L1 层零依赖</strong>，意味着 CI 不需要 GPU 机器，成本极低。</p></blockquote>
+<hr>
+<h2>14.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>测试失败但退出码 0</td><td>忘了 <code>quit(1)</code></td><td>用退出码判定，别靠看日志</td></tr><tr><td>L2 里碰撞取不到</td><td>没等 <code>physics_frame</code></td><td>至少等 1–2 个物理帧</td></tr><tr><td>L1 在无 GPU 机器上失败</td><td>误用了渲染相关 API</td><td>保持 L1 纯逻辑</td></tr><tr><td>只在 L3 复现的 bug</td><td>下层覆盖不足</td><td>把规则补进 L1</td></tr><tr><td>新增资产后 L1 挂了</td><td>断言写死了数量</td><td>见第 31 章</td></tr></tbody></table>
+<hr>
+<h2>14.7 本章作业</h2>
+<ol><li>说出三层的断言数与各自的分工，解释为什么 L1 不依赖渲染很重要</li><li>跑一次 <code>python tools/dev.py test</code>，从输出里找出 <code>WORLD_TEST_RESULT</code> 与 <code>SCENE_SMOKE_RESULT</code>，记录数字</li><li>在 <code>test_world.gd</code> 里加一条断言（例如"在 y=25 放置应失败"），确认失败时退出码为 1</li><li>思考：你所在项目如果要引入这套分层，最先该补的是哪一层？为什么？</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>测试金字塔</strong>——下层多、快、稳；上层少、慢、真。</li><li><strong>课堂演示</strong>：故意改坏 <code>can_place()</code> 的一条规则，看三层各自在哪一步报错。</li><li><strong>高频误解</strong>：学生想把所有断言都放进浏览器层。讨论：反馈周期 vs 真实性。</li><li><strong>讨论题</strong>：如果一个 bug 只在 L3 复现，说明什么？（答：下层覆盖有缺口）</li><li><strong>批改要点</strong>：作业 3 必须验证退出码，不只是看打印。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/29/29-game-running.png" alt="29-game-running"><figcaption>29-game-running.png</figcaption></figure><figure><img src="assets/shots/29/29-progress-panel.png" alt="29-progress-panel"><figcaption>29-progress-panel.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>金字塔图 + 三层对照表</td><td>"91 项，分三层。"</td></tr><tr><td>01:30–03:00</td><td>跑 dev.py test，看 56 + 12</td><td>"秒级反馈，无 GPU 也能跑。"</td></tr><tr><td>03:00–04:30</td><td>L2 里等物理帧的那两行</td><td>"实例化之后，才叫接进了游戏。"</td></tr><tr><td>04:30–06:30</td><td>L3 列表 + 刷新持久化那一项</td><td>"只有真浏览器才知道 IndexedDB 的脾气。"</td></tr><tr><td>06:30–09:00</td><td>三条原则 + 作业</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/29/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>29-game-running.png</code></td><td>游戏运行画面（L3 的被测对象）</td><td><code>python tools/course_capture.py --chapter 29</code></td></tr><tr><td><code>29-progress-panel.png</code></td><td>任务进度面板（L2/L3 都会断言的部分）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："你有几成把握改一行代码不会弄坏游戏？"——引入测试覆盖率话题</li><li><strong>演示</strong>：改坏规则 → 三层报错的先后顺序（现场计时）</li><li><strong>互动</strong>：让观众说出自己项目的"测试金字塔"长什么样</li><li><strong>收尾</strong>：预告浏览器验收细节</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：为什么 L1 和 L2 都是 GDScript 而不是 Python？</strong><br>A：它们测的是 GDScript 逻辑，用同一种语言最直接；<code>dev.py</code> 只负责调用 Godot 并检查退出码。</p>
+<p><strong>Q：91 项算多吗？</strong><br>A：对一个可玩的 3D 建造原型来说，这个量级刚好覆盖"规则 + 集成 + 平台"三件事，不追求覆盖率数字。</p>
+<p><strong>Q：能不能把 L3 也放进每次提交？</strong><br>A：可以但慢（1–2 分钟）。建议提交跑 L1+L2，L3 在发布前或定时跑。</p>
+<div class="pager"><a href="chapter-13.html">← 卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

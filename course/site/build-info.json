@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 13:13",
+  "built": "2026-09-21 13:22",
   "chapters": [
     {
       "key": "01",
@@ -75,7 +75,7 @@
       "key": "11",
       "title": "卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架",
       "volume": "卷 2 · Godot 工程",
-      "characters": 5385,
+      "characters": 5410,
       "file": "chapter-11.html"
     },
     {
@@ -91,7 +91,28 @@
       "volume": "卷 2 · Godot 工程",
       "characters": 4616,
       "file": "chapter-13.html"
+    },
+    {
+      "key": "29",
+      "title": "卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的",
+      "volume": "卷 6 · 质量与协作",
+      "characters": 4139,
+      "file": "chapter-29.html"
+    },
+    {
+      "key": "30",
+      "title": "卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState",
+      "volume": "卷 6 · 质量与协作",
+      "characters": 5203,
+      "file": "chapter-30.html"
+    },
+    {
+      "key": "31",
+      "title": "卷 6 · 第 31 章　断言演变史：三条\"写死数量\"的断言是怎么救了项目的",
+      "volume": "卷 6 · 质量与协作",
+      "characters": 4327,
+      "file": "chapter-31.html"
     }
   ],
-  "characters": 64356
+  "characters": 78050
 }

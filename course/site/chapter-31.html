@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</h1>
+  <div class="meta">卷 6 · 质量与协作 · 字符数 4327 · 生成于 2026-09-21 13:22</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html" style="color:#2d514b;font-weight:700">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</h1>
+<blockquote><p><strong>本章目标</strong>：从<strong>真实翻车记录</strong>里学断言设计——<br>为什么"断言数量"是坏味道，正确做法是<strong>从单一数据源推导</strong>。<br>对应任务：T46（回归修复）　|　对应文件：<code>test_world.gd</code> / <code>smoke_scene.gd</code> / <code>browser_smoke.py</code></p></blockquote>
+<hr>
+<h2>16.1 事故：加了一件资产，三处测试同时变红</h2>
+<p>本实训接入第一件新资产（木桶 <code>barrel</code>）后，跑了全套测试，结果是：</p>
+<table><thead><tr><th>断言</th><th>原文</th><th>症状</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>L1</td><td><code>check(model.palette.size() == 13, "13 buildable materials")</code></td><td>建材变成 14 → <strong>红</strong></td></tr><tr><td>L2</td><td><code>check(scene.world.scenes.size() == 8, "all Blender GLBs imported")</code></td><td>GLB 变成 9 → <strong>红</strong></td></tr><tr><td>L3</td><td><code>check("8 actual Blender GLB modules loaded", len(assets) == 8)</code></td><td>同上 → <strong>红</strong>（一次跑出 20/23）</td></tr></tbody></table>
+<p><strong>这不是"资产加错了"，而是"断言写错了"。</strong><br>三条断言都在说同一件事：<strong>数量必须等于我上次数的那个数</strong>。<br>但数量本来就该随 <code>palette.json</code> 变化——断言却把它钉死了。</p>
+<hr>
+<h2>16.2 修法：让断言从数据源推导</h2>
+<pre><code># test_world.gd
+var palette_file = JSON.parse_string(FileAccess.get_file_as_string(&quot;res://data/palette.json&quot;))
+var expected_materials = palette_file.get(&quot;items&quot;, []).size()
+check(model.palette.size() == expected_materials and expected_materials &gt; 0,
+      &quot;palette matches data/palette.json&quot;)</code></pre>
+<pre><code># smoke_scene.gd
+for item in palette.get(&quot;items&quot;, []):
+    if str(item.get(&quot;mesh&quot;, &quot;cube&quot;)) != &quot;cube&quot;:
+        expected_models += 1
+check(scene.world.scenes.size() == expected_models, &quot;all Blender GLBs imported&quot;)</code></pre>
+<pre><code># browser_smoke.py
+def expected_model_count() -&gt; int:
+    palette = json.loads((PROJECT / &quot;data&quot; / &quot;palette.json&quot;).read_text(encoding=&quot;utf-8&quot;))
+    return sum(1 for item in palette.get(&quot;items&quot;, []) if str(item.get(&quot;mesh&quot;, &quot;cube&quot;)) != &quot;cube&quot;)</code></pre>
+<p><strong>注意那个 <code>and expected_materials &gt; 0</code></strong>：<br>从文件推导有个风险——文件读失败会得到 0，断言就"假绿"了。<br>加一个下界保证，推导才安全。</p>
+<hr>
+<h2>16.3 三条经验（写进肌肉记忆）</h2>
+<table><thead><tr><th>原则</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>断言语义，不断言快照值</strong></td><td>"建材表与 palette.json 一致" 是语义；"等于 13" 是快照</td></tr><tr><td><strong>单一数据源</strong></td><td>数量从 <code>palette.json</code> 推导，而不是在测试里再写一遍</td></tr><tr><td><strong>推导要有下界</strong></td><td>防止读文件失败导致 <code>0 == 0</code> 的假绿</td></tr></tbody></table>
+<blockquote><p>📌 推广一下：凡是"断言一个会自然增长的数"，几乎都该改成"断言它与数据源一致"。<br>典型例子：建材数、模型数、成就数、章节数、按钮数。</p></blockquote>
+<hr>
+<h2>16.4 同一类问题的另外两个变体</h2>
+<table><thead><tr><th>变体</th><th>症状</th><th>正确做法</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>写死的世界尺寸</strong></td><td>改了 <code>WORLD_LIMIT</code> 后一堆断言红</td><td>断言"边界外放置失败"，而不是"边界是 25"</td></tr><tr><td><strong>写死的存档字节数</strong></td><td>换引擎版本后体积变了就红</td><td>断言"往返一致"（存→读→相等），不断言大小</td></tr></tbody></table>
+<p>本实训的存档测试正是后者：<strong><code>load_document(to_document())</code> 往返一致</strong>，<br>所以从 4.4 升到 4.7、体积变化时它依然稳。</p>
+<hr>
+<h2>16.5 那什么<strong>应该</strong>写死？</h2>
+<p>不是所有数字都坏。以下情况写死是对的：</p>
+<ul><li><strong>规则常量</strong>：世界边界 ±25、建材上限 12000、存档 ≤4MB（这些是<strong>设计约束</strong>，变了就该红）</li><li><strong>协议版本</strong>：<code>schema_version</code>（变了必须人工确认）</li><li><strong>性能阈值</strong>：<code>visible_faces &gt; 500</code>（用来兜底"地形真的生成了"这类<strong>存在性</strong>判断）</li></ul>
+<p>判断标准很简单：<strong>这个数字是"约束"还是"统计"？</strong><br>约束写死，统计推导。</p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>断言失效的表现</td><td>本地跑出红色</td><td>云端 CI 红灯，但本地可能绿（数据源不同步）</td></tr><tr><td>根因</td><td>断言写死</td><td><strong>同</strong>；且云端更容易暴露"环境与本地不一致"</td></tr><tr><td>预防</td><td>推导 + 下界</td><td>同；建议云端 CI 里<strong>加一条"数据源非空"的元断言</strong></td></tr><tr><td>收益</td><td>加资产零改测试</td><td><strong>云端批量造资产时尤其明显</strong>——一次加 5 件也不红</td></tr></tbody></table>
+<blockquote><p>🌩 云端批量生产资产是常态（远程 Blender pilot 一次一件），<br>如果每条断言都写死数量，<strong>每加一件资产都要改三处测试</strong>——这在自动化流水线上是不可接受的。</p></blockquote>
+<hr>
+<h2>16.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>加资产后多处测试红</td><td>断言写死数量</td><td>改成从 <code>palette.json</code> 推导</td></tr><tr><td>改了边界后一堆红</td><td>边界写死在多处</td><td>断言行为（越界失败），引用常量</td></tr><tr><td>测试全绿但功能坏了</td><td>推导值是 0，假绿</td><td>加下界 <code>&gt; 0</code></td></tr><tr><td>换引擎后体积断言红</td><td>断言了字节数</td><td>改为往返一致</td></tr><tr><td>数据源改了测试没跟上</td><td>测试里复制了一份数据</td><td>直接读数据源</td></tr></tbody></table>
+<hr>
+<h2>16.7 本章作业</h2>
+<ol><li>找出本工程里三条曾经写死数量的断言，说明各自改成了什么</li><li>解释为什么推导时要加 <code>and expected &gt; 0</code>，举一个假绿的具体场景</li><li>判断下列数字该写死还是推导，说明理由：① 世界边界 25 ② 建材种类数 ③ 成就总数 ④ <code>schema_version</code></li><li>在你自己的项目里找一条"写死数量"的断言，改写成推导式</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>约束写死，统计推导</strong>。一句话记住本章。</li><li><strong>课堂演示</strong>：现场加一件资产，先跑写死版（红），再跑推导版（绿）。</li><li><strong>高频误解</strong>：学生以为"断言越多越严越好"。讨论：脆弱的断言比没有断言更糟（狼来了）。</li><li><strong>讨论题</strong>：测试全绿 = 没问题吗？（引出假绿与元断言）</li><li><strong>批改要点</strong>：作业 3 的 ② ③ 应为推导，① ④ 应为写死。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/31/31-after-place.png" alt="31-after-place"><figcaption>31-after-place.png</figcaption></figure><figure><img src="assets/shots/31/31-barrel-in-dock.png" alt="31-barrel-in-dock"><figcaption>31-barrel-in-dock.png</figcaption></figure></div><h2>📹 录屏分镜（10 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:40</td><td>事故回放：加一件资产，三处变红</td><td>"不是资产错了，是断言错了。"</td></tr><tr><td>01:40–03:30</td><td>三处改法逐行看（含 mesh != cube 的计数）</td><td>"让测试去问数据。"</td></tr><tr><td>03:30–05:00</td><td><code>and &gt; 0</code> 的必要性：假绿演示</td><td>"推导也要防呆。"</td></tr><tr><td>05:00–07:00</td><td>三条原则 + 两个变体（往返一致）</td><td>"约束 vs 统计。"</td></tr><tr><td>07:00–08:40</td><td>什么该写死的判断标准</td><td></td></tr><tr><td>08:40–10:00</td><td>作业 + 卷 3 小结</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/31/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>31-barrel-in-dock.png</code></td><td>木桶出现在建材栏（第 14 件建材）</td><td><code>python tools/course_capture.py --chapter 31</code></td></tr><tr><td><code>31-after-place.png</code></td><td>放置木桶后游戏仍正常（回归已通过）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，12 分钟）</h2>
+<ul><li><strong>开场</strong>："我写错了三条断言，但它们是好断言——因为错得很有代表性"</li><li><strong>演示</strong>：现场加一件资产，看旧断言红、新断言绿</li><li><strong>互动</strong>：让观众自查项目里的 <code>== 8</code> / <code>== 13</code> 这类魔法数</li><li><strong>收尾</strong>：卷 3 总结 + 预告卷 4（资产管线 / 卷 5 性能）</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：推导会不会让测试变弱？</strong><br>A：不会。它断言的是"实现与数据源一致"——这恰恰是最该保证的事。数量本身由数据源负责。</p>
+<p><strong>Q：如果数据源本身错了呢？</strong><br>A：那就该有<strong>校验数据源的断言</strong>（如"每项必须有 id/name/color"）。这是另一类测试：数据校验。</p>
+<p><strong>Q：<code>visible_faces &gt; 500</code> 不也是写死吗？</strong><br>A：它是<strong>存在性阈值</strong>（证明地形真的生成了），不是精确数量。改世界尺寸时它依然成立。</p>
+<div class="pager"><a href="chapter-30.html">← 卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><span></span></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

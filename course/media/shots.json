@@ -77,5 +77,17 @@
     {"shot": "13-dock-icons.png"},
     {"category": "建筑", "select": "barrel", "wait": 600, "shot": "13-barrel-icon.png"},
     {"place": [[760, 470]], "wait": 700, "shot": "13-achievement-toast.png"}
+  ],
+  "29": [
+    {"shot": "29-game-running.png"},
+    {"click": "progress", "wait": 700, "shot": "29-progress-panel.png"}
+  ],
+  "30": [
+    {"shot": "30-desktop-view.png"},
+    {"key": "P", "wait": 1500, "shot": "30-photo-toast.png"}
+  ],
+  "31": [
+    {"category": "建筑", "select": "barrel", "wait": 500, "shot": "31-barrel-in-dock.png"},
+    {"place": [[700, 450]], "wait": 700, "shot": "31-after-place.png"}
   ]
 }
