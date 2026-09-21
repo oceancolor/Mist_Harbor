@@ -8,8 +8,23 @@ class_name ModelThumbnails
 
 signal thumbnail_ready(kind: String)
 
-const SIZE := 96
+const SIZE := 192
 const MANIFEST := "res://assets/models/manifest.json"
+
+# Flip to false to fall back to the hand-drawn icons everywhere.
+const ENABLED := true
+
+# Lighting mirrors scripts/build_world.gd so an icon looks like the piece does in
+# the scene instead of a blown-out studio render.
+const AMBIENT_COLOR := Color("dceae0")
+const AMBIENT_ENERGY := 0.55
+const SUN_COLOR := Color("ffe6bd")
+const SUN_ENERGY := 0.95
+const SUN_ROTATION := Vector3(-48, -30, 0)
+const FILL_COLOR := Color("cfe0ea")
+const FILL_ENERGY := 0.32
+# Same yaw/pitch as the game camera (0.72 / 0.72) -> isometric, consistent with the world.
+const VIEW_DIRECTION := Vector3(0.4957, 0.6594, 0.5652)
 
 var _cache: Dictionary = {}
 var _bounds: Dictionary = {}
@@ -82,10 +97,8 @@ func _frame(kind: String) -> void:
 	var height := maxf(0.25, float(size_values[1]))
 	var span := maxf(0.3, maxf(float(size_values[0]), float(size_values[2])))
 	var center := Vector3(0, height * 0.5, 0)
-	var radius := maxf(span, height) * 0.72
-	var distance := radius / tan(deg_to_rad(_camera.fov * 0.5)) * 1.15
-	var direction := Vector3(0.68, 0.6, 0.68).normalized()
-	_camera.position = center + direction * distance
+	_camera.size = maxf(span, height) * 1.32
+	_camera.position = center + VIEW_DIRECTION * 20.0
 	_camera.look_at_from_position(_camera.position, center, Vector3.UP)
 
 func _has_content(image: Image) -> bool:
@@ -103,27 +116,31 @@ func _ensure_stage() -> void:
 	_viewport.transparent_bg = true
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	_viewport.own_world_3d = true
+	_viewport.msaa_3d = Viewport.MSAA_4X
 	add_child(_viewport)
 	_root = Node3D.new()
 	_viewport.add_child(_root)
 	_camera = Camera3D.new()
-	_camera.fov = 32.0
+	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	_camera.near = 0.05
+	_camera.far = 80.0
 	_viewport.add_child(_camera)
 	_camera.make_current()
 	var key := DirectionalLight3D.new()
-	key.position = Vector3(6, 9, 5)
-	key.look_at_from_position(key.position, Vector3.ZERO, Vector3.UP)
-	key.light_energy = 2.6
+	key.rotation_degrees = SUN_ROTATION
+	key.light_color = SUN_COLOR
+	key.light_energy = SUN_ENERGY
 	_viewport.add_child(key)
 	var fill := DirectionalLight3D.new()
-	fill.position = Vector3(-7, 4, -6)
-	fill.look_at_from_position(fill.position, Vector3.ZERO, Vector3.UP)
-	fill.light_energy = 1.1
+	fill.rotation_degrees = Vector3(-20, 145, 0)
+	fill.light_color = FILL_COLOR
+	fill.light_energy = FILL_ENERGY
 	_viewport.add_child(fill)
 	var world := WorldEnvironment.new()
 	var environment := Environment.new()
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(1, 1, 1)
-	environment.ambient_light_energy = 0.9
+	environment.ambient_light_color = AMBIENT_COLOR
+	environment.ambient_light_energy = AMBIENT_ENERGY
+	environment.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	world.environment = environment
 	_viewport.add_child(world)

@@ -72,9 +72,10 @@ func _ready() -> void:
 	model.migrate_legacy_save()
 	if FileAccess.file_exists(Model.slot_path(model.current_slot)):
 		model.load_local()
-	thumbs = ModelThumbnails.new()
-	add_child(thumbs)
-	thumbs.thumbnail_ready.connect(_on_thumbnail_ready)
+	if ModelThumbnails.ENABLED:
+		thumbs = ModelThumbnails.new()
+		add_child(thumbs)
+		thumbs.thumbnail_ready.connect(_on_thumbnail_ready)
 	achievements = Achievements.new()
 	add_child(achievements)
 	achievements.unlocked.connect(_on_achievement_unlocked)
@@ -93,7 +94,8 @@ func _ready() -> void:
 	objectives = data.get("objectives", []) if data is Dictionary else []
 	chapters = data.get("chapters", []) if data is Dictionary else []
 	_build_ui()
-	thumbs.request(model.palette.keys())
+	if thumbs != null:
+		thumbs.request(model.palette.keys())
 	model.changed.connect(_refresh_ui)
 	_refresh_ui()
 	get_viewport().size_changed.connect(_layout)
@@ -566,8 +568,15 @@ func _refresh_ui() -> void:
 		return
 	var counts := model.player_counts()
 	count_label.text = "已新建 %d 件  ·  SEED %d" % [model.placed_count(), model.world_seed]
-	for i in range(objectives.size()):
-		var goal: Dictionary = objectives[i]
+	var rows := _chapter_objectives(int(_current_chapter().get("id", 1)))
+	for i in range(mission_labels.size()):
+		if i >= rows.size():
+			mission_labels[i].visible = false
+			mission_bars[i].visible = false
+			continue
+		mission_labels[i].visible = true
+		mission_bars[i].visible = true
+		var goal: Dictionary = rows[i]
 		var amount := _objective_amount(goal, counts)
 		var target := int(goal["target"])
 		mission_labels[i].text = ("完成  " if amount >= target else "%02d  " % [i + 1]) + str(goal["title"]) + "  %d/%d" % [mini(amount, target), target]

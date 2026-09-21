@@ -13,6 +13,7 @@ PROJECT = ROOT / 'project'
 # Exports live outside the Godot project: inside it the editor would import the
 # exported .png/.wasm sidecars as project resources on every scan.
 BUILD = ROOT / 'build'
+BUILD_WIN = ROOT / 'build-win'
 
 def engine(explicit):
     local = ROOT / '.codebuddy/local/tools.json'
@@ -47,7 +48,7 @@ def invoke(executable, arguments, label, isolated=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['import', 'test', 'editor', 'run', 'export-web', 'preview', 'package'])
+    parser.add_argument('action', choices=['import', 'test', 'editor', 'run', 'export-web', 'export-windows', 'preview', 'package'])
     parser.add_argument('--godot', help='Godot executable path; overrides local configuration')
     parser.add_argument('--port', type=int, default=8188)
     args = parser.parse_args()
@@ -78,6 +79,12 @@ def main():
         invoke(binary, ['--export-release', 'Web', str(web / 'index.html')], 'web-export')
         if not all((web / name).is_file() for name in ['index.html', 'index.js', 'index.pck', 'index.wasm']):
             raise RuntimeError('Export completed without required Web artifacts')
+    elif args.action == 'export-windows':
+        windows = BUILD_WIN
+        windows.mkdir(exist_ok=True)
+        invoke(binary, ['--export-release', 'Windows Desktop', str(windows / 'mist-harbor.exe')], 'windows-export')
+        if not all((windows / name).is_file() for name in ['mist-harbor.exe', 'mist-harbor.pck']):
+            raise RuntimeError('Export completed without the Windows executable and pck')
     return 0
 
 if __name__ == '__main__':

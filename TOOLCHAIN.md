@@ -18,6 +18,7 @@
 python tools/dev.py test          # 导入 + 模型单测(42) + 场景冒烟
 python tools/dev.py editor        # 打开编辑器
 python tools/dev.py export-web    # Web 导出到仓库根 build/（不在 Godot 工程内）
+python tools/dev.py export-windows  # Windows 桌面版到 build-win/（exe + pck，已验证可启动）
 python tools/dev.py preview       # 本地预览 8188
 python tools/dev.py package       # 打 source/seed/web 三个 zip
 python tools/blender_mcp.py       # 启动 Blender 并自动连上 MCP（需保持窗口）
@@ -113,7 +114,8 @@ python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑
 ## 暂缓（后续专项，不阻塞特性开发）
 
 - Web 体积优化（37.7MB wasm、加载进度页）
-- PC / Android 导出预设（4.7 平台模板已装齐，只差 preset 与 Android SDK/JDK17）
+- Android / iOS 导出预设（Windows 桌面预设已完成；Android 还需要 JDK17 + Android SDK + 构建模板，iOS 需要 macOS）
+- 中文文案变更后的字体：`tools/build_font_corpus.py` 保证**基准字形不变**、只补缺字
 
 **当前优先级：游戏特性与内容量产。** 上述两项留给专项优化阶段。
 
