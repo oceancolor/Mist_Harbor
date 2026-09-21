@@ -1,5 +1,8 @@
 # 雾港造物记 · 用 AI Agent 从 0 做出可发行游戏
 
+> **在线阅读**：https://mist-harbor-course.app.bootcamp.qq.com
+> （36 章 + 附录，含每章演示短片；部署与验收见 [`DEPLOY.md`](./DEPLOY.md)）
+
 > 一句话：这是一套**边做边学**的长教程。你不会只读到概念，而是跟着 48 个有序任务，
 > 用 CodeBuddy（Agent）+ Godot 4.7 + Blender + 两个远程 MCP 服务，把《雾港造物记》
 > 从空目录一路做到 **Web / Windows 双端可发行成品**，并理解每一步为什么这么做。

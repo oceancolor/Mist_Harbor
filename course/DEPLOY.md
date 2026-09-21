@@ -112,12 +112,16 @@ console errors: none
 > 视频外链的 `net::ERR_ABORTED` 是浏览器缓冲完成后关闭 range 请求所致，
 > 非加载失败（`readyState=4` 表示数据足够播放）。
 
-### 关于原域名的 `/course`
+### 关于原域名的 `/course`（2026-09-21 决定：不做）
 
-本次是**新建独立项目**，因此拿到的是新域名，**原游戏服务完全未改动**。
-若要把教程挂到 `https://mist-harbor-3d.app.bootcamp.qq.com/course`，
-需要在平台侧把 `/course/*` 映射到该项目（教程内容已在项目根目录，映射规则用"去前缀"即可）。
-这一步属于控制台配置，CLI 无法完成。
+教程已发布在独立域名 **https://mist-harbor-course.app.bootcamp.qq.com**，
+**不再**把 `/course/*` 映射到 `mist-harbor-3d.app.bootcamp.qq.com`——该路径保持 404，无需处理。
+
+理由：原域名的部署是"整项目替换"，追加子目录会破坏游戏本体；
+独立项目既能保住游戏，又各有独立域名与部署记录，运维更清晰。
+
+> 若将来确实需要同域 `/course`，唯一安全做法是重新部署**合并树**
+> （`.codebuddy/releases/edgeone-full`：游戏根 + `course/`，31 MB，最大单文件 9.61 MB）。
 
 ### 部署后必做验证
 
