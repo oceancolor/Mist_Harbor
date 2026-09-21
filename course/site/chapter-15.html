@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</h1>
+  <div class="meta">卷 3 · 资产管线 · 字符数 4878 · 生成于 2026-09-21 13:28</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html" style="color:#2d514b;font-weight:700">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</h1>
+<blockquote><p><strong>本章目标</strong>：理解<strong>异步作业模型</strong>——为什么提交后要轮询、任务 id 为什么绑定脚本摘要、<br>产物为什么要校验 sha256。<br>对应任务：T12（自动化管线）　|　对应服务：<code>web-cb-blender-pilot</code>（远程 streamableHttp）</p></blockquote>
+<hr>
+<h2>15.1 为什么用远程，而不是本地 Blender MCP</h2>
+<table><thead><tr><th>本地 Blender MCP</th><th>远程 pilot</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>插件<strong>拒绝后台模式</strong>：<code>blender -b</code> 下主循环定时器不跑，命令会挂</td><td>服务端本就无头，天然适合自动化</td></tr><tr><td>必须 GUI 启动并保持窗口</td><td>无需本地 Blender</td></tr><tr><td>每台机器都要装插件、开端口 9876</td><td>一次配置，处处可用</td></tr><tr><td>本机 Blender 4.2</td><td>服务端 <strong>Blender 5.2.1</strong>（Linux x86_64）</td></tr></tbody></table>
+<p>结论：<strong>本地插件适合人交互式建模，远程服务适合流水线</strong>。本实训的资产管线选后者。</p>
+<hr>
+<h2>15.2 五类工具，三种角色</h2>
+<table><thead><tr><th>工具</th><th>角色</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>blender_doctor</code></td><td>探能力</td><td>返回服务端版本、限制、<strong>必须遵循的脚本模板</strong></td></tr><tr><td><code>blender_submit</code></td><td>提交</td><td>内联脚本（≤256 KiB），返回立即，任务进队列</td></tr><tr><td><code>blender_observe</code></td><td>轮询</td><td>查状态，直到进入终端态</td></tr><tr><td><code>blender_cancel</code></td><td>取消</td><td>放弃一个跑偏的任务</td></tr><tr><td><code>blender_artifacts</code></td><td>取产物</td><td>列文件清单（含 sha256、下载路径）</td></tr></tbody></table>
+<p><strong>第一步永远是 <code>doctor</code></strong>：它给出的 <code>authoring.template.script</code> 就是第 14 章那四条契约的出处。<br><strong>先看模板再写脚本</strong>，不要凭记忆写。</p>
+<hr>
+<h2>15.3 提交：任务 id 必须唯一，而且要有意义</h2>
+<pre><code>task_id = f&quot;mist-harbor-{args.id}-v{version}-{sha256(script).hexdigest()[:8]}&quot;
+if args.retry:
+    task_id += f&quot;-r{int(time.time())}&quot;     # 失败过的 id 在服务端仍被占用</code></pre>
+<table><thead><tr><th>设计</th><th>原因</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>服务端<strong>拒绝重复 task_id</strong></td><td>重跑同样的脚本会产生冲突</td></tr><tr><td><strong>绑定脚本摘要</strong>（sha8）</td><td>脚本没改 → 复用同一个任务；脚本改了 → 自动产生新任务</td></tr><tr><td><code>--retry</code> 加时间戳</td><td>失败任务的 id 在服务端仍然"已占用"，必须换新</td></tr></tbody></table>
+<blockquote><p>📌 这是"<strong>内容寻址</strong>"思路的小应用：让 id 反映内容，重复与变更就自动区分开了。</p></blockquote>
+<hr>
+<h2>15.4 轮询：没有回调，只能等</h2>
+<pre><code>deadline = time.time() + args.timeout + 120
+while time.time() &lt; deadline:
+    observed = pilot.call(&quot;blender_observe&quot;, {&quot;task_id&quot;: task_id})
+    state = str(observed.get(&quot;state&quot;) or observed.get(&quot;status&quot;) or &quot;&quot;)
+    if state in TERMINAL_STATES:
+        break
+    time.sleep(5)
+if state != &quot;succeeded&quot;:
+    explain_failure(pilot, task_id)</code></pre>
+<ul><li>间隔 5 秒，总上限 <code>timeout + 120</code></li><li>失败时调 <code>explain_failure()</code> 抓取服务端的错误细节——<strong>别只看"失败了"</strong></li><li>失败后 <code>--retry</code> 重跑（会换 id）</li></ul>
+<hr>
+<h2>15.5 取产物：下载要带同一个 Authorization，且必须校验</h2>
+<pre><code>glb = pick_artifact(files, {&quot;model&quot;,&quot;asset&quot;,&quot;glb&quot;,&quot;mesh&quot;}, (&quot;.glb&quot;,))
+glb_bytes = pilot.download(glb[&quot;download_path&quot;])
+if glb.get(&quot;sha256&quot;) and sha256(glb_bytes).hexdigest() != glb[&quot;sha256&quot;]:
+    fail(&quot;GLB sha256 mismatch&quot;)</code></pre>
+<p>两个要点：</p>
+<ol><li><strong>产物下载必须与 MCP 调用带同一个 <code>Authorization</code> 头</strong>——否则 401</li><li><strong>sha256 必校验</strong>：网络传输、截断、缓存错误都会在"看起来成功"的情况下给出坏文件</li></ol>
+<h3>关于 <code>role</code> 字段</h3>
+<pre><code>def pick_artifact(files, roles, suffixes):
+    for f in files:
+        if str(f.get(&quot;role&quot;) or &quot;&quot;).lower() in roles:   # 优先按 role
+            return f
+    for f in files:
+        if str(f.get(&quot;path&quot;,&quot;&quot;)).lower().endswith(suffixes):   # 回退按后缀
+            return f</code></pre>
+<p>这是我们给同事提的建议（<strong>已采纳</strong>）：清单每项带<br><code>role ∈ {model/asset, preview/render, receipt/inspect, log}</code>，<br>客户端就不必靠扩展名猜。实现上<strong>先 role 后后缀</strong>，服务端上线前后都能工作。</p>
+<hr>
+<h2>15.6 凭据不要进仓库</h2>
+<pre><code>tools/pilot.example.json        ← 模板（入库，占位值）
+.codebuddy/local/pilot.json     ← 真实端点与令牌（.gitignore 忽略）</code></pre>
+<p><code>pilot_config()</code> 优先读本地文件，读不到就报明确错误并提示复制模板。<br><strong>原则同第 03 章的 <code>tools.example.json</code></strong>：模板入库，秘密不入库。</p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>调用方式</td><td>脚本直连 HTTP + JSON-RPC</td><td><strong>平台内原生调用 MCP 工具</strong>（含远程 pilot）</td></tr><tr><td>凭据</td><td>本地文件</td><td>平台托管</td></tr><tr><td>等待</td><td>Python 轮询</td><td>平台同样需要等待，<strong>建议封装成"一步命令"</strong></td></tr><tr><td>产物</td><td>下载到本地</td><td>平台产物面板 + 可下载</td></tr><tr><td>稳定性</td><td>受本机网络影响</td><td>云端到云端通常更快更稳</td></tr></tbody></table>
+<blockquote><p>🌩 云端用 MCP 时最需要注意的是<strong>异步</strong>：一次调用不返回最终结果，<br>必须有明确的"轮询—超时—失败解释"三步，否则流水线会卡死或静默产出空文件。</p></blockquote>
+<hr>
+<h2>15.7 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>提交报重复 id</td><td>task_id 撞了</td><td>绑定脚本摘要；失败后 <code>--retry</code></td></tr><tr><td>轮询一直不结束</td><td>没判终端态 / 超时太短</td><td>用 <code>TERMINAL_STATES</code> + 总上限</td></tr><tr><td>下载 401</td><td>忘了带 Authorization</td><td>下载与 MCP 调用同头</td></tr><tr><td>产物损坏但流程报成功</td><td>没校验 sha256</td><td>必校验</td></tr><tr><td>找不到 GLB</td><td>靠后缀猜错了</td><td>用 <code>role</code> 优先的 <code>pick_artifact</code></td></tr><tr><td>脚本不被接受</td><td>超过 256 KiB 或不符合模板</td><td>先跑 <code>doctor</code> 读模板</td></tr></tbody></table>
+<hr>
+<h2>15.8 本章作业</h2>
+<ol><li>说出五类工具的分工，以及为什么第一步必须是 <code>doctor</code></li><li>解释 task_id 绑定脚本摘要的好处，并举出两个会踩坑的场景</li><li>说明为什么产物必须校验 sha256</li><li>用 <code>blender_doctor</code> 取一次模板，对照第 14 章的四条契约，指出模板里对应的要求</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>异步作业 = 提交 + 轮询 + 取结果</strong>，和"函数调用"完全不同的心智模型。</li><li><strong>课堂演示</strong>：提交一个脚本，现场看 observe 的状态变化序列。</li><li><strong>高频误解</strong>：学生把 MCP 调用当作同步函数。强调：<strong>返回快 ≠ 完成</strong>。</li><li><strong>讨论题</strong>：如果服务端提供回调（webhook），这段轮询代码该怎么改？</li><li><strong>批改要点</strong>：作业 2 要答出"重复 id"与"失败 id 仍占用"两个场景。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/15/15-barrel-placed.png" alt="15-barrel-placed"><figcaption>15-barrel-placed.png</figcaption></figure><figure><img src="assets/shots/15/15-game-start.png" alt="15-game-start"><figcaption>15-game-start.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>本地 vs 远程对照表</td><td>"本地插件拒绝后台，远程生而无头。"</td></tr><tr><td>01:30–02:40</td><td>doctor 返回的模板</td><td>"先看模板，再写脚本。"</td></tr><tr><td>02:40–04:00</td><td>提交 + task_id 绑定 sha8</td><td>"让 id 反映内容。"</td></tr><tr><td>04:00–05:30</td><td>轮询循环 + 失败解释</td><td>"返回快不等于完成。"</td></tr><tr><td>05:30–07:00</td><td>下载 + sha256 校验 + role 字段</td><td></td></tr><tr><td>07:00–09:00</td><td>凭据不入库 + 作业</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/15/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>15-game-start.png</code></td><td>起始画面（管线产物的最终落点）</td><td><code>python tools/course_capture.py --chapter 15</code></td></tr><tr><td><code>15-barrel-placed.png</code></td><td>放置一件由远程管线产出的木桶</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："如果调用一个工具要等 30 秒，你会怎么写代码？"——引出异步</li><li><strong>演示</strong>：现场 submit → observe（看状态序列）→ artifacts（校验 sha256）</li><li><strong>互动</strong>：让观众设计 task_id 命名规则，点评"内容寻址"的优劣</li><li><strong>收尾</strong>：预告一条命令进游戏</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：能不能一次提交多件资产？</strong><br>A：当前是一件一个任务。批量由上层脚本循环调用（第 16 章的管线就是）。</p>
+<p><strong>Q：任务失败后 id 为什么不能复用？</strong><br>A：服务端保留记录以免结果混淆；所以 <code>--retry</code> 会追加时间戳生成全新 id。</p>
+<p><strong>Q：远程服务版本比本地新，脚本会不兼容吗？</strong><br>A：只要遵守 <code>doctor</code> 给的契约模板就不会；这也是为什么<strong>先读模板再写</strong>。</p>
+<div class="pager"><a href="chapter-14.html">← 卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

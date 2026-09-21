@@ -78,6 +78,18 @@
     {"category": "建筑", "select": "barrel", "wait": 600, "shot": "13-barrel-icon.png"},
     {"place": [[760, 470]], "wait": 700, "shot": "13-achievement-toast.png"}
   ],
+  "14": [
+    {"shot": "14-game-start.png"},
+    {"category": "建筑", "select": "barrel", "wait": 500, "shot": "14-barrel-selected.png"}
+  ],
+  "15": [
+    {"shot": "15-game-start.png"},
+    {"category": "建筑", "select": "barrel", "place": [[720, 430]], "wait": 600, "shot": "15-barrel-placed.png"}
+  ],
+  "16": [
+    {"category": "建筑", "select": "barrel", "place": [[700, 460]], "wait": 600, "shot": "16-island-with-barrel.png"},
+    {"click": "progress", "wait": 700, "shot": "16-progress-after.png"}
+  ],
   "29": [
     {"shot": "29-game-running.png"},
     {"click": "progress", "wait": 700, "shot": "29-progress-panel.png"}

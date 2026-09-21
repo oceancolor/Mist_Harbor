@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</h1>
+  <div class="meta">卷 3 · 资产管线 · 字符数 4799 · 生成于 2026-09-21 13:28</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html" style="color:#2d514b;font-weight:700">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</h1>
+<blockquote><p><strong>本章目标</strong>：读通"造资产 → 进游戏"的<strong>自动化主线</strong>，<br>理解每一步为什么存在，以及<strong>溯源（provenance）</strong>为什么是商业项目的必需品。<br>对应任务：T12 / T13　|　对应文件：<code>tools/asset_pipeline.py</code></p></blockquote>
+<hr>
+<h2>16.1 一条命令</h2>
+<pre><code>python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑 \
+       --color b07d4f --tip &quot;码头边的橡木桶，可以一只只堆起来。&quot;
+python tools/asset_pipeline.py list      # 看全部资产与是否已注册</code></pre>
+<p>常用开关：<code>--no-register</code>（只出资产不注册）/ <code>--no-import</code>（不跑 Godot 导入）/<br><code>--retry</code>（换任务 id 重跑）/ <code>--timeout</code>（默认 300 秒）/ <code>--height</code>（占位格数）。</p>
+<hr>
+<h2>16.2 八步主线</h2>
+<pre><code>① 读 tools/art/&lt;id&gt;.py，检查 ≤256 KiB
+② 算任务 id（绑定脚本摘要）
+③ blender_submit → 轮询 observe → artifacts
+④ 下载 GLB（sha256 校验）→ 写 assets/models/&lt;id&gt;.glb
+⑤ 预览 PNG → art/previews/&lt;id&gt;.png
+⑥ 写溯源 art/provenance/&lt;id&gt;.json
+⑦ 更新 assets/models/manifest.json（bytes / triangles / bounds）
+⑧ Godot headless 导入（校验 .import 真的生成）→ 写 data/palette.json</code></pre>
+<p><img src="assets/diagrams/pipeline-flow.svg" alt="资产管线流程"></p>
+<hr>
+<h2>16.3 为什么要写 <code>manifest.json</code></h2>
+<pre><code>&quot;assets&quot;: [{ &quot;id&quot;: &quot;barrel&quot;, &quot;bytes&quot;: 44580, &quot;triangles&quot;: 632,
+             &quot;bounds&quot;: { &quot;godot_size&quot;: [0.614, 0.72, 0.614] }, ... }]</code></pre>
+<p>它有三个消费者：</p>
+<table><thead><tr><th>消费者</th><th>用哪个字段</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>缩略图渲染</strong></td><td><code>bounds.godot_size</code> → 自动构图（第 13 章）</td></tr><tr><td><strong>建材注册</strong></td><td><code>godot_size[1]</code> → 建议占位高度 <code>ceil(h)</code></td></tr><tr><td><strong>体积预算</strong></td><td><code>bytes</code> / <code>triangles</code> → 控制包体与面数</td></tr></tbody></table>
+<blockquote><p>📌 一句话：<strong>manifest 是"资产的体检报告"</strong>，让后续环节不必重新解析 GLB。</p></blockquote>
+<hr>
+<h2>16.4 为什么要写 <code>provenance</code></h2>
+<pre><code>{ &quot;id&quot;: &quot;barrel&quot;, &quot;version&quot;: 2, &quot;task_id&quot;: &quot;mist-harbor-barrel-v2-a52aa92e&quot;,
+  &quot;script&quot;: &quot;tools/art/barrel.py&quot;, &quot;script_sha256&quot;: &quot;...&quot;, &quot;glb_sha256&quot;: &quot;...&quot;,
+  &quot;bytes&quot;: 44580, &quot;triangles&quot;: 632, &quot;generated_at&quot;: &quot;2026-09-15T...&quot; }</code></pre>
+<p><strong>它回答"这个二进制是哪来的"</strong>：<br>哪版脚本、哪个任务、什么时候、校验值是什么。</p>
+<p>对商业项目的意义：</p>
+<ul><li>出问题能<strong>追溯到脚本版本</strong>，而不是对着二进制猜</li><li>换机器/换人重建，能验证<strong>产物一致</strong>（sha256 相同）</li><li>审计与版权存证</li></ul>
+<blockquote><p>📌 二进制入库而<strong>没有</strong>溯源，是资产管线的头号技术债。</p></blockquote>
+<hr>
+<h2>16.5 注册建材：只覆盖调用方给的值</h2>
+<pre><code>register_palette(args.id, args.name, args.category, args.color, height, args.tip, suggested_height)</code></pre>
+<p>设计要点：<code>--name</code> / <code>--color</code> / <code>--tip</code> <strong>不传就保留既有值</strong>。<br>这样重跑管线（比如换了建模脚本）不会把已经调好的中文名和提示文案冲掉——<br><strong>重跑只更新几何，不动文案</strong>。</p>
+<p><code>suggested_height</code> 由 bounds 推导：<code>max(1, ceil(godot_size[1]))</code>，<br>即"模型有多高就占几格"。</p>
+<hr>
+<h2>16.6 与测试的衔接（回看卷 6）</h2>
+<p>管线在 ⑧ 之后，第 31 章那三条"写死数量"的断言<strong>自动成立</strong>：</p>
+<ul><li><code>palette.json</code> 多一项 → L1 从 <code>palette.json</code> 推导建材数 ✅</li><li><code>manifest.json</code> 多一项、GLB 多一个 → L2 从 <code>palette.json</code> 推导模型数 ✅</li><li>L3 同理 ✅</li></ul>
+<p><strong>这就是"数据源驱动"的复利</strong>：加一件资产，改 0 行测试。</p>
+<hr>
+<h2>16.7 存量资产怎么办</h2>
+<p>现有 8 件资产来自 <code>project/art/generate_harbor.py</code>（整体重建式脚本，一次重建全部）。<br>迁移策略：</p>
+<ol><li>为每件资产写一个 <code>tools/art/&lt;id&gt;.py</code>（按第 14 章契约）</li><li>走管线：<code>build --id &lt;id&gt;</code> 逐件替换</li><li>用 <code>list</code> 确认 manifest 与 palette 一致</li><li>保留 <code>generate_harbor.py</code> 作为"批量参考实现"，不再作为主路径</li></ol>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>管线本身</td><td><code>tools/asset_pipeline.py</code></td><td>同一脚本，或平台内用 MCP 工具串起来</td></tr><tr><td>远程 Blender</td><td>HTTP 直连</td><td>平台原生调用（更快更稳）</td></tr><tr><td>Godot 导入</td><td>本地 4.7 headless</td><td>平台内执行同命令（对齐 <code>features</code>）</td></tr><tr><td>产物落盘</td><td>本地工程目录</td><td>平台工作区 → 需要同步回仓库</td></tr><tr><td>建议</td><td>本地跑通再提交</td><td><strong>云端把"提交脚本 → 审核 GLB → 合并"做成流水线</strong></td></tr></tbody></table>
+<blockquote><p>🌩 云端最理想形态：<strong>只提交 .py 脚本，二进制由流水线生成并校验 sha256</strong>，<br>仓库里永远只有文本 + 溯源，没有"不知道怎么来的 GLB"。</p></blockquote>
+<hr>
+<h2>16.8 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>missing authoring script</code></td><td>没写 <code>tools/art/&lt;id&gt;.py</code></td><td>先写脚本（第 14 章）</td></tr><tr><td>任务 id 冲突</td><td>脚本没变却想重跑</td><td>改用 <code>--retry</code></td></tr><tr><td><code>Godot did not produce .import</code></td><td>导入没真跑</td><td>检查 <code>tools.json</code> 引擎路径</td></tr><tr><td>加了资产测试仍红</td><td>断言写死数量</td><td>见第 31 章（从 palette 推导）</td></tr><tr><td>文案被重置</td><td>重跑传了 <code>--name/--tip</code></td><td>不传就保留既有值</td></tr><tr><td>占位高度不对</td><td>bounds 没更新</td><td>检查 manifest 是否被写入</td></tr></tbody></table>
+<hr>
+<h2>16.9 本章作业</h2>
+<ol><li>按序列出管线八步，指出哪一步会"校验"、校验的是什么</li><li>说出 <code>manifest.json</code> 的三个消费者各自用哪个字段</li><li>解释为什么重跑管线时"不传 <code>--name</code> 就保留既有文案"是好设计</li><li>选一件存量资产（例如 <code>lamp</code>），写出迁移到 <code>tools/art/lamp.py</code> 的要点清单（不用真写完整脚本）</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>自动化 = 把人工步骤固化成可重跑的命令</strong>；<strong>溯源 = 让二进制可解释</strong>。</li><li><strong>课堂演示</strong>：现场跑一次 <code>build --id barrel --no-register</code>，看八步输出。</li><li><strong>高频误解</strong>：学生觉得"GLB 能出来就行"。追问：三个月后你怎么知道它是哪个脚本产出的？</li><li><strong>讨论题</strong>：二进制该不该入库？（本实训：入库 + 溯源 + 脚本可复现）</li><li><strong>批改要点</strong>：作业 2 要答出缩略图 / 注册 / 预算三个消费者。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/16/16-island-with-barrel.png" alt="16-island-with-barrel"><figcaption>16-island-with-barrel.png</figcaption></figure><figure><img src="assets/shots/16/16-progress-after.png" alt="16-progress-after"><figcaption>16-progress-after.png</figcaption></figure></div><h2>📹 录屏分镜（10 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:20</td><td>一条命令 + 八步主线</td><td>"从脚本到可放置建材。"</td></tr><tr><td>01:20–03:00</td><td>manifest 三个消费者</td><td>"体检报告，供三个人用。"</td></tr><tr><td>03:00–04:30</td><td>provenance 内容逐字段</td><td>"这个二进制是哪来的？"</td></tr><tr><td>04:30–06:00</td><td>注册只覆盖传入值</td><td>"重跑不动文案。"</td></tr><tr><td>06:00–07:30</td><td>与卷 6 断言的衔接</td><td>"加资产，改 0 行测试。"</td></tr><tr><td>07:30–10:00</td><td>存量迁移策略 + 作业</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/16/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>16-island-with-barrel.png</code></td><td>岛上有管线产出的木桶</td><td><code>python tools/course_capture.py --chapter 16</code></td></tr><tr><td><code>16-progress-after.png</code></td><td>完成任务进度后的面板</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，12 分钟）</h2>
+<ul><li><strong>开场</strong>："你的仓库里有没有说不清来历的二进制？"</li><li><strong>演示</strong>：跑一次完整 build（含 sha256 校验与 manifest 写入）</li><li><strong>互动</strong>：让观众设计 provenance 还应该记什么（作者、许可、引擎版本？）</li><li><strong>收尾</strong>：卷 3 小结 + 预告卷 4（玩法系统）</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：能不能跳过 Godot 导入？</strong><br>A：<code>--no-import</code> 可以，但那样 <code>.import</code> 不会生成，游戏里加载不到新资产。仅调试用。</p>
+<p><strong>Q：manifest 和 provenance 会进导出包吗？</strong><br>A：<code>manifest.json</code> 在 <code>assets/</code> 下会进包（运行时读 bounds）；<br><code>art/provenance/</code> 属于 <code>art/</code>，被 <code>export_presets.cfg</code> 排除，不进包——它只服务开发。</p>
+<p><strong>Q：一次能加多件吗？</strong><br>A：循环调用 <code>build</code> 即可；但<strong>建议一件一件验</strong>（预览图 + 游戏内效果），避免批量返工。</p>
+<div class="pager"><a href="chapter-15.html">← 卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

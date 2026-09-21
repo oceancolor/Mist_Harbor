@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 13:22",
+  "built": "2026-09-21 13:28",
   "chapters": [
     {
       "key": "01",
@@ -93,6 +93,27 @@
       "file": "chapter-13.html"
     },
     {
+      "key": "14",
+      "title": "卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何",
+      "volume": "卷 3 · 资产管线",
+      "characters": 4688,
+      "file": "chapter-14.html"
+    },
+    {
+      "key": "15",
+      "title": "卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts",
+      "volume": "卷 3 · 资产管线",
+      "characters": 4878,
+      "file": "chapter-15.html"
+    },
+    {
+      "key": "16",
+      "title": "卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材",
+      "volume": "卷 3 · 资产管线",
+      "characters": 4799,
+      "file": "chapter-16.html"
+    },
+    {
       "key": "29",
       "title": "卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的",
       "volume": "卷 6 · 质量与协作",
@@ -114,5 +135,5 @@
       "file": "chapter-31.html"
     }
   ],
-  "characters": 78050
+  "characters": 92415
 }

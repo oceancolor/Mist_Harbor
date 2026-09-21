@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="430" viewBox="0 0 880 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="880" height="430" fill="#f7f8ed"/>
+  <text x="440" y="32" text-anchor="middle" font-size="20" fill="#2d514b">bpy 脚本骨架：脚本只造，执行器只出</text>
+
+  <rect x="40" y="55" width="380" height="330" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="230" y="84" text-anchor="middle" font-size="15" fill="#2d514b">脚本要做（tools/art/&lt;id&gt;.py）</text>
+  <text x="60" y="112" font-size="12" fill="#497c6b">① 单位</text>
+  <text x="60" y="132" font-size="12" fill="#789087">unit_settings.system = 'METRIC'</text>
+  <text x="60" y="150" font-size="12" fill="#789087">scale_length = 1.0</text>
+  <text x="60" y="178" font-size="12" fill="#497c6b">② 材质</text>
+  <text x="60" y="198" font-size="12" fill="#789087">Principled BSDF；输入取不到就报错</text>
+  <text x="60" y="216" font-size="12" fill="#789087">（不要静默跳过）</text>
+  <text x="60" y="244" font-size="12" fill="#497c6b">③ 几何</text>
+  <text x="60" y="264" font-size="12" fill="#789087">Z-up；原点在 footprint 中心</text>
+  <text x="60" y="282" font-size="12" fill="#789087">底面贴地：抬 depth/2</text>
+  <text x="60" y="310" font-size="12" fill="#497c6b">④ 规整 + 自检</text>
+  <text x="60" y="330" font-size="12" fill="#789087">transform_apply(scale=True)</text>
+  <text x="60" y="348" font-size="12" fill="#789087">assert 底面 z ≈ 0</text>
+  <text x="60" y="372" font-size="12" fill="#2d514b">面数预算：一件 ≤ 1500 三角面</text>
+
+  <rect x="460" y="55" width="380" height="330" rx="10" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="650" y="84" text-anchor="middle" font-size="15" fill="#2d514b">执行器要做（远程 pilot）</text>
+  <text x="480" y="112" font-size="12" fill="#789087">· 导出 GLB（转 Y-up）</text>
+  <text x="480" y="134" font-size="12" fill="#789087">· 渲染预览 PNG（cycles-cpu）</text>
+  <text x="480" y="156" font-size="12" fill="#789087">· 生成 glb-inspect.json</text>
+  <text x="480" y="178" font-size="12" fill="#789087">· 计算 sha256 并提供下载</text>
+  <text x="480" y="206" font-size="12" fill="#497c6b">脚本里不要做：</text>
+  <text x="480" y="226" font-size="12" fill="#789087">× export_scene.gltf</text>
+  <text x="480" y="246" font-size="12" fill="#789087">× 设置相机 / 打灯渲染</text>
+  <text x="480" y="266" font-size="12" fill="#789087">× 保存 .blend</text>
+  <text x="480" y="294" font-size="12" fill="#497c6b">先看 blender_doctor 的模板，</text>
+  <text x="480" y="312" font-size="12" fill="#497c6b">再动笔写脚本。</text>
+  <text x="480" y="342" font-size="12" fill="#789087">产物按 role 取：</text>
+  <text x="480" y="360" font-size="12" fill="#789087">model / preview / inspect / log</text>
+  <text x="480" y="378" font-size="12" fill="#789087">（role 缺失时回退按后缀匹配）</text>
+
+  <text x="440" y="412" text-anchor="middle" font-size="12" fill="#2d514b">脚本是纯文本：可 diff、可评审、可复现 —— 而 .blend 永远说不清改了什么</text>
+</svg>
