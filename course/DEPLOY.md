@@ -79,6 +79,46 @@ edgeone pages deploy <目录> -n <项目名> -t $env:EDGEONE_TOKEN -e production
 | `edgeone-course/` | 教程在 `course/` 子目录 | 20.6 MB | 若映射规则是"保留 /course 前缀" |
 | `edgeone-full/` | 游戏根 + `course/` | 31.0 MB | 合并树（最大单文件 9.61 MB，符合 25 MiB 限制），用于直接更新原项目 |
 
+### 已完成的部署（2026-09-21）
+
+| 项 | 值 |
+|---|---|
+| 项目名 | `mist-harbor-course` |
+| Project ID | `makers-umdakezd9w6r` |
+| Deployment ID | `dpyc3jxf30sq` |
+| 环境 / 区域 | Production / global |
+| **线上地址** | **https://mist-harbor-course.app.bootcamp.qq.com** |
+| 上传内容 | `.codebuddy/releases/edgeone-course-root`（20.6 MB，教程在项目根目录） |
+
+命令（token 用环境变量注入，不落盘）：
+
+```powershell
+$env:EDGEONE_TOKEN='<你的token>'
+edgeone pages deploy .codebuddy\releases\edgeone-course-root `
+    -n mist-harbor-course -t $env:EDGEONE_TOKEN -e production --json
+```
+
+**验收结果（真实 Chromium）**
+
+```
+/index.html       200  图片 0/0 坏
+/chapter-10.html  200  图片 4/4 正常，视频 readyState=4，时长 43.6s，1280×800
+/chapter-31.html  200  图片 2/2 正常，视频外链正常
+/appendix.html    200
+console errors: none
+原游戏入口 https://mist-harbor-3d.app.bootcamp.qq.com/  200 —— 未受影响
+```
+
+> 视频外链的 `net::ERR_ABORTED` 是浏览器缓冲完成后关闭 range 请求所致，
+> 非加载失败（`readyState=4` 表示数据足够播放）。
+
+### 关于原域名的 `/course`
+
+本次是**新建独立项目**，因此拿到的是新域名，**原游戏服务完全未改动**。
+若要把教程挂到 `https://mist-harbor-3d.app.bootcamp.qq.com/course`，
+需要在平台侧把 `/course/*` 映射到该项目（教程内容已在项目根目录，映射规则用"去前缀"即可）。
+这一步属于控制台配置，CLI 无法完成。
+
 ### 部署后必做验证
 
 ```
