@@ -308,6 +308,9 @@ def insert_media_sections(html: str, key: str) -> str:
 def sidebar(entries: list[tuple[str, str, str]], current: str) -> str:
     links = ['<a class="home" href="index.html">课程首页</a>',
              '<a href="syllabus.html">任务清单 T01–T48</a>']
+    if (COURSE / "appendix.md").is_file():
+        cls = ' style="color:#2d514b;font-weight:700"' if current == "appendix" else ""
+        links.append(f'<a href="appendix.html"{cls}>附录 · 速查与索引</a>')
     for key, title, _ in entries:
         cls = ' style="color:#2d514b;font-weight:700"' if key == current else ""
         links.append(f'<a href="chapter-{key}.html"{cls}>{title}</a>')
@@ -375,18 +378,22 @@ def build(embed: bool) -> dict:
                                body=body, pager="")
         (SITE / "syllabus.html").write_text(page, encoding="utf-8")
 
+    # appendix (terminology / FAQ / pitfalls / commands / asset index)
+    if (COURSE / "appendix.md").is_file():
+        raw = (COURSE / "appendix.md").read_text(encoding="utf-8")
+        page = TEMPLATE.format(title="附录 · 术语 / FAQ / 坑索引 / 命令速查", volume="速查与索引",
+                               built=built, chars=len(raw), style_block=style_block,
+                               sidebar=sidebar(entries, "appendix"),
+                               body=rewrite_media(md_to_html(raw)), pager="")
+        (SITE / "appendix.html").write_text(page, encoding="utf-8")
+
     # course home
     cards = []
     for key, title, volume in entries:
         cards.append(
             f'<div class="card"><span class="badge">{volume}</span>'
             f'<a href="chapter-{key}.html" style="color:#497c6b;font-size:16px">{title}</a></div>')
-    pending = [f'<div class="card"><span class="badge todo">待写</span>{name}</div>'
-               for name in ("卷1 设计先行 05–08", "卷2 Godot 工程 09–13", "卷3 资产管线 14–18",
-                            "卷4 玩法系统 19–24", "卷5 多端发行 25–28", "卷6 质量与协作 29–32",
-                            "卷7 商业化 33–36")]
-    body = ("<h2>已发布章节</h2>" + "".join(cards) +
-            "<h2>规划中</h2>" + "".join(pending) +
+    body = ("<h2>全部章节</h2>" + "".join(cards) +
             '<h2>怎么用</h2><p>Markdown 是设计沟通的载体，<b>本站点是最终成品</b>：'
             '每章内嵌截图与视频位，可直接用于课堂教学、直播与自学。'
             '重新生成：<code>python tools/course_build.py</code>；'

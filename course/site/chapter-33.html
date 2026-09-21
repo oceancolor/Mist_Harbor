@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 7 · 第 33 章　功能取舍：决定"不做什么"比做什么更难 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 7 · 第 33 章　功能取舍：决定"不做什么"比做什么更难</h1>
+  <div class="meta">卷 7 · 商业化 · 字符数 3168 · 生成于 2026-09-21 15:31</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="appendix.html">附录 · 速查与索引</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-25.html">卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-26.html">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-28.html">卷 5 · 第 28 章　体积优化：先测量，再动刀</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a><a href="chapter-32.html">卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</a><a href="chapter-33.html" style="color:#2d514b;font-weight:700">卷 7 · 第 33 章　功能取舍：决定"不做什么"比做什么更难</a><a href="chapter-34.html">卷 7 · 第 34 章　发行渠道：把成品送到玩家面前</a><a href="chapter-35.html">卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进</a><a href="chapter-36.html">卷 7 · 第 36 章　直播教学与作业批改：把项目变成一门课</a></nav>
+<main>
+<h1>卷 7 · 第 33 章　功能取舍：决定"不做什么"比做什么更难</h1>
+<blockquote><p><strong>本章目标</strong>：用本项目的真实约束，讲清楚商业化第一原则——<br><strong>范围控制</strong>。学会写一份"坚决不做清单"。<br>对应任务：T45　|　对应文件：<code>project/docs/requirements.md</code></p></blockquote>
+<hr>
+<h2>33.1 需求文档里的"不做"清单</h2>
+<p><code>requirements.md</code> 开头就写死的几条：</p>
+<table><thead><tr><th>约束</th><th>值</th><th>它挡住了什么</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>单人、<strong>不联机</strong></td><td>—</td><td>服务器的全部复杂度（同步、反作弊、运维成本）</td></tr><tr><td><strong>不联网</strong></td><td>—</td><td>账号体系、云存档、内容分发</td></tr><tr><td>建材上限</td><td>12,000 原点</td><td>性能失控</td></tr><tr><td>世界范围</td><td>±25</td><td>无限地图的加载与序列化难题</td></tr><tr><td>存档上限</td><td>≤ 4 MB</td><td>无限建造带来的存档膨胀</td></tr><tr><td>渲染</td><td>GL Compatibility</td><td>高端画质需求（也就保住了 Web 与老设备）</td></tr></tbody></table>
+<p><strong>这些不是"还没做"，是"决定不做"。</strong> 差别很大：前者是欠债，后者是设计。</p>
+<hr>
+<h2>33.2 为什么"不做"比"做"更重要</h2>
+<pre><code>加一个功能 = 实现 + 测试 + 文档 + 维护 + 与它冲突的旧功能要处理</code></pre>
+<table><thead><tr><th>例子</th><th>加了会怎样</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>联机</td><td>撤销栈要变成"可回滚的分布式操作"；存档要处理并发</td></tr><tr><td>无限地图</td><td>分块加载、边界处的面剔除、存档分片</td></tr><tr><td>高清材质</td><td>包体从 37 MB 涨到几百 MB，Web 首屏崩塌（第 28 章）</td></tr></tbody></table>
+<blockquote><p>📌 <strong>每一个"听起来只是加一点"的功能，都会攻击你最脆弱的那个假设。</strong></p></blockquote>
+<hr>
+<h2>33.3 一个可用的取舍框架：MoSCoW</h2>
+<table><thead><tr><th>档</th><th>含义</th><th>本项目的例子</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>M</strong>ust</td><td>没有就不成立</td><td>放置/拆除、地形、保存/载入</td></tr><tr><td><strong>S</strong>hould</td><td>很重要但可延后</td><td>撤销/重做、昼夜、小地图</td></tr><tr><td><strong>C</strong>ould</td><td>锦上添花</td><td>拍照、成就、章节引导</td></tr><tr><td><strong>W</strong>on't</td><td><strong>本次不做</strong></td><td>联机、无限地图、高清材质、模组系统</td></tr></tbody></table>
+<p><strong>关键动作</strong>：把 W 档<strong>写下来并说明理由</strong>。<br>不写下来，它会在第三次讨论时以"这个很简单吧"的形式复活。</p>
+<hr>
+<h2>33.4 用约束反推设计（本项目的三个正面案例）</h2>
+<table><thead><tr><th>约束</th><th>反过来带来的好处</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>不联网</td><td>存档可以只是本地 JSON → 校验简单、可导出分享（第 21 章）</td></tr><tr><td>GL Compatibility</td><td>一套渲染管线覆盖 Web + 桌面 + 老显卡</td></tr><tr><td>低模纯色</td><td>资产 282 KB → 包体优化压力全在引擎侧，目标明确（第 28 章）</td></tr></tbody></table>
+<blockquote><p>📌 好的约束不是"少做"，是<strong>把复杂度集中到可控的地方</strong>。</p></blockquote>
+<hr>
+<h2>33.5 什么时候该改约束</h2>
+<p>只有三种情况值得重新打开"不做清单"：</p>
+<ol><li><strong>用户数据证明它被卡住</strong>（例如大量玩家反馈"格子不够"）</li><li><strong>它挡住了核心体验</strong>（例如不联机就无法实现你真正想做的玩法）</li><li><strong>成本已经变了</strong>（例如引擎新版本让某件事变便宜）</li></ol>
+<p><strong>反例</strong>："我觉得加上会更好"——这不是理由，是冲动。</p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>功能产出速度</td><td>受人手限制，天然克制</td><td><strong>产出极快 → 更容易范围失控</strong></td></tr><tr><td>风险</td><td>慢</td><td><strong>"Agent 一小时加五个功能"是真实风险</strong></td></tr><tr><td>对策</td><td>—</td><td>把 W 档清单<strong>放进给 Agent 的提示词里</strong>，明确禁止项</td></tr><tr><td>建议</td><td>—</td><td>每加一个功能，同步问："它攻击了哪个既有假设？"</td></tr></tbody></table>
+<blockquote><p>🌩 AI 协作时代，"不做清单"从文档变成<strong>提示词的一部分</strong>——<br>这是本项目给 Agent 的边界中最有价值的一条。</p></blockquote>
+<hr>
+<h2>33.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>功能越加越乱</td><td>没有 W 档清单</td><td>写下来并给理由</td></tr><tr><td>"这个很简单吧"反复出现</td><td>没记录为什么不做的决定</td><td>留下决策记录</td></tr><tr><td>加了功能后老功能坏</td><td>新功能攻击了旧假设</td><td>先识别假设，再动手</td></tr><tr><td>团队对范围理解不一致</td><td>只有口头约定</td><td>写进 <code>requirements.md</code></td></tr><tr><td>Agent 加了不该加的东西</td><td>提示词没有边界</td><td>把 W 档写进提示词</td></tr></tbody></table>
+<hr>
+<h2>33.7 本章作业</h2>
+<ol><li>列出本项目"不做清单"里的三条，并为每条说明"如果做了会攻击什么假设"</li><li>用 MoSCoW 给当前项目分档，各档至少两项</li><li>说出三种"值得重开不做清单"的情况，并各举一个反例</li><li>为你自己的项目写一份 W 档清单（3 条 + 理由）</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>范围控制是商业化第一能力</strong>，不是"后期再考虑"。</li><li><strong>课堂演示</strong>：让学员提议三个功能，现场用"它会攻击什么假设"逐个击破。</li><li><strong>高频误解</strong>：学生把"还没做"和"决定不做"混为一谈。</li><li><strong>讨论题</strong>：你的项目里，哪条约束带来了意外的好处？</li><li><strong>批改要点</strong>：作业 1 必须指出"攻击了哪个假设"，只说"会变复杂"不给分。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/33/33-night-scope.png" alt="33-night-scope"><figcaption>33-night-scope.png</figcaption></figure><figure><img src="assets/shots/33/33-scope-game.png" alt="33-scope-game"><figcaption>33-scope-game.png</figcaption></figure></div><h2>📹 录屏分镜（8 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>requirements.md 的约束表</td><td>"这不是欠债，是设计。"</td></tr><tr><td>01:30–03:00</td><td>三个"加一点"如何引爆复杂度</td><td></td></tr><tr><td>03:00–04:30</td><td>MoSCoW 分档</td><td>"W 档必须写下来。"</td></tr><tr><td>04:30–06:00</td><td>约束反推的三个正面案例</td><td>"约束把复杂度集中了。"</td></tr><tr><td>06:00–08:00</td><td>何时改约束 + 作业</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/33/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>33-scope-game.png</code></td><td>当前范围下的成品画面</td><td><code>python tools/course_capture.py --chapter 33</code></td></tr><tr><td><code>33-night-scope.png</code></td><td>夜景（范围内做到位的效果）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："如果再给你两周，你会加什么功能？"——收集后逐个击破</li><li><strong>演示</strong>：现场把 W 档写进给 Agent 的提示词，看它是否遵守</li><li><strong>互动</strong>：让观众写自己的"不做清单"</li><li><strong>收尾</strong>：预告发行渠道</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：不做清单会限制创意吗？</strong><br>A：恰恰相反——<strong>约束是创意的催化剂</strong>。1 格 = 1 米的约束催生了整套比例规则（第 18 章）。</p>
+<p><strong>Q：用户要求做 W 档功能怎么办？</strong><br>A：那是"值得重开"的信号之一（用户数据）。但要用数据印证，而不是单个请求。</p>
+<p><strong>Q：本项目的 W 档以后会做吗？</strong><br>A：取决于用户反馈；即便做，也要按第 27 章那种"每步可验收"的方式排期。</p>
+<div class="pager"><a href="chapter-32.html">← 卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</a><a href="chapter-34.html">卷 7 · 第 34 章　发行渠道：把成品送到玩家面前 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 7 · 第 36 章　直播教学与作业批改：把项目变成一门课 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 7 · 第 36 章　直播教学与作业批改：把项目变成一门课</h1>
+  <div class="meta">卷 7 · 商业化 · 字符数 3972 · 生成于 2026-09-21 15:31</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="appendix.html">附录 · 速查与索引</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-25.html">卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-26.html">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-28.html">卷 5 · 第 28 章　体积优化：先测量，再动刀</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a><a href="chapter-32.html">卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</a><a href="chapter-33.html">卷 7 · 第 33 章　功能取舍：决定"不做什么"比做什么更难</a><a href="chapter-34.html">卷 7 · 第 34 章　发行渠道：把成品送到玩家面前</a><a href="chapter-35.html">卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进</a><a href="chapter-36.html" style="color:#2d514b;font-weight:700">卷 7 · 第 36 章　直播教学与作业批改：把项目变成一门课</a></nav>
+<main>
+<h1>卷 7 · 第 36 章　直播教学与作业批改：把项目变成一门课</h1>
+<blockquote><p><strong>本章目标</strong>：把前面 35 章沉淀成<strong>可交付的教学资产</strong>——<br>8 场直播怎么排、作业怎么批、以及"教学友好"本身就是一种设计目标。<br>对应任务：T48　|　对应文件：<code>course/README.md</code> 的直播表、每章的教学提示</p></blockquote>
+<hr>
+<h2>36.1 课程结构：8 卷 36 章怎么拆</h2>
+<table><thead><tr><th>卷</th><th>主题</th><th>定位</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>卷 0</td><td>启程</td><td><strong>先跑起来</strong>，建立信心</td></tr><tr><td>卷 1</td><td>设计先行</td><td>需求与数据驱动（<strong>最容易被跳过，也最不该跳过</strong>）</td></tr><tr><td>卷 2</td><td>Godot 工程</td><td>引擎侧实现</td></tr><tr><td>卷 3</td><td>资产管线</td><td>脚本化建模 + 远程执行</td></tr><tr><td>卷 4</td><td>玩法系统</td><td>规则、历史、存档、引导、成就、摄影</td></tr><tr><td>卷 5</td><td>多端发行</td><td>Web / Windows / 移动端 / 体积</td></tr><tr><td>卷 6</td><td>质量与协作</td><td>三层测试、CI、字体、Git</td></tr><tr><td>卷 7</td><td>商业化</td><td>取舍、渠道、运营、教学</td></tr></tbody></table>
+<p><strong>8 场直播（每场 90 分钟）的排法</strong>（见 <code>course/README.md</code> 的直播表）：</p>
+<pre><code>L1 跑通第一个可玩版本      L5 引导与成就（投票新增成就）
+L2 从需求到验收            L6 观感调优（A/B 盲测）
+L3 世界模型与撤销栈        L7 三端发行
+L4 远程 Blender 管线       L8 质量工程与 CI（现场制造回归）</code></pre>
+<p>每场都配了<strong>互动设计</strong>——这是"能讲"与"能教会"的分水岭。</p>
+<hr>
+<h2>36.2 每章三件套，让备课成本趋近于零</h2>
+<p>每章末尾都固定附有三段：</p>
+<table><thead><tr><th>件套</th><th>作用</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>🎓 教学提示</strong></td><td>概念锚点、课堂演示、高频误解、讨论题、<strong>批改要点</strong></td></tr><tr><td><strong>📹 录屏分镜</strong></td><td>时间轴 / 画面 / 解说词，照着录即可（8–15 分钟/章）</td></tr><tr><td><strong>🖼 配图清单</strong></td><td>需要哪些图、怎么生成（可 <code>course_capture.py --chapter NN</code> 批量产出）</td></tr></tbody></table>
+<p><strong>这是本项目最值钱的复用资产</strong>：写章时顺手产出，教学时零成本取用。</p>
+<hr>
+<h2>36.3 作业批改：看什么，不看什么</h2>
+<table><thead><tr><th>看</th><th>不看</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>是否答中"为什么"</strong></td><td>代码是否与我的一模一样</td></tr><tr><td>是否用<strong>数据/事实</strong>支撑</td><td>篇幅长短</td></tr><tr><td>是否触及<strong>关键机制</strong>（如 <code>owner_at</code>、<code>ceil</code>）</td><td>格式是否漂亮</td></tr></tbody></table>
+<p>每章的"批改要点"已经写明<strong>给分点</strong>，例如：</p>
+<ul><li>第 19 章：必须答出 <code>19 + 3 &gt; 20</code> 被第 ② 道闸门拦下</li><li>第 20 章：要断言 <code>revision</code> 或 <code>cells</code> 回到初值，<strong>不是</strong>只看 undo 栈长度</li><li>第 31 章：要区分"约束写死"与"统计推导"</li><li>第 32 章：要答出 <code>failed==0</code> <strong>且</strong> <code>passed&gt;0</code> 两个条件</li></ul>
+<blockquote><p>📌 批改标准的价值：<strong>让助教也能批</strong>。写得越具体，课程越可规模化。</p></blockquote>
+<hr>
+<h2>36.4 "教学友好"是一种设计目标</h2>
+<p>回头看，本项目的很多决策都<strong>顺带</strong>服务了教学：</p>
+<table><thead><tr><th>决策</th><th>教学价值</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>QA 快照（<code>harborState</code>）</td><td>学员能在控制台<strong>看见</strong>内部状态（第 11 章）</td></tr><tr><td>断言从数据源推导</td><td>加资产不改测试 → 作业不会莫名变红（第 31 章）</td></tr><tr><td>资产脚本化</td><td>作业可以"写一段 bpy"而不是"用鼠标点"（第 14 章）</td></tr><tr><td>三条契约 + assert</td><td>错误<strong>当场</strong>暴露，而不是到游戏里才发现</td></tr><tr><td>快捷键表准确</td><td>直播时不翻车（第 11 章修正过的那张表）</td></tr></tbody></table>
+<blockquote><p>📌 反过来也成立：<strong>教学不友好的项目，往往工程上也含糊</strong>。<br>"讲不清楚"通常意味着"想不清楚"。</p></blockquote>
+<hr>
+<h2>36.5 一次真实的教学事故与修正</h2>
+<p>第 11 章的快捷键表最初是<strong>错</strong>的（<code>Z</code>/<code>Y</code> 撤销、<code>X</code> 拆除、<code>P</code> 拍照），<br>直到为第 19/20 章拍图时才发现实际是 <code>Ctrl+Z</code>、<code>B</code>、<code>P=隐藏HUD</code>、<code>C=截图</code>。</p>
+<table><thead><tr><th>教训</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>文档会撒谎，代码不会</strong></td><td>写文档时<strong>对照代码</strong>，不要凭印象</td></tr><tr><td><strong>用自动化暴露错误</strong></td><td>拍图脚本按错误的键 → 配图不对 → 立刻暴露</td></tr><tr><td><strong>修正要留痕</strong></td><td>提交信息里写清"原（错）→ 实际"</td></tr></tbody></table>
+<blockquote><p>📌 这类"用工具反过来校验文档"的做法，值得复制到任何项目：<br><strong>让文档与代码互相验证，而不是各自维护</strong>。</p></blockquote>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>学员环境</td><td>各自装 Godot（门槛高）</td><td><strong>打开就能跑</strong> → 教学转化率大幅提升</td></tr><tr><td>直播画面</td><td>本地窗口</td><td>云端预览即共享画面</td></tr><tr><td>作业提交</td><td>交代码/截图</td><td>可交<strong>云端工作区链接</strong></td></tr><tr><td>批改</td><td>人工</td><td>先用 L1/L2 自动筛，再人工看"为什么"</td></tr><tr><td>风险</td><td>环境不一致</td><td><strong>版本与模板必须与课程声明一致</strong></td></tr></tbody></table>
+<blockquote><p>🌩 云端对教学最大的价值：<strong>把"装环境"这一小时还给学习本身</strong>。</p></blockquote>
+<hr>
+<h2>36.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>直播翻车（快捷键无效）</td><td>文档凭印象写</td><td>对照代码校验（36.5）</td></tr><tr><td>学员跑不起来</td><td>环境步骤太多</td><td>用云端，或写清六步清单（第 32 章）</td></tr><tr><td>作业无法规模化批改</td><td>没有给分点</td><td>每章写"批改要点"</td></tr><tr><td>备课耗时长</td><td>每章从零准备</td><td>用三件套（36.2）</td></tr><tr><td>讲不清楚某块</td><td>概念本身含糊</td><td>把它写成数据/规则再讲</td></tr><tr><td>学员加资产后测试红</td><td>断言写死数量</td><td>第 31 章</td></tr></tbody></table>
+<hr>
+<h2>36.7 本章作业（也是全课程的结业作业）</h2>
+<ol><li>说出每章三件套分别是什么，以及它们把备课成本降到了多少</li><li>解释"教学友好"与"工程清晰"的关系，举本项目的两个例子</li><li>复述 36.5 的教学事故，说明"用工具校验文档"为什么有效</li><li><strong>结业设计</strong>：选一个你自己的项目，为它写一份"教学化改造清单"（至少 5 条），</li></ol>
+<p>每条说明它如何同时改善工程质量与可教性</p>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>讲不清楚 = 想不清楚</strong>。教学化是工程质量的探针。</li><li><strong>课堂演示</strong>：拿一块自己项目里"讲不清楚"的部分，试着写成数据/规则。</li><li><strong>高频误解</strong>：学生以为"做课件"是额外工作。强调：写章时顺手产出，边际成本极低。</li><li><strong>讨论题</strong>：你的项目里，哪一处最适合作为第一节公开课的演示？</li><li><strong>批改要点</strong>：作业 4 的五条里，至少三条要同时体现"工程质量"与"可教性"。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/36/36-course-game.png" alt="36-course-game"><figcaption>36-course-game.png</figcaption></figure><figure><img src="assets/shots/36/36-final-island.png" alt="36-final-island"><figcaption>36-final-island.png</figcaption></figure></div><h2>📹 录屏分镜（10 分钟 · 全课程收尾）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:40</td><td>8 卷结构 + 8 场直播排期</td><td>"36 章，一条主线。"</td></tr><tr><td>01:40–03:00</td><td>每章三件套</td><td>"备课成本趋近于零。"</td></tr><tr><td>03:00–04:30</td><td>批改要点示例（四章）</td><td>"让助教也能批。"</td></tr><tr><td>04:30–06:00</td><td>教学友好 = 工程清晰</td><td>"讲不清，通常是想不清。"</td></tr><tr><td>06:00–08:00</td><td>快捷键事故与修正</td><td>"让文档与代码互相验证。"</td></tr><tr><td>08:00–10:00</td><td>结业作业 + 全课程总结</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/36/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>36-course-game.png</code></td><td>课程教出来的成品（可玩状态）</td><td><code>python tools/course_capture.py --chapter 36</code></td></tr><tr><td><code>36-final-island.png</code></td><td>结业作品示例（建成的小岛）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L8 收尾场，90 分钟）</h2>
+<ul><li><strong>开场</strong>：从"跑不起来"到"能讲能交付"——回顾 36 章的主线</li><li><strong>演示</strong>：现场制造一个回归，让 CI 抓出来（第 32 章 L8 环节）</li><li><strong>互动</strong>：观众展示自己的结业作品（导出 JSON 互评）</li><li><strong>收尾</strong>：下一站——你的项目</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：36 章一定要全讲吗？</strong><br>A：不必。<code>course/README.md</code> 给了三条路线（全卷 / 有经验者跳过卷 0-1 / 只想复刻作品跑五个任务）。</p>
+<p><strong>Q：作业答案有标准版吗？</strong><br>A：每章给了"批改要点"（给分点），但不给唯一答案——<strong>能说出为什么</strong>即可。</p>
+<p><strong>Q：这套课程结构能复用到别的项目吗？</strong><br>A：能。骨架是"跑通 → 设计 → 实现 → 资产 → 玩法 → 发行 → 质量 → 商业化"，<br>任何项目都可以按这个八段填内容。</p>
+<div class="pager"><a href="chapter-35.html">← 卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进</a><span></span></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

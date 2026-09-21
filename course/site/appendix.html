@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>附录 · 术语 / FAQ / 坑索引 / 命令速查 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>附录 · 术语 / FAQ / 坑索引 / 命令速查</h1>
+  <div class="meta">速查与索引 · 字符数 5261 · 生成于 2026-09-21 15:31</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="appendix.html" style="color:#2d514b;font-weight:700">附录 · 速查与索引</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-25.html">卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-26.html">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-28.html">卷 5 · 第 28 章　体积优化：先测量，再动刀</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a><a href="chapter-32.html">卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</a><a href="chapter-33.html">卷 7 · 第 33 章　功能取舍：决定"不做什么"比做什么更难</a><a href="chapter-34.html">卷 7 · 第 34 章　发行渠道：把成品送到玩家面前</a><a href="chapter-35.html">卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进</a><a href="chapter-36.html">卷 7 · 第 36 章　直播教学与作业批改：把项目变成一门课</a></nav>
+<main>
+<h1>附录 · 术语 / FAQ / 坑索引 / 命令速查 / 素材索引</h1>
+<p>这一页是把 36 章里<strong>可查的事实</strong>抽出来的速查表。写章时随时回来对照，别凭记忆写数字。</p>
+<hr>
+<h2>A. 术语表</h2>
+<table><thead><tr><th>术语</th><th>含义</th><th>首次出现</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>G‑V‑C 循环</strong></td><td>Goal 目标 → Verify 验证 → Correct 修正，与 Agent 协作的基本节奏</td><td>第 03 章</td></tr><tr><td><strong>L1 / L2 / L3</strong></td><td>三层测试：模型层（56 项）/ 场景层（12 项）/ 浏览器层（23 项）</td><td>第 29 章</td></tr><tr><td><strong>QA 快照</strong></td><td><code>window.harborState</code>，游戏自己导出的内部状态 JSON</td><td>第 11 章</td></tr><tr><td><strong>cells / occupancy</strong></td><td>双字典：逻辑格（原点）与物理格（每一格）的映射</td><td>第 19 章</td></tr><tr><td><strong>footprint / owner</strong></td><td>多格模型占用的格集合，及其原点格（<code>owner_at</code>）</td><td>第 06 / 19 章</td></tr><tr><td><strong>原点格（origin）</strong></td><td>一件建材的记录位置；点击任意部分都反查到它</td><td>第 10 / 19 章</td></tr><tr><td><strong>可见面（visible_faces）</strong></td><td>剔除被遮挡面后真正渲染的面数，可被断言</td><td>第 10 章</td></tr><tr><td><strong>导入（import）</strong></td><td>原始资产 → Godot 运行时资源；<code>.import</code> 是决策，<code>.godot/</code> 是结果</td><td>第 09 章</td></tr><tr><td><strong>provenance</strong></td><td>溯源记录：哪个脚本、哪个任务、什么摘要、什么时间产出的二进制</td><td>第 16 章</td></tr><tr><td><strong>manifest</strong></td><td>资产体检报告：bytes / triangles / bounds</td><td>第 16 / 17 章</td></tr><tr><td><strong>atomic write</strong></td><td>先写 <code>.tmp</code> 再 rename，崩溃不毁原文件</td><td>第 21 章</td></tr><tr><td><strong>快照式撤销</strong></td><td>记录 before / after，撤销 = 写回旧值（非"逆操作"）</td><td>第 20 章</td></tr><tr><td><strong>约束写死，统计推导</strong></td><td>断言设计原则：规则常量可写死，数量从数据源推导</td><td>第 31 章</td></tr><tr><td><strong>W 档（Won't）</strong></td><td>MoSCoW 里"本次坚决不做"，必须写下来并给理由</td><td>第 33 章</td></tr><tr><td><strong>pilot</strong></td><td>同事封装的远程 MCP 服务（Blender 侧），异步作业模型</td><td>第 15 章</td></tr></tbody></table>
+<hr>
+<h2>B. 关键常量速查</h2>
+<table><thead><tr><th>常量</th><th>值</th><th>出处</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>MAX_CELLS</code></td><td>12,000</td><td><code>world_model.gd</code></td></tr><tr><td><code>EDGE</code> / <code>MIN_Y</code> / <code>MAX_Y</code></td><td>25 / −4 / 20</td><td>同上</td></tr><tr><td><code>MAX_HISTORY</code></td><td>160</td><td>同上</td></tr><tr><td><code>SLOT_COUNT</code></td><td>3</td><td>同上</td></tr><tr><td><code>SAVE_VERSION</code></td><td>1</td><td>同上</td></tr><tr><td>世界种子 <code>seed</code></td><td>240910</td><td>manifest / <code>village.reset</code></td></tr><tr><td>相机 yaw / pitch</td><td>0.72 / 0.72（等距）</td><td><code>main.gd</code> / 缩略图同参数</td></tr><tr><td>建材数 / GLB 数</td><td>14 项 / 9 件</td><td><code>palette.json</code> / <code>manifest.json</code></td></tr><tr><td>资产总量</td><td>2,722 三角面 · 约 282 KB</td><td>manifest</td></tr><tr><td>Web 产物</td><td>wasm 37.68 MB · pck 0.40 MB · js 0.27 MB</td><td>第 25 章</td></tr><tr><td>字体子集</td><td>299 KB</td><td><code>harbor-sc.ttf</code></td></tr><tr><td>引擎</td><td>Godot 4.7.stable（本地）/ Blender 5.2.1（远程 pilot）</td><td>TOOLCHAIN.md</td></tr></tbody></table>
+<hr>
+<h2>C. 命令速查</h2>
+<pre><code># 引擎内（提交前必跑）
+python tools/dev.py test                 # L1(56) + L2(12)，秒级，退出码表达成败
+python tools/dev.py import               # 重新导入（改了 GLB / .import / 换引擎后）
+
+# 发行
+python tools/dev.py export-web           # → build/
+python tools/dev.py export-windows       # → build-win/mist-harbor.exe（单文件）
+python tools/dev.py preview              # 起本地预览（注意：不压缩，别拿它测体积）
+python tools/dev.py package              # 打 source/seed/web 三个 zip
+
+# 浏览器验收（需先导出）
+python -m http.server 8184 --bind 127.0.0.1 --directory build
+python project/tests/browser_smoke.py --base http://127.0.0.1:8184/index.html   # 23 项
+
+# 资产管线
+python tools/asset_pipeline.py list
+python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑 --color b07d4f
+python tools/fetch_templates.py          # 换机器装导出模板（分块续传，反复执行至 complete）
+E:/Mist_Harbor/.venv-mcp/Scripts/python.exe tools/build_font_corpus.py   # 字体增量子集
+
+# 教程站点
+python tools/course_capture.py --chapter 03     # 拍该章配图
+python tools/course_check.py                    # 校验配图引用
+python tools/course_build.py                    # 重建站点</code></pre>
+<hr>
+<h2>D. 游戏内快捷键（<strong>以代码为准</strong>）</h2>
+<table><thead><tr><th>键</th><th>作用</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>左键 / 拖动</td><td>放置 / 连续绘制</td></tr><tr><td>右键拖动 / 中键拖动</td><td>旋转视角 / 平移</td></tr><tr><td>滚轮</td><td>缩放（14–64）</td></tr><tr><td>WASD / 方向键、Q / E</td><td>平移、左右转</td></tr><tr><td><strong>B</strong></td><td>拆除模式</td></tr><tr><td><strong>R</strong></td><td>旋转待放置道具</td></tr><tr><td><strong>Ctrl+Z / Ctrl+Y</strong></td><td>撤销 / 重做</td></tr><tr><td><strong>Ctrl+S</strong></td><td>保存作品</td></tr><tr><td><strong>N</strong></td><td>昼夜切换</td></tr><tr><td><strong>F</strong></td><td>回到岛屿中心</td></tr><tr><td><strong>P</strong></td><td>隐藏 / 显示 HUD（构图用）</td></tr><tr><td><strong>C</strong></td><td>保存截图</td></tr><tr><td><strong>H</strong></td><td>帮助　<strong>Esc</strong> 关闭弹窗</td></tr></tbody></table>
+<blockquote><p>⚠️ 撤销/重做/保存<strong>都带 Ctrl</strong>；<code>P</code> 不是拍照（那是 <code>C</code>）。第 11 章曾写错过，已按代码修正。</p></blockquote>
+<hr>
+<h2>E. 常见坑索引（按主题）</h2>
+<table><thead><tr><th>主题</th><th>坑</th><th>章</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>断言</td><td>写死数量（<code>== 13</code> / <code>== 8</code>）→ 加资产即红</td><td>31</td></tr><tr><td>断言</td><td>只判 <code>failed==0</code> → 套件没跑也算通过（假绿）</td><td>32</td></tr><tr><td>存档</td><td>边读边写 → 坏存档把作品改半坏</td><td>21</td></tr><tr><td>存档</td><td>直接写目标文件 → 崩溃留下半截 JSON</td><td>21</td></tr><tr><td>成就</td><td>Web 下解锁后立刻写盘 → <strong>毁掉刚写的存档</strong></td><td>13 / 23</td></tr><tr><td>渲染</td><td>改场景后立刻取画面 → 截到旧画面（要等两帧）</td><td>24</td></tr><tr><td>缩略图</td><td>无头环境渲不出 → 必须检查 alpha 并回退手绘</td><td>13</td></tr><tr><td>资产</td><td>单位不是米 / 原点没在底面 → 模型错位</td><td>14</td></tr><tr><td>资产</td><td>面数低 ≠ 体积小（物体与材质数才是元凶）</td><td>17</td></tr><tr><td>导入</td><td>换引擎 → 大量 <code>.import</code> 同时变红（先查版本）</td><td>09</td></tr><tr><td>导出</td><td>产物在工程内且没排除 → 包体越导越大</td><td>25</td></tr><tr><td>体积</td><td>用 <code>http.server</code> 测体积 → 得出错误结论（不压缩）</td><td>28</td></tr><tr><td>远程执行</td><td>提交返回快 ≠ 完成；失败 id 在服务端仍被占用</td><td>15</td></tr><tr><td>文档</td><td>凭印象写快捷键 → 直播翻车</td><td>36</td></tr></tbody></table>
+<hr>
+<h2>F. FAQ（跨章高频问题）</h2>
+<p><strong>Q：加一件新资产要改几处？</strong><br>A：理想 0 处代码——写 <code>tools/art/&lt;id&gt;.py</code> → <code>asset_pipeline.py build</code> → 自动落 GLB/预览/溯源/manifest/<code>.import</code>/palette；<strong>测试因从 <code>palette.json</code> 推导而自动跟上</strong>（第 16、31 章）。</p>
+<p><strong>Q：测试全绿就没事了吗？</strong><br>A：不一定。要防"假绿"：断言数量需 &gt; 0（第 32 章）；浏览器层还要看 <code>logs</code>（第 30 章）。</p>
+<p><strong>Q：为什么很多地方强调"从数据源推导"？</strong><br>A：因为<strong>数量会自然增长</strong>。写死的数字每增长一次就要改一次测试/文档，最终必然失控。</p>
+<p><strong>Q：37 MB 的 Web 包能上线吗？</strong><br>A：能。开 gzip/Brotli 后传输体积大幅下降；再加加载反馈即可（第 28 章）。<strong>先测再判断</strong>。</p>
+<p><strong>Q：换一台机器怎么跑起来？</strong><br>A：六步交接清单：装 4.7 → 复制 <code>tools.example.json</code> → <code>fetch_templates.py</code> → <code>dev.py test</code> → <code>export-web</code> →（可选）<code>pilot.example.json</code>（第 32 章）。</p>
+<p><strong>Q：云端（web-cb）和本地最大的差别？</strong><br>A：<strong>平台差异集中在写盘与渲染</strong>：<code>user://</code> 在 Web 是异步 IndexedDB（第 13/23 章），渲染走 WebGL（第 29 章）。逻辑层（L1）两边完全一致，所以 CI 放 L1 最划算。</p>
+<hr>
+<h2>G. 素材与图片索引</h2>
+<table><thead><tr><th>类型</th><th>数量</th><th>位置</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>示意图（SVG）</td><td>14</td><td><code>course/media/diagrams/</code></td></tr><tr><td>实拍配图（PNG）</td><td>85</td><td><code>assets/shots/&lt;章号&gt;/</code></td></tr><tr><td>拍摄脚本</td><td>36 章</td><td><code>course/media/shots.json</code></td></tr><tr><td>视频位</td><td>每章预留</td><td><code>course/media/video/&lt;章号&gt;/</code>（有则自动嵌入）</td></tr></tbody></table>
+<p><strong>命名规范</strong>：<code>&lt;章号&gt;-&lt;用途&gt;.png</code>，例如 <code>10-night.png</code>、<code>31-barrel-in-dock.png</code>。</p>
+<table><thead><tr><th>常用示意图</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><code>test-pyramid.svg</code></td><td>三层测试 91 项（第 29 章）</td></tr><tr><td><code>pipeline-flow.svg</code></td><td>资产管线八步（第 16 章）</td></tr><tr><td><code>bpy-script.svg</code></td><td>脚本 vs 执行器分工（第 14 章）</td></tr><tr><td><code>asset-budget.svg</code></td><td>面数/体积对照与三种原型（第 17 章）</td></tr><tr><td><code>place-rules.svg</code></td><td>四道闸门 + 双字典（第 19 章）</td></tr><tr><td><code>save-flow.svg</code></td><td>存档读写安全边界（第 21 章）</td></tr><tr><td><code>web-export.svg</code></td><td>产物构成与预设开关（第 25 章）</td></tr><tr><td><code>render-tree.svg</code></td><td>节点树与重建流程（第 10 章）</td></tr></tbody></table>
+<blockquote><p>📌 每张图都对应一个<strong>可被验证的事实</strong>（例如"跑完应该有 9 个 GLB"）。<br>改代码后如果图与事实不符，图就是错的——请以事实为准并更新图。</p></blockquote>
+
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

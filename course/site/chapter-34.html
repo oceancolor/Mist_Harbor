@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 7 · 第 34 章　发行渠道：把成品送到玩家面前 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 7 · 第 34 章　发行渠道：把成品送到玩家面前</h1>
+  <div class="meta">卷 7 · 商业化 · 字符数 3500 · 生成于 2026-09-21 15:31</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="appendix.html">附录 · 速查与索引</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-25.html">卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-26.html">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-28.html">卷 5 · 第 28 章　体积优化：先测量，再动刀</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a><a href="chapter-32.html">卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</a><a href="chapter-33.html">卷 7 · 第 33 章　功能取舍：决定"不做什么"比做什么更难</a><a href="chapter-34.html" style="color:#2d514b;font-weight:700">卷 7 · 第 34 章　发行渠道：把成品送到玩家面前</a><a href="chapter-35.html">卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进</a><a href="chapter-36.html">卷 7 · 第 36 章　直播教学与作业批改：把项目变成一门课</a></nav>
+<main>
+<h1>卷 7 · 第 34 章　发行渠道：把成品送到玩家面前</h1>
+<blockquote><p><strong>本章目标</strong>：客观对比几条现实可行的发行路径，<br>知道<strong>门槛、成本、适配工作量</strong>分别是什么，以及本项目为什么"Web 优先"。<br>对应任务：T46　|　对应文件：<code>build/</code>、<code>build-win/</code></p></blockquote>
+<hr>
+<h2>34.1 先看你手里有什么</h2>
+<table><thead><tr><th>产物</th><th>状态</th><th>能去哪</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>build/</code>（Web）</td><td>✅ 已产出，37.68 MB wasm</td><td>网页直发、itch.io、任何静态托管</td></tr><tr><td><code>build-win/mist-harbor.exe</code></td><td>✅ 单文件</td><td>itch.io、Steam、网盘分发</td></tr><tr><td>Android / iOS</td><td>❌ 未做（第 27 章）</td><td>—</td></tr></tbody></table>
+<p><strong>结论</strong>：现在就能发的是 <strong>Web</strong> 与 <strong>Windows</strong>。</p>
+<hr>
+<h2>34.2 四条路径对比</h2>
+<table><thead><tr><th>渠道</th><th>门槛</th><th>成本</th><th>适配工作</th><th>适合</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>网页直发</strong>（自建/GitHub Pages）</td><td>极低</td><td>几乎为零</td><td>服务器开压缩（第 28 章）</td><td>试水、教学、作品集</td></tr><tr><td><strong>itch.io</strong></td><td>低</td><td>免费（可设价格/分成）</td><td>上传 Web 或 exe</td><td><strong>独立小作品首选</strong></td></tr><tr><td><strong>Steam</strong></td><td>中</td><td>上架费（约 100 美元/款，达标可退；<strong>以官方最新政策为准</strong>）</td><td>商店页、成就/云存档对接、构建管线</td><td>商业发行</td></tr><tr><td><strong>移动端商店</strong></td><td>高</td><td>开发者账号年费</td><td>第 27 章的六维度改造</td><td>有把握再做</td></tr></tbody></table>
+<hr>
+<h2>34.3 网页直发：最快的一条路</h2>
+<pre><code>python tools/dev.py export-web
+# 把 build/ 整个目录上传到静态托管即可</code></pre>
+<table><thead><tr><th>托管</th><th>注意</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>GitHub Pages</td><td>仓库 → Settings → Pages；<strong>确认静态资源被压缩</strong></td></tr><tr><td>Vercel / Netlify</td><td>默认压缩与 CDN，最省事</td></tr><tr><td>自建 Nginx</td><td>记得 <code>gzip_types application/wasm</code>（第 28 章）</td></tr><tr><td>itch.io</td><td>上传 zip，勾选"This file will be played in the browser"</td></tr></tbody></table>
+<p><strong>必做的三件事</strong>：</p>
+<ol><li>开压缩（否则 37 MB 直传）</li><li>有加载反馈（否则玩家以为坏了）</li><li>移动端浏览器地址栏配色（<code>theme-color</code> 已设）</li></ol>
+<hr>
+<h2>34.4 Windows 单文件：发给人的最小摩擦</h2>
+<p><code>build-win/mist-harbor.exe</code> 一个文件（第 26 章）：</p>
+<ul><li>网盘/邮件直发 → 对方双击就跑，<strong>不用装环境</strong></li><li>itch.io → 直接上传 exe</li><li>Steam → 需要 <code>Steamworks</code> 集成（成就/云存档若要打通）</li></ul>
+<p><strong>商业级还差</strong>：图标、代码签名、版本号、关控制台黑框（第 26 章）。</p>
+<hr>
+<h2>34.5 上架前的最小检查清单</h2>
+<pre><code>□ Web：压缩开启 + 加载反馈 + 无控制台报错（browser_smoke.py 的 logs 断言）
+□ Windows：换了图标 / 签名（至少说明未签名） / 关了控制台
+□ 许可：资产 CC0-1.0 已声明；字体 Noto Sans SC 为 OFL 1.1（需保留许可声明）
+□ 版本：project.godot 与文档里的版本号一致
+□ 隐私：本游戏不联网、不采集数据——在商店页写明是加分项
+□ 回退：存档可导出 JSON（第 21 章），玩家不会因换机器丢作品</code></pre>
+<blockquote><p>📌 最后一条常被忽略：<strong>玩家能不能带走自己的作品</strong>——<br>这是本作"可导出 JSON"设计的一项真实商业价值。</p></blockquote>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>构建产物</td><td>本地目录</td><td>云端构建 + 归档，团队直接下载</td></tr><tr><td>静态托管</td><td>自己配</td><td><strong>云端预览即托管</strong> → 分享链接就能玩</td></tr><tr><td>发布节奏</td><td>手工</td><td>云端可做成"合并即发布"</td></tr><tr><td>注意</td><td>版本一致性</td><td><strong>云端产物必须与本地同引擎版本</strong>，否则行为不同</td></tr><tr><td>建议</td><td>—</td><td>用云端做"内测链接"，用本地做最终发布物</td></tr></tbody></table>
+<blockquote><p>🌩 云端最适合承担的角色：<strong>内测分发</strong>。一条链接给到测试者，省去打包传输。</p></blockquote>
+<hr>
+<h2>34.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>网页加载巨慢</td><td>没开压缩</td><td>检查 <code>content-encoding</code></td></tr><tr><td>玩家说"点了没反应"</td><td>没加载反馈 / 没自动聚焦</td><td>第 25 章两个开关</td></tr><tr><td>exe 被系统拦截</td><td>未签名</td><td>签名或在页面说明</td></tr><tr><td>商店页缺少许可声明</td><td>用了 OFL 字体</td><td>保留 Noto Sans SC 的许可声明</td></tr><tr><td>换机器作品丢失</td><td>存档在 user://</td><td>提供 JSON 导出（已有）</td></tr><tr><td>平台费用与政策变化</td><td>引用了旧信息</td><td><strong>以官方最新政策为准</strong></td></tr></tbody></table>
+<hr>
+<h2>34.7 本章作业</h2>
+<ol><li>对比四条渠道的门槛与成本，说明本项目现在能上哪两条</li><li>列出网页直发必做的三件事，并解释第二件事为什么重要</li><li>说出上架前检查清单里的"许可"两项，说明各自要求</li><li>给自己项目选一条首发渠道，写出理由与需要的三项准备</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>渠道决定形态</strong>。Web 优先不是偷懒，是门槛最低的真实分发。</li><li><strong>课堂演示</strong>：把 <code>build/</code> 丢到静态托管，现场拿到一条可玩链接。</li><li><strong>高频误解</strong>：学生一上来就想 Steam。先用数据说清门槛与适配工作量。</li><li><strong>讨论题</strong>：如果只能选一条渠道，你选哪条？为什么？</li><li><strong>批改要点</strong>：作业 3 要区分 CC0（资产）与 OFL（字体）的不同要求。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/34/34-game-built.png" alt="34-game-built"><figcaption>34-game-built.png</figcaption></figure><figure><img src="assets/shots/34/34-web-delivery.png" alt="34-web-delivery"><figcaption>34-web-delivery.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>手里有什么：build/ 与 build-win/</td><td>"现在就能发两条。"</td></tr><tr><td>01:30–03:30</td><td>四条路径对比表</td><td>"门槛、成本、适配。"</td></tr><tr><td>03:30–05:00</td><td>网页直发三件事</td><td>"压缩 + 反馈 + 配色。"</td></tr><tr><td>05:00–06:30</td><td>上架检查清单（含许可）</td><td>"玩家能不能带走作品。"</td></tr><tr><td>06:30–09:00</td><td>作业 + 预告（社区运营）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/34/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>34-web-delivery.png</code></td><td>Web 版运行画面（网页直发的形态）</td><td><code>python tools/course_capture.py --chapter 34</code></td></tr><tr><td><code>34-game-built.png</code></td><td>建造中的作品（可分享的成果）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："你的游戏，玩家在哪玩到？"</li><li><strong>演示</strong>：静态托管一条链接，现场打开</li><li><strong>互动</strong>：让观众报自己的首发渠道选择</li><li><strong>收尾</strong>：预告社区运营</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：Steam 的成就/云存档要接吗？</strong><br>A：可选。本作成就存 <code>user://</code>（第 23 章），接 Steamworks 才能打通平台成就——属于额外工作量。</p>
+<p><strong>Q：itch.io 能卖钱吗？</strong><br>A：可以（自行定价/接受捐赠，平台分成政策以官方为准）。<strong>具体费率请查官方最新说明</strong>。</p>
+<p><strong>Q：国内渠道（如微信小游戏）呢？</strong><br>A：Godot 对其支持不成熟，通常需要额外适配层；本实训未覆盖，建议按第 27 章的排期思路单独评估。</p>
+<div class="pager"><a href="chapter-33.html">← 卷 7 · 第 33 章　功能取舍：决定"不做什么"比做什么更难</a><a href="chapter-35.html">卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

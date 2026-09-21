@@ -132,6 +132,24 @@
     {"shot": "32-game-ui-fonts.png"},
     {"click": "progress", "wait": 900, "shot": "32-progress-text.png"}
   ],
+  "33": [
+    {"shot": "33-scope-game.png"},
+    {"key": "N", "wait": 1200, "shot": "33-night-scope.png"},
+    {"key": "N", "wait": 500}
+  ],
+  "34": [
+    {"shot": "34-web-delivery.png"},
+    {"category": "建筑", "select": "cottage", "place": [[720, 430]], "wait": 600, "shot": "34-game-built.png"}
+  ],
+  "35": [
+    {"key": "P", "wait": 900, "shot": "35-hero-shot.png"},
+    {"key": "P", "wait": 500},
+    {"category": "地形", "select": "wood", "place": [[700, 470], [730, 490]], "wait": 600, "shot": "35-share-build.png"}
+  ],
+  "36": [
+    {"shot": "36-course-game.png"},
+    {"category": "建筑", "select": "cottage", "place": [[700, 450], [660, 490]], "wait": 700, "shot": "36-final-island.png"}
+  ],
   "14": [
     {"shot": "14-game-start.png"},
     {"category": "建筑", "select": "barrel", "wait": 500, "shot": "14-barrel-selected.png"}

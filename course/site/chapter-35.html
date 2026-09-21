@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进</h1>
+  <div class="meta">卷 7 · 商业化 · 字符数 3439 · 生成于 2026-09-21 15:31</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="appendix.html">附录 · 速查与索引</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-25.html">卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-26.html">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-28.html">卷 5 · 第 28 章　体积优化：先测量，再动刀</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a><a href="chapter-32.html">卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</a><a href="chapter-33.html">卷 7 · 第 33 章　功能取舍：决定"不做什么"比做什么更难</a><a href="chapter-34.html">卷 7 · 第 34 章　发行渠道：把成品送到玩家面前</a><a href="chapter-35.html" style="color:#2d514b;font-weight:700">卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进</a><a href="chapter-36.html">卷 7 · 第 36 章　直播教学与作业批改：把项目变成一门课</a></nav>
+<main>
+<h1>卷 7 · 第 35 章　社区运营：让作品被看见、被复刻、被改进</h1>
+<blockquote><p><strong>本章目标</strong>：理解本项目的"运营资产"其实<strong>已经在仓库里</strong>——<br>可复刻的任务清单、可分享的存档 JSON、CC0 资产、可教学的课程。<br>对应任务：T47　|　对应文件：<code>syllabus.md</code>、<code>README.md</code>、导出/导入 JSON</p></blockquote>
+<hr>
+<h2>35.1 四类现成的运营资产</h2>
+<table><thead><tr><th>资产</th><th>在哪</th><th>怎么用</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>可玩链接</strong>（Web）</td><td><code>build/</code></td><td>一条链接，零安装，最适合传播（第 34 章）</td></tr><tr><td><strong>作品分享</strong>（存档 JSON）</td><td>游戏内导出/导入</td><td>玩家互相交换岛屿 → <strong>UGC 的最小闭环</strong></td></tr><tr><td><strong>CC0 资产</strong></td><td><code>assets/models/</code> + manifest</td><td>别人可以合法用在自己的项目里</td></tr><tr><td><strong>课程与任务清单</strong></td><td><code>course/</code>、<code>syllabus.md</code></td><td>教学、直播、作业（第 36 章）</td></tr></tbody></table>
+<blockquote><p>📌 很多项目上线后才开始想"运营素材"，其实<strong>开发过程本身就在产出它们</strong>——<br>前提是你有意识地把它们留下来。</p></blockquote>
+<hr>
+<h2>35.2 视觉素材：会说话的截图</h2>
+<p>玩家的注意力只有几秒。<strong>第一张图决定他要不要点进来。</strong></p>
+<table><thead><tr><th>类型</th><th>要点</th><th>本项目的做法</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>首图</td><td>一眼看懂玩法 + 风格统一</td><td>岛屿全貌（含起始村庄作参照物，第 18 章）</td></tr><tr><td>对比图</td><td>昼夜 / 前后</td><td><code>N</code> 键切换，两套配色</td></tr><tr><td>过程图</td><td>"我也能做出来"</td><td>建造过程 + 目标面板</td></tr><tr><td>短动图</td><td>展示交互手感</td><td>放置/拆除/旋转循环</td></tr></tbody></table>
+<p><strong>工具就是游戏本身</strong>：</p>
+<pre><code>P  隐藏 HUD（截干净画面）      C  保存截图（第 24 章）
+N  昼夜切换                     F  回到岛屿中心</code></pre>
+<blockquote><p>📌 第 24 章那两个键在这里变现：<strong>摄影模式就是运营工具</strong>。<br>不需要额外的截图工具，也不需要后期处理。</p></blockquote>
+<hr>
+<h2>35.3 更新节奏：小步、可预期</h2>
+<table><thead><tr><th>节奏</th><th>做法</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>每次更新都要可玩</strong></td><td>提交前跑 <code>dev.py test</code> + 导出（第 32 章）</td></tr><tr><td><strong>更新要说清"变了什么"</strong></td><td>用提交信息里的要点（本仓库一直在做）</td></tr><tr><td><strong>固定节奏</strong></td><td>每周/每两周一版，哪怕只改一点</td></tr><tr><td><strong>收集反馈的入口</strong></td><td>仓库 Issues / 社区帖 / 直播弹幕</td></tr></tbody></table>
+<p><strong>反模式</strong>：憋三个月发一个"大版本"。<br>小作品的生命力来自<strong>持续可见的进展</strong>。</p>
+<hr>
+<h2>35.4 UGC 的最小闭环</h2>
+<pre><code>玩家 A 造岛 → 导出 JSON → 分享
+                            ↓
+玩家 B 导入 → 看到 A 的作品 → 改造 → 再分享</code></pre>
+<p><strong>为什么这很值钱</strong>：</p>
+<ul><li>你不用做"关卡编辑器"就有 UGC（<strong>存档即关卡</strong>）</li><li><code>load_document()</code> 的全量校验保证"别人的存档不会搞坏游戏"（第 21 章）</li><li>固定 seed 让地形可复现（第 17 章）</li></ul>
+<blockquote><p>📌 这是"<strong>用已有机制达成运营目标</strong>"的典型：<br>导入/导出本来是为了存档健壮性做的，却天然成为了分享功能。</p></blockquote>
+<hr>
+<h2>35.5 开源与许可</h2>
+<table><thead><tr><th>内容</th><th>许可</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>代码</td><td>仓库许可（自行设定）</td><td>明确写 LICENSE</td></tr><tr><td>模型资产</td><td><strong>CC0-1.0</strong></td><td>manifest 里已声明，可商用无需署名</td></tr><tr><td>字体</td><td>Noto Sans SC <strong>OFL 1.1</strong></td><td>可商用，<strong>需保留许可声明</strong></td></tr></tbody></table>
+<p><strong>为什么写清楚许可很重要</strong>：</p>
+<ul><li>别人敢用 → 你的作品被传播</li><li>你也免于后续的许可纠纷</li></ul>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>试玩链接</td><td>自己托管</td><td><strong>云端预览即链接</strong>，分享成本几乎为零</td></tr><tr><td>素材产出</td><td>本地截图</td><td>云端同样可用游戏内摄影键</td></tr><tr><td>社区反馈</td><td>手工整理</td><td>建议做成<strong>结构化 issue 模板</strong>（版本 + 复现 + 期望）</td></tr><tr><td>风险</td><td>低</td><td><strong>云端链接若含凭据要小心</strong>（本项目不含）</td></tr></tbody></table>
+<blockquote><p>🌩 云端再提醒一次：预览链接是公开的，<strong>别把本地凭据写进任何会被分享的产物</strong>。</p></blockquote>
+<hr>
+<h2>35.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>没人点进来</td><td>首图没说清玩法</td><td>用含起始村庄的全貌图</td></tr><tr><td>截图里全是面板</td><td>没用 <code>P</code> 隐藏 HUD</td><td>第 24 章</td></tr><tr><td>玩家不敢分享作品</td><td>没有导出入口</td><td>用已有的 JSON 导入/导出</td></tr><tr><td>别人不敢用你的资产</td><td>没写许可</td><td>标明 CC0 与 OFL</td></tr><tr><td>更新后玩家流失</td><td>更新破坏存档</td><td>归档版本号 + 保持 <code>load_document</code> 兼容</td></tr><tr><td>反馈无法复现</td><td>没版本信息</td><td>反馈模板里带上版本号与平台</td></tr></tbody></table>
+<hr>
+<h2>35.7 本章作业</h2>
+<ol><li>列出四类现成运营资产，说明各自怎么用</li><li>说出四类视觉素材的要点，并指出本项目用哪两个键产出它们</li><li>解释"存档即关卡"为什么是低成本 UGC，指出它依赖哪两个已有机制</li><li>为你的项目写一段 100 字以内的介绍（要让人一眼看懂玩法）</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>运营素材是开发过程的副产品</strong>，前提是留下来。</li><li><strong>课堂演示</strong>：用 <code>P</code> + <code>C</code> 现场产出一张可发布的截图。</li><li><strong>高频误解</strong>：学生以为运营是"做完了才开始"。讨论：什么时候开始留素材最省事？</li><li><strong>讨论题</strong>：你的项目里，哪个已有机制可以顺手变成运营功能？</li><li><strong>批改要点</strong>：作业 3 要提到"全量校验"与"固定 seed"。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/35/35-hero-shot.png" alt="35-hero-shot"><figcaption>35-hero-shot.png</figcaption></figure><figure><img src="assets/shots/35/35-share-build.png" alt="35-share-build"><figcaption>35-share-build.png</figcaption></figure></div><h2>📹 录屏分镜（8 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:20</td><td>四类运营资产表</td><td>"素材已经在仓库里。"</td></tr><tr><td>01:20–03:00</td><td>用 P/C 现场出图</td><td>"摄影模式就是运营工具。"</td></tr><tr><td>03:00–04:30</td><td>更新节奏与反馈入口</td><td>"小步，可预期。"</td></tr><tr><td>04:30–06:00</td><td>存档即关卡的 UGC 闭环</td><td>"已有机制的复用。"</td></tr><tr><td>06:00–08:00</td><td>许可 + 作业</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/35/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>35-hero-shot.png</code></td><td>可作首图的岛屿全貌（P 隐藏 HUD）</td><td><code>python tools/course_capture.py --chapter 35</code></td></tr><tr><td><code>35-share-build.png</code></td><td>建造成果（可导出分享）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："如果只能发一张图，你发哪张？"</li><li><strong>演示</strong>：P + C 出图，现场挑首图</li><li><strong>互动</strong>：观众投票选首图</li><li><strong>收尾</strong>：预告直播教学与作业批改</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：要不要做内置的作品分享平台（在线 gallery）？</strong><br>A：那是"不联网"约束之外的另一个产品（第 33 章 W 档）。当前用 JSON 文件分享即可。</p>
+<p><strong>Q：CC0 是不是等于放弃著作权？</strong><br>A：CC0 是<strong>放弃到公有领域</strong>，任何人可任意使用（含商用），无需署名。选用前请确认这是你想要的。</p>
+<p><strong>Q：玩家反馈的 bug 怎么转成回归测试？</strong><br>A：见第 31 章：先在 L1 加一条断言复现它，再修——这样它永远不会再回来。</p>
+<div class="pager"><a href="chapter-34.html">← 卷 7 · 第 34 章　发行渠道：把成品送到玩家面前</a><a href="chapter-36.html">卷 7 · 第 36 章　直播教学与作业批改：把项目变成一门课 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>
