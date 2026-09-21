@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</h1>
+  <div class="meta">卷 1 · 设计先行 · 字符数 4934 · 生成于 2026-09-21 12:57</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html" style="color:#2d514b;font-weight:700">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a></nav>
+<main>
+<h1>卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</h1>
+<blockquote><p><strong>本章目标</strong>：掌握 <code>palette</code> / <code>objectives</code> / <code>achievements</code> 三张表的字段与扩展方式——<br>从此<strong>加内容不用改代码</strong>，只改 JSON（外加一条命令）。<br>对应任务：T21 / T22　|　对应文件：<code>project/data/*.json</code></p></blockquote>
+<hr>
+<h2>7.1 为什么要数据驱动</h2>
+<p>对比两种加法：</p>
+<table><thead><tr><th></th><th>硬编码</th><th>数据驱动（本实训）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>加一件建材</td><td>改 GDScript 数组、改 UI 分支、改图标 switch</td><td>加一条 JSON + 跑一条命令</td></tr><tr><td>加一个目标</td><td>改 UI 列表、改统计逻辑</td><td>加一条 JSON（若 <code>kind</code> 已有统计口径）</td></tr><tr><td>加一项成就</td><td>写代码判断 + 存状态</td><td>加一条 JSON（若 <code>kind</code> 已有统计口径）</td></tr></tbody></table>
+<p><strong>代价</strong>：统计口径（<code>kind</code> 的含义）仍写在代码里（<code>main.gd</code> 的 <code>_objective_amount</code>、<br><code>achievements.gd</code> 的 <code>progress_value</code>）。所以新增"全新口径"时才需要动代码——<br>这是有意的分工：<strong>数据管内容，代码管口径</strong>。</p>
+<p><img src="assets/diagrams/data-model.svg" alt="三张表与它们的读取方"></p>
+<hr>
+<h2>7.2 palette.json：建材表</h2>
+<pre><code>{&quot;id&quot;:&quot;barrel&quot;,&quot;name&quot;:&quot;木桶&quot;,&quot;category&quot;:&quot;建筑&quot;,&quot;color&quot;:&quot;b07d4f&quot;,
+ &quot;height&quot;:1,&quot;mesh&quot;:&quot;barrel&quot;,&quot;tip&quot;:&quot;码头边的橡木桶，可以一只只堆起来。&quot;}</code></pre>
+<table><thead><tr><th>字段</th><th>含义</th><th>注意</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>id</code></td><td>唯一键</td><td>同时是 <code>mesh</code> 默认名与 GLB 文件名</td></tr><tr><td><code>name</code></td><td>中文名</td><td><strong>改中文后要跑字体工具</strong>（T28）</td></tr><tr><td><code>category</code></td><td>地形 / 建筑 / 自然</td><td>决定它出现在哪个分类页</td></tr><tr><td><code>color</code></td><td>UI 色块（6 位 hex，不带 #）</td><td>用于手绘图标与选中态</td></tr><tr><td><code>height</code></td><td>占几格</td><td>影响放置校验与撤销；改了要重跑测试</td></tr><tr><td><code>mesh</code></td><td><code>"cube"</code> = 用方块；其他 = 加载 <code>assets/models/&lt;mesh&gt;.glb</code></td><td>决定会不会进 GLB 缩略图流程</td></tr><tr><td><code>tip</code></td><td>选中时底部提示</td><td>同样是中文，受字体子集影响</td></tr></tbody></table>
+<p><strong>加一件建材的完整流程</strong>（四步，零 GDScript 改动）：</p>
+<pre><code>1. 写建模脚本     tools/art/xxx.py
+2. 跑管线         python tools/asset_pipeline.py build --id xxx --name 名字 --category 建筑
+3. 自动完成       GLB → manifest → Godot 导入 → 写入 palette（保留原位、只覆盖传参的字段）
+4. 验证           python tools/dev.py test</code></pre>
+<blockquote><p>图标不用管：<code>model_thumbnail.gd</code> 会在运行时渲染 GLB 当图标。</p></blockquote>
+<hr>
+<h2>7.3 objectives.json：章节与目标（schema_version 2）</h2>
+<pre><code>{&quot;chapters&quot;:[{&quot;id&quot;:1,&quot;title&quot;:&quot;第一章 · 落脚&quot;,&quot;hint&quot;:&quot;熟悉放置、撤销与保存...&quot;}],
+ &quot;objectives&quot;:[{&quot;id&quot;:&quot;boardwalk&quot;,&quot;chapter&quot;:1,&quot;title&quot;:&quot;延伸一段木栈道&quot;,
+                &quot;description&quot;:&quot;亲手放置 8 块木栈道&quot;,&quot;kind&quot;:&quot;wood&quot;,&quot;target&quot;:8}]}</code></pre>
+<p><strong><code>kind</code> 就是统计口径</strong>，目前有这些：</p>
+<table><thead><tr><th>kind</th><th>含义</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><code>"wood"</code> / <code>"cottage"</code> / <code>"arch"</code> / <code>"beacon"</code> …</td><td>该类建材的玩家放置数</td></tr><tr><td><code>"garden"</code></td><td><code>min(3, tree) + min(3, flower)</code></td></tr><tr><td><code>"journal"</code></td><td><code>min(1, 保存次数) + min(1, 撤销次数)</code></td></tr><tr><td><code>"variety"</code></td><td>用过的不同建材种类数</td></tr><tr><td><code>"total"</code></td><td>玩家放置总数</td></tr><tr><td><code>"night_photo"</code></td><td>夜景截图次数</td></tr></tbody></table>
+<p>新增目标时：有现成 <code>kind</code> → 只加 JSON；需要新口径 → 在 <code>main.gd</code> 的 <code>_objective_amount</code><br>里加一个分支，并补一条断言。</p>
+<p><strong>面板只显示当前章节</strong>（2–4 条），完整进度在「目标与成就」——这是刻意的密度控制（见第 08 章）。</p>
+<hr>
+<h2>7.4 achievements.json：成就表</h2>
+<pre><code>{&quot;id&quot;:&quot;night_owl&quot;,&quot;title&quot;:&quot;夜观察者&quot;,&quot;description&quot;:&quot;在夜色中拍下一张照片&quot;,
+ &quot;kind&quot;:&quot;night_photo&quot;,&quot;target&quot;:1}</code></pre>
+<p>与目标的差别只有两点：</p>
+<ol><li><strong>持久化位置不同</strong>：成就存 <code>user://achievements.json</code>，<strong>属于玩家，不属于作品</strong>，</li></ol>
+<p>不随存档槽导出；目标进度则来自当前世界状态</p>
+<ol><li><strong>落盘时机有讲究</strong>：见下方"Web 写盘顺序"这个真实事故</li></ol>
+<blockquote><p>⚠️ <strong>真实事故（必读）</strong>：Web 端 <code>user://</code> 是异步写入 IndexedDB 的。<br>本实训曾出现"成就文件在存档之后写，导致整份存档丢失"。<br>现在的规则是：<strong>成就只在"存档之前"和"退出时"落盘</strong>（<code>main.gd</code> 里 <code>achievements.flush()</code><br>在 <code>model.save_slot()</code> 之前调用），绝不在自己的定时器里写。</p></blockquote>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>改 JSON</td><td>改文件后跑 <code>dev.py test</code></td><td>一样的操作；平台可能提供<strong>校验预览</strong>（JSON schema / 断言提示）</td></tr><tr><td>加建材</td><td>自己跑 <code>asset_pipeline.py build</code></td><td>同一条命令，产物落在平台工作区</td></tr><tr><td>持久化差异</td><td>写本地磁盘，行为可预测</td><td>云端预览环境同样是 Web 运行时，<strong>IndexedDB 写盘顺序的坑完全一样存在</strong></td></tr><tr><td>排错</td><td>本地复现</td><td>先用 <code>dev.py test</code> 排除逻辑，再查运行时（写盘/预览）</td></tr></tbody></table>
+<blockquote><p>🌩 提醒：不要因为"在云端"就以为没有 Web 运行时的坑——<br>云端预览往往<strong>正是 Web 导出</strong>，第 7.4 的写盘顺序问题在那里同样会发生。</p></blockquote>
+<hr>
+<h2>7.5 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>加了建材但游戏里没有</td><td>只改了 JSON，没放 GLB</td><td>跑 <code>asset_pipeline.py build</code></td></tr><tr><td>改中文后出现方框</td><td>子集字体缺字</td><td>跑 <code>build_font_corpus.py</code></td></tr><tr><td>改 <code>height</code> 后穿模/测试红</td><td>占位与断言不一致</td><td>改完必跑测试</td></tr><tr><td>面板顺序变了</td><td>注册逻辑曾把条目移到分类末尾</td><td>现状：已存在条目<strong>保留原位</strong></td></tr><tr><td>Web 上存档丢失</td><td>第二个文件在存档之后写</td><td>见 7.4：把其他写盘放在存档之前</td></tr></tbody></table>
+<hr>
+<h2>7.6 本章作业</h2>
+<ol><li>加一件"新分类外"的建材：写脚本 → 跑管线 → 跑测试（可先从复制 <code>barrel.py</code> 改名开始）</li><li>给第三章加一条目标（用现成 <code>kind</code>，例如 <code>total: 80</code>），跑测试确认面板显示变化</li><li>加一项成就（用现成 <code>kind</code>），并<strong>验证它只解锁一次</strong>（重进不重复弹）</li><li>回答：目标进度与成就状态分别存在哪里？为什么这么分？</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>数据管内容，代码管口径</strong>。这条边界讲清了，学生就不会乱改代码。</li><li><strong>课堂演示</strong>：现场加一条目标（<code>total: 80</code>），刷新看面板变化——30 秒见效，很有说服力。</li><li><strong>高频误解</strong>：学生以为"数据驱动 = 什么都不用改代码"。用 <code>kind</code> 的例子说明边界在哪。</li><li><strong>压轴案例</strong>：7.4 的"Web 写盘顺序导致丢存档"——这是本实训最有教学价值的真实事故，</li></ul>
+<p>建议整段讲（它同时涉及运行时、持久化、验证三条线）。</p>
+<ul><li><strong>批改要点</strong>：作业 4 必须答出"成就属于玩家、目标属于作品"。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/07/07-dock-building.png" alt="07-dock-building"><figcaption>07-dock-building.png</figcaption></figure><figure><img src="assets/shots/07/07-place-tree.png" alt="07-place-tree"><figcaption>07-place-tree.png</figcaption></figure><figure><img src="assets/shots/07/07-progress-panel.png" alt="07-progress-panel"><figcaption>07-progress-panel.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:20</td><td>硬编码 vs 数据驱动 对比</td><td>"加内容不该改代码。"</td></tr><tr><td>01:20–03:00</td><td>palette 字段表 + 加建材四步</td><td>"一条命令，从脚本到可放置。"</td></tr><tr><td>03:00–04:40</td><td>objectives 的 kind 口径表</td><td>"数据管内容，代码管口径。"</td></tr><tr><td>04:40–06:20</td><td><strong>Web 写盘顺序事故</strong>复盘</td><td>"存档之后再写别的文件，存档会丢。"</td></tr><tr><td>06:20–08:00</td><td>现场加一条目标看面板变化</td><td>"30 秒见效，这就是数据驱动的价值。"</td></tr><tr><td>08:00–09:00</td><td>作业 + 预告（观感设计）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/07/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>07-dock-building.png</code></td><td>建筑分类建材栏全貌（数据渲染结果）</td><td><code>python tools/course_capture.py --chapter 07</code></td></tr><tr><td><code>07-progress-panel.png</code></td><td>目标与成就面板</td><td>同上</td></tr><tr><td><code>07-place-tree.png</code></td><td>放置一棵树（触发目标统计）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L5 片段，12 分钟）</h2>
+<ul><li><strong>开场投票</strong>："加一件建材，你觉得要改几个文件？"（多数人会高估）</li><li><strong>演示</strong>：现场四步加一件建材 + 现场加一条目标</li><li><strong>事故复盘</strong>：7.4 的写盘顺序（可用"先存档 vs 先写成就"两版对比演示）</li><li><strong>收尾</strong>：强调"数据驱动也有边界"</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：能不能再加一个分类（比如"装饰"）？</strong><br>A：可以，但要同步 UI：<code>main.gd</code> 里分类按钮是硬编码的三个。这是本实训明确的"代码侧"边界。</p>
+<p><strong>Q：成就能不能按作品存档？</strong><br>A：现状是按玩家存（<code>user://achievements.json</code>）。若要按作品，需要改存储位置与导出逻辑。</p>
+<p><strong>Q：objectives 的 schema_version 从 1 升到 2，旧存档会坏吗？</strong><br>A：不会——<code>schema_version</code> 是<strong>存档格式</strong>的版本，与 <code>objectives.json</code> 的字段无关；<br>但课件若沿用旧格式，<code>chapters</code> 缺失时面板会退化（这也是要跑测试的原因）。</p>
+<div class="pager"><a href="chapter-06.html">← 卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

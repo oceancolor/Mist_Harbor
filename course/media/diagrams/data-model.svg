@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="470" viewBox="0 0 960 470" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="960" height="470" fill="#f7f8ed"/>
+  <text x="480" y="34" text-anchor="middle" font-size="20" fill="#2d514b">数据驱动：三张 JSON 表与它们的读取方</text>
+
+  <rect x="30" y="70" width="260" height="180" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="160" y="98" text-anchor="middle" font-size="15" fill="#2d514b">data/palette.json</text>
+  <text x="50" y="126" font-size="12" fill="#789087">id · name · category · color</text>
+  <text x="50" y="146" font-size="12" fill="#789087">height · mesh · tip</text>
+  <text x="50" y="176" font-size="12" fill="#497c6b">= 建材表（14 条）</text>
+  <text x="50" y="204" font-size="12" fill="#789087">mesh=cube → 方块</text>
+  <text x="50" y="222" font-size="12" fill="#789087">mesh=其他 → 加载 GLB</text>
+
+  <rect x="350" y="70" width="260" height="180" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="480" y="98" text-anchor="middle" font-size="15" fill="#2d514b">data/objectives.json</text>
+  <text x="370" y="126" font-size="12" fill="#789087">chapters[]: id · title · hint</text>
+  <text x="370" y="146" font-size="12" fill="#789087">objectives[]: id · chapter ·</text>
+  <text x="370" y="164" font-size="12" fill="#789087">  title · description · kind · target</text>
+  <text x="370" y="194" font-size="12" fill="#497c6b">= 三章引导（9 条目标）</text>
+  <text x="370" y="222" font-size="12" fill="#789087">kind 决定统计口径</text>
+
+  <rect x="670" y="70" width="260" height="180" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="800" y="98" text-anchor="middle" font-size="15" fill="#2d514b">data/achievements.json</text>
+  <text x="690" y="126" font-size="12" fill="#789087">id · title · description</text>
+  <text x="690" y="146" font-size="12" fill="#789087">kind · target</text>
+  <text x="690" y="176" font-size="12" fill="#497c6b">= 成就表（8 条）</text>
+  <text x="690" y="204" font-size="12" fill="#789087">状态存 user://achievements.json</text>
+  <text x="690" y="226" font-size="12" fill="#8a6d3b">⚠ 只能在"存档之前/退出时"写</text>
+
+  <line x1="160" y1="250" x2="160" y2="300" stroke="#789087" stroke-width="2"/>
+  <line x1="480" y1="250" x2="480" y2="300" stroke="#789087" stroke-width="2"/>
+  <line x1="800" y1="250" x2="800" y2="300" stroke="#789087" stroke-width="2"/>
+
+  <rect x="30" y="300" width="260" height="130" rx="12" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="160" y="328" text-anchor="middle" font-size="14" fill="#2d514b">world_model / build_world</text>
+  <text x="50" y="356" font-size="12" fill="#789087">读 palette：kind 是否合法、</text>
+  <text x="50" y="374" font-size="12" fill="#789087">height 决定占位、mesh 决定模型</text>
+  <text x="50" y="402" font-size="12" fill="#497c6b">→ can_place / 占位 / 网格</text>
+
+  <rect x="350" y="300" width="260" height="130" rx="12" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="480" y="328" text-anchor="middle" font-size="14" fill="#2d514b">main.gd</text>
+  <text x="370" y="356" font-size="12" fill="#789087">_objective_amount(goal, counts)</text>
+  <text x="370" y="374" font-size="12" fill="#789087">按 kind 计算进度 → 面板/总览</text>
+  <text x="370" y="402" font-size="12" fill="#497c6b">面板只显示当前章节</text>
+
+  <rect x="670" y="300" width="260" height="130" rx="12" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="800" y="328" text-anchor="middle" font-size="14" fill="#2d514b">achievements.gd</text>
+  <text x="690" y="356" font-size="12" fill="#789087">progress_value(kind, model, photos)</text>
+  <text x="690" y="374" font-size="12" fill="#789087">达标 → unlocked 信号 → toast</text>
+  <text x="690" y="402" font-size="12" fill="#497c6b">玩家级持久化，不随存档导出</text>
+
+  <text x="480" y="458" text-anchor="middle" font-size="13" fill="#789087">分工：数据管内容，代码管口径；加内容改 JSON，只有新增"口径"才动代码</text>
+</svg>

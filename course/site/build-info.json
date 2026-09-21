@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 12:50",
+  "built": "2026-09-21 12:57",
   "chapters": [
     {
       "key": "01",
@@ -42,7 +42,21 @@
       "volume": "卷 1 · 设计先行",
       "characters": 3962,
       "file": "chapter-06.html"
+    },
+    {
+      "key": "07",
+      "title": "卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容",
+      "volume": "卷 1 · 设计先行",
+      "characters": 4934,
+      "file": "chapter-07.html"
+    },
+    {
+      "key": "08",
+      "title": "卷 1 · 第 08 章　观感设计：\"高级感\"从哪来，又怎么丢的",
+      "volume": "卷 1 · 设计先行",
+      "characters": 4383,
+      "file": "chapter-08.html"
     }
   ],
-  "characters": 31124
+  "characters": 40441
 }

@@ -5,10 +5,10 @@
 <link rel="stylesheet" href="assets/style.css"></head><body>
 <header class="top"><div class="inner">
   <h1>卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</h1>
-  <div class="meta">卷 1 · 设计先行 · 字符数 3962 · 生成于 2026-09-21 12:50</div>
+  <div class="meta">卷 1 · 设计先行 · 字符数 3962 · 生成于 2026-09-21 12:57</div>
 </div></header>
 <div class="wrap">
-<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html" style="color:#2d514b;font-weight:700">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a></nav>
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html" style="color:#2d514b;font-weight:700">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a></nav>
 <main>
 <h1>卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</h1>
 <blockquote><p><strong>本章目标</strong>：理解《雾港》为什么能"放了就能撤销、高处不能悬空"——<br>全部答案都在 <code>project/scripts/world_model.gd</code> 的数据结构里。<br>对应任务：T16 / T17　|　对应文件：<code>project/scripts/world_model.gd</code></p></blockquote>
@@ -64,7 +64,7 @@ var occupancy: Dictionary = {}   # Vector3i(被占用的格) -&gt; Vector3i(它�
 <p><strong>Q：为什么不用数组/八叉树而用字典？</strong><br>A：世界是稀疏的（大部分格子是空的），字典按坐标直接命中，O(1) 且实现简单；<br>12000 上限下内存与性能都够。</p>
 <p><strong>Q：撤销栈为什么是 160？</strong><br>A：产品权衡——足够覆盖一次建造会话的操作量，又不至于无限增长。它是常量，可按需调整。</p>
 <p><strong>Q：多格模型的旋转会影响占位吗？</strong><br>A：占位按高度（Y 轴）展开，旋转只影响朝向，不影响占格数量。</p>
-<div class="pager"><a href="chapter-05.html">← 卷 1 · 第 05 章　设计先行：约束比功能更重要</a><span></span></div>
+<div class="pager"><a href="chapter-05.html">← 卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容 →</a></div>
 </main></div>
 <footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
 </body></html>

@@ -38,5 +38,17 @@
     {"category": "建筑", "select": "beacon", "place": [[720, 430]], "wait": 600,
      "shot": "06-beacon-placed.png"},
     {"key": "Control+z", "wait": 800, "shot": "06-undo.png"}
+  ],
+  "07": [
+    {"shot": "07-dock-building.png"},
+    {"click": "progress", "wait": 800, "shot": "07-progress-panel.png"},
+    {"key": "Escape", "wait": 500},
+    {"category": "自然", "select": "tree", "place": [[700, 430]], "wait": 500, "shot": "07-place-tree.png"}
+  ],
+  "08": [
+    {"shot": "08-dock-building.png"},
+    {"category": "建筑", "select": "barrel", "wait": 600, "shot": "08-barrel-icon.png"},
+    {"key": "N", "wait": 1200, "shot": "08-night-glow.png"},
+    {"key": "N", "wait": 600}
   ]
 }

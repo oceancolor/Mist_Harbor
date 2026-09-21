@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</h1>
+  <div class="meta">卷 1 · 设计先行 · 字符数 4383 · 生成于 2026-09-21 12:57</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html" style="color:#2d514b;font-weight:700">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a></nav>
+<main>
+<h1>卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</h1>
+<blockquote><p><strong>本章目标</strong>：把"看起来廉价"这种模糊感受，拆成<strong>可检查的四类问题</strong>：<br>配色、字体、图标、密度——每类都配本实训真实翻车案例与修复方法。<br>对应任务：T28–T32　|　对应提交：<code>fe21139</code>（观感修复）</p></blockquote>
+<hr>
+<h2>8.1 先看配色：一套值，全场复用</h2>
+<table><thead><tr><th>变量</th><th>值</th><th>用在哪</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>INK</code></td><td><code>#2d514b</code></td><td>主文字</td></tr><tr><td><code>MUTED</code></td><td><code>#789087</code></td><td>次要文字、说明</td></tr><tr><td><code>PAPER</code></td><td><code>#f7f8ed</code></td><td>面板底色</td></tr><tr><td><code>ACCENT</code></td><td><code>#497c6b</code></td><td>选中、强调</td></tr><tr><td>场景环境</td><td>背景 <code>#cfdfd6</code> / 环境光 <code>#dceae0</code> / 阳光 <code>#ffe6bd</code></td><td><code>build_world.gd</code></td></tr></tbody></table>
+<p><strong>规则</strong>：新增 UI <strong>不许</strong>自己编颜色，只能从这五个值里取（或明确派生，如 <code>color.darkened(0.08)</code>）。<br>配色一旦散开，界面立刻"拼贴感"。</p>
+<hr>
+<h2>8.2 字体：一个真实的"变瘦 1.5%"事故</h2>
+<p><strong>现象</strong>：改完中文文案后，界面"好像没原来精致了"。<br><strong>取证</strong>（用 fontTools 对比字形坐标）：</p>
+<pre><code>小: old bbox 30,-82,978,828
+小: new bbox 42,-72,966,816     ← 同样是 3 个轮廓、43 个点，但整体内缩 12–16/1000</code></pre>
+<p><strong>原因</strong>：字体是<strong>子集字体</strong>（只打包用到的字）。我为了补缺字，把整包重新子集了一遍，<br>新子集的字形比原版窄约 1.5%——字重与字距同时变轻，于是"廉价感"就来了。</p>
+<p><strong>修法（现在的标准流程）</strong>：<strong>保基准 + 补缺字</strong></p>
+<pre><code>1. 原版子集存为基准：tools/fonts/harbor-sc-base.ttf
+2. 只把&quot;基准里没有的字&quot;从源字体（Noto Sans SC，可变字体需先实例化 wght=400）子集出来
+3. 合并进基准 → 原有字形字节级不变</code></pre>
+<pre><code>python tools/build_font_corpus.py   # 保基准 + 只补缺字，并报告补了几个</code></pre>
+<p><strong>验证</strong>：<code>小/屋/灯/塔</code> 坐标 <strong>IDENTICAL</strong>；游戏文案缺字扫描 <strong>MISSING_TOTAL=0</strong>。</p>
+<blockquote><p>📌 规矩：<strong>任何中文文案增删改，都要跑一次 <code>build_font_corpus.py</code>。</strong><br>顺带两个坑：源字体是<strong>可变字体</strong>（要先实例化），fontTools 合并布局表会报 <code>VarStore</code> 错（要先剥离）。</p></blockquote>
+<hr>
+<h2>8.3 图标：手绘 vs GLB 缩略图，以及"塑料感"</h2>
+<p>本实训把建材图标换成了<strong>运行时渲染的 GLB 缩略图</strong>（<code>model_thumbnail.gd</code>），好处是加建材零图标代码。<br>但第一版翻车了：</p>
+<table><thead><tr><th></th><th>第一版（塑料感）</th><th>修好之后</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>环境光</td><td>白色 × 0.9</td><td><code>#dceae0</code> × 0.55</td></tr><tr><td>主光</td><td>白 × 2.6</td><td>暖阳 <code>#ffe6bd</code> × 0.95</td></tr><tr><td>补光</td><td>白 × 1.1</td><td>冷色 <code>#cfe0ea</code> × 0.32</td></tr><tr><td>色调映射</td><td>默认</td><td><strong>线性</strong>（与场景一致）</td></tr><tr><td>相机</td><td>透视 + 自定角度</td><td><strong>正交 + 与游戏同角度</strong>（yaw/pitch 0.72）</td></tr><tr><td>画质</td><td>96px 无抗锯齿</td><td>192px + 4× MSAA</td></tr></tbody></table>
+<p><strong>根因</strong>：图标舞台的光比与游戏场景完全不一致 → 模型像棚拍塑料玩具，而不是"场景里的小物件"。</p>
+<p><strong>修法口诀</strong>：<strong>图标的打光必须抄场景的</strong>。<code>build_world.gd</code> 里是什么光，缩略图就用什么光。</p>
+<blockquote><p>逃生开关：<code>scripts/model_thumbnail.gd</code> 顶部 <code>const ENABLED := true</code> 改成 <code>false</code>，<br>一键回退到手绘图标。</p></blockquote>
+<hr>
+<h2>8.4 密度：信息层级比"多"更重要</h2>
+<p><strong>真实案例</strong>：目标面板一度塞了 9 条目标（原本 6 条），立刻显得杂乱。<br><strong>修法</strong>：面板只显示<strong>当前章节</strong>（2–4 条），完整进度收进「目标与成就」面板。</p>
+<p>三条密度原则：</p>
+<ol><li><strong>一屏只回答一个问题</strong>（"我现在该做什么" vs "我总共做了多少"不要挤在一起）</li><li>次要信息<strong>可收起</strong>，不要平铺</li><li>进度用<strong>条形</strong>表达，不用长句</li></ol>
+<hr>
+<h2>8.5 观感回归检查单（每次 UI 改动后过一遍）</h2>
+<ul><li>[ ] 新增颜色是否来自五个变量？（不许自编）</li><li>[ ] 中文文案改动是否跑了 <code>build_font_corpus.py</code>？缺字扫描是否为 0？</li><li>[ ] 新图标打光是否与 <code>build_world.gd</code> 一致？是否开了 MSAA？</li><li>[ ] 面板条目数是否超过 5 条？超了是否可收起？</li><li>[ ] 截图对比：改动前后的同一画面放在一起看（可用 <code>course_capture.py</code> 产出）</li></ul>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>观感问题定位</td><td>本地跑游戏/截图对比</td><td>云端预览同样截图对比；<strong>建议仍用 <code>course_capture.py</code> 产出同一视角</strong></td></tr><tr><td>字体工具</td><td>本地跑 <code>build_font_corpus.py</code></td><td>平台内执行同一命令（纯 Python 标准库 + fontTools）</td></tr><tr><td>图标渲染</td><td>本地 GPU/软渲染</td><td>云端预览是 WebGL，<strong>MSAA 与光比表现一致</strong></td></tr><tr><td>风险</td><td>本地显卡差异</td><td>云端预览环境更接近最终 Web 成品——<strong>观感验收应优先在 Web 成品上看</strong></td></tr></tbody></table>
+<blockquote><p>🌩 一句话：<strong>观感的最终裁判是 Web 成品 + 截图对比</strong>，因为学员看到的就是它。</p></blockquote>
+<hr>
+<h2>8.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>中文变方框</td><td>子集缺字</td><td>跑 <code>build_font_corpus.py</code></td></tr><tr><td>字看着变轻/变瘦</td><td>整包重子集，字形换了</td><td>保基准 + 只补缺字</td></tr><tr><td>图标发白、塑料感</td><td>光比与场景不一致</td><td>抄 <code>build_world.gd</code> 的灯光参数</td></tr><tr><td>图标锯齿</td><td>分辨率低/没开 MSAA</td><td>192px + <code>MSAA_4X</code></td></tr><tr><td>面板显得杂</td><td>信息平铺太多</td><td>按章节收起，只留当前</td></tr></tbody></table>
+<hr>
+<h2>8.7 本章作业</h2>
+<ol><li>用 fontTools 对比你机器上任意两个中文字形，写出 <code>contours / 点数 / bbox</code> 三项</li><li>改一条中文文案 → 跑字体工具 → 确认缺字扫描为 0</li><li>把 <code>ModelThumbnails.ENABLED</code> 改成 <code>false</code> 看一版手绘图标，再改回来，写下你的偏好与理由</li><li>挑一个面板，按 8.4 三条原则给出一条改进建议</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：观感不是玄学，是<strong>四类可检查项</strong>（配色/字体/图标/密度）。</li><li><strong>最强演示</strong>：<strong>A/B 盲测</strong>。把"塑料感图标"与"修好后的图标"并排，让观众投票——</li></ul>
+<p>再公布哪边是哪边，印象极深。</p>
+<ul><li><strong>高频误解</strong>：学生觉得"观感靠审美天赋"。用 8.2 的<strong>数值取证</strong>（bbox 缩小 16/1000）</li></ul>
+<p>证明它可以被量化。</p>
+<ul><li><strong>讨论题</strong>：为什么"图标打光要抄场景"？（因为玩家会把图标与场景里的实物做视觉对照）</li><li><strong>批改要点</strong>：作业 2 必须给出缺字扫描结果（数字），只说"跑过了"不给分。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/08/08-barrel-icon.png" alt="08-barrel-icon"><figcaption>08-barrel-icon.png</figcaption></figure><figure><img src="assets/shots/08/08-dock-building.png" alt="08-dock-building"><figcaption>08-dock-building.png</figcaption></figure><figure><img src="assets/shots/08/08-night-glow.png" alt="08-night-glow"><figcaption>08-night-glow.png</figcaption></figure></div><h2>📹 录屏分镜（10 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:20</td><td>配色五值表</td><td>"不许自编颜色。"</td></tr><tr><td>01:20–03:30</td><td><strong>字体事故取证</strong>（bbox 对比）</td><td>"字变瘦了 1.5%，肉眼说不清，数字说得清。"</td></tr><tr><td>03:30–05:30</td><td>图标 A/B 对比（塑料感 vs 修好）</td><td>"打光抄场景，质感就对了。"</td></tr><tr><td>05:30–07:00</td><td>面板密度前后对比</td><td>"一屏只回答一个问题。"</td></tr><tr><td>07:00–08:40</td><td>过一遍观感检查单</td><td>"改完 UI 就照这五条打勾。"</td></tr><tr><td>08:40–10:00</td><td>作业 + 预告（卷 2：Godot 工程）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/08/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>08-dock-building.png</code></td><td>建筑分类（缩略图图标现状）</td><td><code>python tools/course_capture.py --chapter 08</code></td></tr><tr><td><code>08-barrel-icon.png</code></td><td>木桶被选中（看缩略图与提示）</td><td>同上</td></tr><tr><td><code>08-night-glow.png</code></td><td>夜景灯光（与图标打光对照）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L6，15 分钟，建议整场做 A/B 盲测）</h2>
+<ul><li><strong>开场盲测</strong>：两组截图（旧图标 / 新图标、旧字体 / 新字体），观众投票</li><li><strong>揭晓 + 取证</strong>：用 fontTools 输出与灯光参数表解释差异</li><li><strong>现场修一个</strong>：挑一条真实观感问题现场改（例如把某个自编颜色改回变量）</li><li><strong>收尾</strong>：发"观感检查单"</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：我没有美术基础，能做好观感吗？</strong><br>A：能。本章的四类问题全部可检查、可量化；本实训的两次翻车也是靠数据定位的，不是靠"眼光"。</p>
+<p><strong>Q：字体工具一定要 fontTools 吗？</strong><br>A：本实训用它做子集与合并。你可以换成任何工具，但<strong>"保基准 + 只补缺字"的原则不能变</strong>。</p>
+<p><strong>Q：Web 上看到的和本地不一致？</strong><br>A：以 Web 成品为准（学员看到的就是它）。差异通常来自渲染后端与 MSAA，按 8.5 检查单逐项排除。</p>
+<div class="pager"><a href="chapter-07.html">← 卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><span></span></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>
