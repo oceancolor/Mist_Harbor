@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 3 · 第 18 章　风格统一：配色、比例与密度 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 3 · 第 18 章　风格统一：配色、比例与密度</h1>
+  <div class="meta">卷 3 · 资产管线 · 字符数 3861 · 生成于 2026-09-21 13:41</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html" style="color:#2d514b;font-weight:700">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 3 · 第 18 章　风格统一：配色、比例与密度</h1>
+<blockquote><p><strong>本章目标</strong>：把"看起来协调"拆成<strong>三条可执行的规则</strong>——<br>配色有主次、比例有基准、密度有上限。这样新增资产时才不会风格漂移。<br>对应任务：T28–T32（观感）　|　对应文件：<code>data/palette.json</code>、<code>project/docs/requirements.md</code></p></blockquote>
+<hr>
+<h2>18.1 配色：一个暖色家族 + 一个冷色点缀</h2>
+<p>把 14 项建材的颜色摊开看：</p>
+<table><thead><tr><th>类别</th><th>色值</th><th>感觉</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>地形</strong>（5）</td><td><code>8ab18c</code> 草地 / <code>b9bcad</code> 岩石 / <code>bb946c</code> 木栈道 / <code>c8856b</code> 砖 / <code>82bcc2</code> 玻璃</td><td>低饱和、偏灰的自然色</td></tr><tr><td><strong>建筑</strong>（6）</td><td><code>d1826b</code> 小屋 / <code>c67360</code> 屋顶 / <code>d4cfb8</code> 桥拱 / <code>d08067</code> 灯塔 / <code>dbbca0</code> 风车 / <code>b07d4f</code> 木桶</td><td><strong>暖砖红—赭石家族</strong></td></tr><tr><td><strong>自然</strong>（3）</td><td><code>73a38b</code> 乔木 / <code>eac989</code> 暖光灯 / <code>d9aeae</code> 花丛</td><td>绿 + 两个暖亮点</td></tr></tbody></table>
+<p><strong>三条规则</strong>：</p>
+<ol><li><strong>主色家族统一</strong>：建筑类全在<strong>暖赭石—砖红</strong>区间（<code>b07d4f</code> → <code>dbbca0</code>），不出现纯饱和色</li><li><strong>点缀只有一个冷色</strong>：<code>82bcc2</code>（玻璃）是<strong>全表唯一的冷色</strong>，正因为少，它才显眼</li><li><strong>饱和度压低</strong>：没有 <code>#ff0000</code> 式的纯色，全部带灰——低饱和让大量方块堆叠时不刺眼</li></ol>
+<blockquote><p>📌 这个配色的效果是：<strong>远看是一片和谐的暖灰海岛，近看有明确的材质区分</strong>。</p></blockquote>
+<hr>
+<h2>18.2 比例：1 格 = 1 米，是全部比例的锚</h2>
+<pre><code>1 格 = 1 m  →  单格道具宽 ≤ 1 m
+              高体道具底座收窄（lamp 0.42 m / beacon 0.86 m）
+              建筑高度 1–3 格（小屋 1、风车 2、灯塔 3）</code></pre>
+<table><thead><tr><th>比例决策</th><th>理由</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>道具<strong>略小于</strong>1 m（cottage 1.03 是例外，因为它要"贴满"一格）</td><td>留缝隙 → 堆叠时有轮廓感</td></tr><tr><td>高体<strong>底座收窄</strong></td><td>占 2–3 格时不会显得像一根柱子</td></tr><tr><td>相机等距角固定 0.72/0.72</td><td>所有比例判断都在同一视角下进行（第 11 章）</td></tr></tbody></table>
+<p><strong>验证方法</strong>：把新资产放进去，<strong>跟小屋并排看</strong>——如果它显得"太胖"或"太细"，<br>问题一定在宽度/底座，而不是高度。</p>
+<hr>
+<h2>18.3 密度：上限、起始量与视觉噪声</h2>
+<table><thead><tr><th>约束</th><th>值</th><th>来源</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>建材上限</td><td><strong>12,000</strong> 原点</td><td><code>requirements.md</code></td></tr><tr><td>世界范围</td><td>±25（相机钳制 ±23）</td><td>同上</td></tr><tr><td>起始村庄</td><td>固定 <code>seed 240910</code> 生成</td><td>manifest / <code>village.reset(240910, true)</code></td></tr><tr><td>存档上限</td><td>≤ 4 MB</td><td><code>requirements.md</code></td></tr></tbody></table>
+<p><strong>密度设计的两条经验</strong>：</p>
+<ol><li><strong>起始村庄给"参照物"</strong>：玩家一进来就有房子、树、灯塔，立刻理解比例与风格</li><li><strong>地形用顶点色扰动</strong>：<code>build_world.gd</code> 按坐标 hash 做 ±0.07 亮度变化（第 10 章）</li></ol>
+<p>→ <strong>大片同色地形不死板</strong>，等价于"用代码代替贴图"</p>
+<blockquote><p>📌 第 3 条经验：<strong>密度靠"变化"而非"数量"</strong>。同样 100 块石头，<br>有亮度扰动看起来就自然得多。</p></blockquote>
+<hr>
+<h2>18.4 新增资产时的风格检查清单</h2>
+<pre><code>□ 颜色在既有家族内？（建筑：暖赭石；自然：绿/暖亮；地形：低饱和）
+□ 是否引入了第二个冷色？（如果是，说明玻璃的点缀地位被稀释）
+□ 宽度 ≤ 1 m（单格）或底座收窄（高体）？
+□ 高度 ceil 后占位合理？跟同类并排看是否协调？
+□ 面数 ≤ 1500、体积在同类中不突兀？（第 17 章）
+□ 放进游戏截图对比：跟小屋/树并排是否&quot;像一家人&quot;？</code></pre>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>风格判断</td><td>人眼看截图</td><td>同样靠人眼；<strong>但可以先机器筛</strong>（色相/饱和度/尺寸阈值）</td></tr><tr><td>批量产出</td><td>逐件做</td><td>云端容易一次造多件 → <strong>更依赖检查清单</strong></td></tr><tr><td>建议</td><td>每件留预览图</td><td>云端把预览图 + inspect 报告<strong>归档</strong>，作为风格评审材料</td></tr><tr><td>风险</td><td>风格漂移慢</td><td><strong>云端批量 + 缺少评审 = 风格漂移最快</strong></td></tr></tbody></table>
+<blockquote><p>🌩 给云端流水线的具体建议：把上面 6 条清单里的<strong>可量化项</strong><br>（饱和度区间、宽度 ≤1 m、面数 ≤1500）做成自动卡点，只把"是否协调"留给人。</p></blockquote>
+<hr>
+<h2>18.5 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>新资产显得"不像这个游戏"</td><td>颜色跳出家族 / 饱和度过高</td><td>压低饱和度，靠拢暖赭石</td></tr><tr><td>玻璃不再显眼</td><td>又加了别的冷色</td><td>保持"唯一冷色"原则</td></tr><tr><td>道具显得笨重</td><td>高体底座没收窄</td><td>底座收到 ≤0.5 m</td></tr><tr><td>大片地形死板</td><td>没有颜色扰动</td><td>顶点色 hash 扰动（第 10 章）</td></tr><tr><td>玩家一进来空荡荡</td><td>没有起始参照物</td><td>保留 seed 固定的起始村庄</td></tr><tr><td>堆叠看不出层次</td><td>道具宽度贴满一格</td><td>略小于 1 m，留缝</td></tr></tbody></table>
+<hr>
+<h2>18.6 本章作业</h2>
+<ol><li>说出配色三条规则，并指出全表唯一的冷色是哪个、为什么只允许有一个</li><li>说明"1 格 = 1 m"如何决定单格道具与高体道具的尺寸策略</li><li>用风格检查清单评估 <code>barrel</code>（0.61 m 宽 / <code>b07d4f</code>）：逐条给出结论</li><li>设计一件新资产（例如 <code>crate</code> 木箱），给出颜色、尺寸与占位，并说明它如何满足清单</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>风格 = 约束的集合</strong>，不是"感觉"。能写进清单的才管得住。</li><li><strong>课堂演示</strong>：把一件资产的饱和度拉高 30%，并排截图让学员直观感受"跳"。</li><li><strong>高频误解</strong>：学生追求"每件都好看"。强调：<strong>整体协调 &gt; 单件出彩</strong>。</li><li><strong>讨论题</strong>：如果游戏要出"雪岛"主题包，配色规则该怎么改？（引出主题化扩展）</li><li><strong>批改要点</strong>：作业 3 要逐条给结论，尤其要点出它宽度 0.61 m 是为了留缝。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/18/18-glass-accent.png" alt="18-glass-accent"><figcaption>18-glass-accent.png</figcaption></figure><figure><img src="assets/shots/18/18-palette-colors.png" alt="18-palette-colors"><figcaption>18-palette-colors.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:40</td><td>三类配色摊开 + 三条规则</td><td>"暖色家族，一个冷色点缀。"</td></tr><tr><td>01:40–03:00</td><td>饱和度实验：拉高 30% 并排对比</td><td>"跳出来的那件，就是错的。"</td></tr><tr><td>03:00–04:30</td><td>比例：1 格 = 1 m，高体收窄</td><td>"比例的锚是格子。"</td></tr><tr><td>04:30–06:00</td><td>密度：上限、起始村庄、顶点色扰动</td><td>"密度靠变化，不靠数量。"</td></tr><tr><td>06:00–08:00</td><td>新增资产检查清单逐条过</td><td></td></tr><tr><td>08:00–09:00</td><td>作业 + 卷 3 小结</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/18/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>18-palette-colors.png</code></td><td>建材栏全部色块（配色家族一目了然）</td><td><code>python tools/course_capture.py --chapter 18</code></td></tr><tr><td><code>18-glass-accent.png</code></td><td>放置玻璃（唯一冷色点缀的效果）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，12 分钟）</h2>
+<ul><li><strong>开场</strong>：A/B 盲测——两版截图（一版饱和度偏高），让观众投票</li><li><strong>演示</strong>：把某件资产的颜色改成跳出家族的值，看整体观感崩塌</li><li><strong>互动</strong>：让观众给自己的项目写三条配色规则</li><li><strong>收尾</strong>：卷 3 总结（脚本 → 远程执行 → 管线 → 预算 → 风格）</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：能不能用贴图提升质感？</strong><br>A：本实训刻意走<strong>纯色低模</strong>路线：体积小、风格统一、无需 UV 与纹理管理。加贴图会破坏这三点。</p>
+<p><strong>Q：起始村庄会算进玩家的建造统计吗？</strong><br>A：不会——测试里明确断言"starter scenery not credited as learner construction"（第 29 章 L1）。</p>
+<p><strong>Q：配色能不能玩家自定义？</strong><br>A：当前是数据驱动的固定表；要做自定义只需让玩家改 <code>palette.json</code> 的 <code>color</code>，架构上已支持。</p>
+<div class="pager"><a href="chapter-17.html">← 卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

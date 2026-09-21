@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="480" viewBox="0 0 920 480" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="920" height="480" fill="#f7f8ed"/>
+  <text x="460" y="32" text-anchor="middle" font-size="20" fill="#2d514b">资产预算：面数 ≠ 体积，高度 ≠ 占位</text>
+
+  <text x="40" y="62" font-size="14" fill="#2d514b">三角面（越右越多）</text>
+  <g font-size="12" fill="#789087">
+    <text x="40" y="88">roof</text><rect x="90" y="78" width="12" height="14" fill="#9dbda9"/>
+    <text x="40" y="110">tree</text><rect x="90" y="100" width="21" height="14" fill="#9dbda9"/>
+    <text x="40" y="132">lamp</text><rect x="90" y="122" width="38" height="14" fill="#9dbda9"/>
+    <text x="40" y="154">arch</text><rect x="90" y="144" width="59" height="14" fill="#6d9e88"/>
+    <text x="40" y="176">cottage</text><rect x="90" y="166" width="77" height="14" fill="#6d9e88"/>
+    <text x="40" y="198">windmill</text><rect x="90" y="188" width="78" height="14" fill="#6d9e88"/>
+    <text x="40" y="220">beacon</text><rect x="90" y="210" width="148" height="14" fill="#497c6b"/>
+    <text x="40" y="242">flower</text><rect x="90" y="232" width="158" height="14" fill="#497c6b"/>
+    <text x="40" y="264">barrel</text><rect x="90" y="254" width="179" height="14" fill="#497c6b"/>
+  </g>
+
+  <text x="330" y="62" font-size="14" fill="#2d514b">文件体积（KB）</text>
+  <g font-size="12" fill="#789087">
+    <text x="330" y="88">roof</text><rect x="390" y="78" width="12" height="14" fill="#9dbda9"/>
+    <text x="330" y="110">tree</text><rect x="390" y="100" width="17" height="14" fill="#9dbda9"/>
+    <text x="330" y="132">lamp</text><rect x="390" y="122" width="30" height="14" fill="#9dbda9"/>
+    <text x="330" y="154">arch</text><rect x="390" y="144" width="41" height="14" fill="#6d9e88"/>
+    <text x="330" y="176">cottage</text><rect x="390" y="166" width="58" height="14" fill="#6d9e88"/>
+    <text x="330" y="198">windmill</text><rect x="390" y="188" width="60" height="14" fill="#6d9e88"/>
+    <text x="330" y="220">beacon</text><rect x="390" y="210" width="89" height="14" fill="#497c6b"/>
+    <text x="330" y="242">barrel</text><rect x="390" y="232" width="83" height="14" fill="#497c6b"/>
+    <text x="330" y="264">flower</text><rect x="390" y="254" width="133" height="14" fill="#a4625a"/>
+  </g>
+
+  <text x="40" y="300" font-size="13" fill="#2d514b">反直觉①：flower 560 面却最占体积（71.8 KB）——物体与材质数量才是元凶</text>
+  <text x="40" y="320" font-size="13" fill="#2d514b">反直觉②：roof 只有 44 面，barrel 632 面，体积却只差 6.7 倍</text>
+
+  <line x1="30" y1="340" x2="890" y2="340" stroke="#b7cdb4" stroke-width="1"/>
+
+  <rect x="40" y="356" width="270" height="104" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="175" y="380" text-anchor="middle" font-size="14" fill="#2d514b">① 单格道具（占 1 格）</text>
+  <text x="56" y="404" font-size="12" fill="#789087">cottage / roof / arch / barrel / flower</text>
+  <text x="56" y="424" font-size="12" fill="#789087">宽度 ≤ 1 m，略小留缝（barrel 0.61）</text>
+  <text x="56" y="444" font-size="12" fill="#789087">堆叠时才有轮廓感</text>
+
+  <rect x="325" y="356" width="270" height="104" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="460" y="380" text-anchor="middle" font-size="14" fill="#2d514b">② 高体道具（占 2–3 格）</text>
+  <text x="341" y="404" font-size="12" fill="#789087">lamp / windmill / tree / beacon</text>
+  <text x="341" y="424" font-size="12" fill="#789087">底座收窄（lamp 0.42 / beacon 0.86）</text>
+  <text x="341" y="444" font-size="12" fill="#789087">否则占多格会显得笨重</text>
+
+  <rect x="610" y="356" width="270" height="104" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="745" y="380" text-anchor="middle" font-size="14" fill="#2d514b">③ 地形立方（程序化）</text>
+  <text x="626" y="404" font-size="12" fill="#789087">grass / stone / wood / brick / glass</text>
+  <text x="626" y="424" font-size="12" fill="#789087">mesh = "cube"，由 build_world 生成</text>
+  <text x="626" y="444" font-size="12" fill="#789087">零资产成本，顶点色扰动防死板</text>
+
+  <text x="460" y="474" text-anchor="middle" font-size="12" fill="#789087">合计 2,722 三角面 / 约 282 KB —— 这就是整个游戏的全部模型资产</text>
+</svg>

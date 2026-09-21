@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 13:28",
+  "built": "2026-09-21 13:41",
   "chapters": [
     {
       "key": "01",
@@ -114,6 +114,20 @@
       "file": "chapter-16.html"
     },
     {
+      "key": "17",
+      "title": "卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与\"为什么长这样\"",
+      "volume": "卷 3 · 资产管线",
+      "characters": 4414,
+      "file": "chapter-17.html"
+    },
+    {
+      "key": "18",
+      "title": "卷 3 · 第 18 章　风格统一：配色、比例与密度",
+      "volume": "卷 3 · 资产管线",
+      "characters": 3861,
+      "file": "chapter-18.html"
+    },
+    {
       "key": "29",
       "title": "卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的",
       "volume": "卷 6 · 质量与协作",
@@ -135,5 +149,5 @@
       "file": "chapter-31.html"
     }
   ],
-  "characters": 92415
+  "characters": 100690
 }

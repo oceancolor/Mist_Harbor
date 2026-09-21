@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样" · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</h1>
+  <div class="meta">卷 3 · 资产管线 · 字符数 4414 · 生成于 2026-09-21 13:41</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html" style="color:#2d514b;font-weight:700">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</h1>
+<blockquote><p><strong>本章目标</strong>：把 9 件 GLB 摊开看——<strong>面数 ≠ 体积</strong>，<strong>高度 ≠ 占位格数</strong>，<br>以及每件资产的造型决策背后的取舍。<br>对应任务：T09–T15　|　对应文件：<code>assets/models/manifest.json</code>、<code>data/palette.json</code></p></blockquote>
+<hr>
+<h2>17.1 一张表看懂全部资产</h2>
+<table><thead><tr><th>id</th><th>中文名</th><th>三角面</th><th>文件</th><th>尺寸（宽×高×深 m）</th><th>建材表高度</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---:</td><td>---:</td><td>---</td><td>---:</td></tr><tr><td><code>roof</code></td><td>草屋顶</td><td><strong>44</strong></td><td>6.6 KB</td><td>1.10 × 0.66 × 1.08</td><td>1</td></tr><tr><td><code>tree</code></td><td>乔木</td><td>72</td><td>9.1 KB</td><td>0.92 × 1.80 × 0.89</td><td>2</td></tr><tr><td><code>arch</code></td><td>桥拱</td><td>208</td><td>22.0 KB</td><td>1.00 × 1.00 × 1.00</td><td>1</td></tr><tr><td><code>cottage</code></td><td>渔村小屋</td><td>272</td><td>31.5 KB</td><td>1.03 × 1.00 × 1.03</td><td>1</td></tr><tr><td><code>windmill</code></td><td>风车</td><td>276</td><td>32.3 KB</td><td>0.94 × <strong>1.71</strong> × 0.95</td><td>2</td></tr><tr><td><code>lamp</code></td><td>暖光灯</td><td>134</td><td>16.4 KB</td><td>0.42 × 1.25 × 0.42</td><td>2</td></tr><tr><td><code>flower</code></td><td>花丛</td><td>560</td><td><strong>71.8 KB</strong></td><td>0.85 × 0.32 × 0.85</td><td>1</td></tr><tr><td><code>beacon</code></td><td>灯塔</td><td>524</td><td>47.9 KB</td><td>0.86 × <strong>2.80</strong> × 0.86</td><td>3</td></tr><tr><td><code>barrel</code></td><td>木桶</td><td>632</td><td>44.6 KB</td><td>0.61 × 0.72 × 0.61</td><td>1</td></tr></tbody></table>
+<p>合计 <strong>2,722 三角面 / 约 282 KB</strong>——这就是整个游戏的全部模型资产。</p>
+<hr>
+<h2>17.2 第一个反直觉：<strong>面数 ≠ 体积</strong></h2>
+<p>看两组对照：</p>
+<table><thead><tr><th>对比</th><th>结论</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><code>flower</code> 560 面 / <strong>71.8 KB</strong> vs <code>windmill</code> 276 面 / 32.3 KB</td><td>花丛面数只有 2 倍，体积却是 2 倍多</td></tr><tr><td><code>roof</code> 44 面 / 6.6 KB vs <code>barrel</code> 632 面 / 44.6 KB</td><td>面数差 14 倍，体积差不到 7 倍</td></tr></tbody></table>
+<p><strong>为什么？</strong> GLB 体积还取决于：</p>
+<ul><li><strong>物体与材质数量</strong>（每个 mesh / material 都有元数据开销）</li><li>顶点属性（法线、UV、顶点色）</li><li>是否共享几何（实例化/复用）</li></ul>
+<blockquote><p>📌 所以优化包体时，<strong>别只盯面数</strong>。减少物体数、合并材质，往往比减面更有效。</p></blockquote>
+<hr>
+<h2>17.3 第二个反直觉：<strong>高度 ≠ 占位格数</strong></h2>
+<p>建材表里的 <code>height</code> 是 <code>ceil(godot_size[1])</code>：</p>
+<table><thead><tr><th>资产</th><th>实际高</th><th>占位</th></tr></thead><tbody><tr><td>---</td><td>---:</td><td>---:</td></tr><tr><td><code>lamp</code></td><td>1.25 m</td><td><strong>2</strong> 格</td></tr><tr><td><code>windmill</code></td><td>1.71 m</td><td><strong>2</strong> 格</td></tr><tr><td><code>beacon</code></td><td>2.80 m</td><td><strong>3</strong> 格</td></tr><tr><td><code>flower</code></td><td>0.32 m</td><td>1 格</td></tr></tbody></table>
+<p>这是<strong>向上取整</strong>的必然结果：格子是离散的，1.25 m 的灯必须占 2 格才不会插进上面的方块。<br>副作用是"看起来没那么高的东西占了 2 格"——<strong>这是网格建造游戏的固有权衡</strong>（第 06 章）。</p>
+<hr>
+<h2>17.4 三种原型</h2>
+<pre><code>① 单格道具（占 1 格）   cottage / roof / arch / barrel / flower
+② 高体道具（占 2–3 格） lamp / windmill / tree / beacon
+③ 地形立方（mesh=cube，程序化） grass / stone / wood / brick / glass</code></pre>
+<table><thead><tr><th>原型</th><th>设计要点</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>单格道具</td><td>宽度控制在 <strong>≤1 m</strong>，留出缝隙感；<code>barrel</code> 只有 0.61 m，故意做小显得可堆叠</td></tr><tr><td>高体道具</td><td>底座要收窄（<code>lamp</code> 0.42 m），否则占 2–3 格会显得笨重</td></tr><tr><td>地形立方</td><td>不建模，由 <code>build_world.gd</code> 程序化生成（第 10 章），<strong>零资产成本</strong></td></tr></tbody></table>
+<hr>
+<h2>17.5 从 manifest 里还能读出什么</h2>
+<pre><code>&quot;seed&quot;: 240910, &quot;license&quot;: &quot;CC0-1.0&quot;, &quot;units&quot;: &quot;meters&quot;,
+&quot;gltf_up_axis&quot;: &quot;Y&quot;, &quot;generator&quot;: &quot;Blender 4.2.0&quot;</code></pre>
+<table><thead><tr><th>字段</th><th>用途</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><code>seed</code></td><td>程序化地形/起始村庄的固定种子 → <strong>可复现</strong></td></tr><tr><td><code>license</code></td><td>CC0-1.0，商用无顾虑</td></tr><tr><td><code>units</code> / <code>gltf_up_axis</code></td><td>契约声明，防止换工具链时静默失真</td></tr><tr><td><code>source</code> / <code>task_id</code></td><td><strong>溯源</strong>：<code>arch-v2-c31bcd14</code> 说明它重做过（v2），<code>lamp</code> 也是 v2</td></tr></tbody></table>
+<blockquote><p>📌 <code>source</code> 字段现在是 <code>tools/art/&lt;id&gt;.py</code>——说明这 9 件都已经（或正在迁移到）脚本化管线。</p></blockquote>
+<p><img src="assets/diagrams/asset-budget.svg" alt="资产预算与原型"></p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>资产生成</td><td>本地/远程管线</td><td>远程 pilot（Blender 5.2.1）批量产出</td></tr><tr><td>manifest</td><td>管线自动写入</td><td>同；<strong>建议把"面数/体积超阈值"做成流水线卡点</strong></td></tr><tr><td>版本迭代</td><td>改脚本 → v2/v3</td><td>同；task_id 带摘要，历史可追溯</td></tr><tr><td>建议</td><td>本地先看预览图</td><td>云端可<strong>并行</strong>造多件，但<strong>逐件验收</strong>（面数/比例/风格）</td></tr></tbody></table>
+<blockquote><p>🌩 云端造资产很容易"批量产出但风格漂移"——第 18 章就是为此准备的。</p></blockquote>
+<hr>
+<h2>17.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>模型看起来正常但卡</td><td>面数不高但物体/材质太多</td><td>合并 mesh、减少材质数</td></tr><tr><td>矮道具占了 2 格</td><td><code>ceil</code> 向上取整</td><td>调低模型高度或接受该权衡</td></tr><tr><td>道具穿进上层方块</td><td>height 算小了</td><td>用 <code>godot_size[1]</code> 推导，别手写</td></tr><tr><td>换机器后地形不一样</td><td>seed 变了</td><td>固定 <code>seed</code>（240910）</td></tr><tr><td>不知道某个 GLB 哪来的</td><td>缺溯源</td><td>看 manifest 的 <code>source</code> / <code>task_id</code></td></tr></tbody></table>
+<hr>
+<h2>17.7 本章作业</h2>
+<ol><li>说出两个"面数 ≠ 体积"的证据，并解释体积还受什么影响</li><li>计算：<code>beacon</code> 高 2.80 m 为什么占 3 格？如果把它改成 2.4 m，占位会变成几格？</li><li>按三种原型给 9 件资产分类，并说明各自的设计要点</li><li>挑一件资产，提出一个"降体积但外观不变"的具体改法（合并什么、复用什么）</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>预算意识</strong>——面数、体积、占位格数，是三笔不同的账。</li><li><strong>课堂演示</strong>：把 <code>flower</code>（71.8 KB）和 <code>windmill</code>（32.3 KB）的预览图并排，让学员猜谁面数高。</li><li><strong>高频误解</strong>：学生以为"减面 = 减包体"。用本章数据纠正。</li><li><strong>讨论题</strong>：如果包体只能再放 50 KB，你砍哪一件？怎么砍？</li><li><strong>批改要点</strong>：作业 2 要答出 2.4 m → 3 格（ceil(2.4)=3），容易错答 2 格。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/17/17-tree-placed.png" alt="17-tree-placed"><figcaption>17-tree-placed.png</figcaption></figure><figure><img src="assets/shots/17/17-windmill-placed.png" alt="17-windmill-placed"><figcaption>17-windmill-placed.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:40</td><td>九件资产表 + 合计 2722 面</td><td>"整个游戏的模型，就这么点。"</td></tr><tr><td>01:40–03:00</td><td>flower vs windmill 的反直觉对照</td><td>"面数不等于体积。"</td></tr><tr><td>03:00–04:20</td><td>高度 ceil 表（lamp 1.25→2）</td><td>"格子是离散的，这是固有权衡。"</td></tr><tr><td>04:20–06:00</td><td>三种原型与宽度控制</td><td></td></tr><tr><td>06:00–07:30</td><td>manifest 的 seed / license / 溯源字段</td><td></td></tr><tr><td>07:30–09:00</td><td>作业 + 预告（风格统一）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/17/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>17-windmill-placed.png</code></td><td>放置风车（高体道具占 2 格）</td><td><code>python tools/course_capture.py --chapter 17</code></td></tr><tr><td><code>17-tree-placed.png</code></td><td>放置乔木（自然类高体）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："猜一猜：花丛和风车，谁更占地方？"——揭晓 71.8 KB vs 32.3 KB</li><li><strong>演示</strong>：在 Blender 里把花丛合并成一个 mesh，看体积变化</li><li><strong>互动</strong>：让观众给自己的项目做一张"资产预算表"</li><li><strong>收尾</strong>：预告风格统一</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：为什么 flower 这么大？</strong><br>A：它由多个小花物体组成，物体数与材质元数据占了大头。合并成一个 mesh 能显著减小。</p>
+<p><strong>Q：占位格数能手动指定吗？</strong><br>A：可以（管线 <code>--height</code>），但建议让它从 bounds 推导，避免模型和规则不一致。</p>
+<p><strong>Q：CC0-1.0 能商用吗？</strong><br>A：可以，无需署名。但这是<strong>本项目自产资产</strong>的声明；若引入外部素材要单独核对许可。</p>
+<div class="pager"><a href="chapter-16.html">← 卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>
