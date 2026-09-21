@@ -147,8 +147,20 @@ A：**平台差异集中在写盘与渲染**：`user://` 在 Web 是异步 Index
 |---|---|---|
 | 示意图（SVG） | 14 | `course/media/diagrams/` |
 | 实拍配图（PNG） | 85 | `course/media/shots/<章号>/` |
+| 演示视频（webm） | 36 | `course/media/video/<章号>/<章号>-demo.webm` |
 | 拍摄脚本 | 36 章 | `course/media/shots.json` |
-| 视频位 | 每章预留 | `course/media/video/<章号>/`（有则自动嵌入） |
+
+**视频是脚本自动录制的**：`course_capture.py --video` 会用 Playwright 把每章的
+拍摄步骤**重跑一遍并录屏**，产出该章的演示短片（约 10–25 秒，真机 WebGL 运行画面）。
+
+```powershell
+python tools/course_capture.py --chapter 03 --video          # 单章
+python tools/course_capture.py --chapter 01,02,03 --video   # 多章
+python tools/course_build.py                                 # 重建后自动内嵌（首帧用本章首图作封面）
+```
+
+> 📌 这些短片是"**本章机制的真实运行演示**"，不是讲课录像；
+> 讲课录像按每章的「📹 录屏分镜」人工录制后放到同目录即可替换（文件名任意，取排序第一个）。
 
 **命名规范**：`<章号>-<用途>.png`，例如 `10-night.png`、`31-barrel-in-dock.png`。
 

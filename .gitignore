@@ -8,6 +8,7 @@ releases/
 **/.venv-mcp/
 **/build/
 build-win/
+course/site-single/
 .env
 .env.*
 *.pem

@@ -237,17 +237,24 @@ def rewrite_media(html: str) -> str:
     return html
 
 
-def embed_assets(html: str) -> str:
+def embed_assets(html: str, site: Path | None = None) -> str:
     """Inline every referenced asset as base64 so the page is a single file."""
+    root = site or SITE
+
     def replace(match: re.Match) -> str:
-        path = SITE / match.group(1)
+        path = root / match.group(1)
         if not path.is_file():
+            return match.group(0)
+        # Videos stay external: inlining megabytes of video would break the page,
+        # and a single-file HTML is meant to be readable without them.
+        if path.parent.parent.name == "video" or path.suffix.lower() in {".mp4", ".webm", ".mov", ".m4v"}:
             return match.group(0)
         mime = "image/svg+xml" if path.suffix == ".svg" else "image/png"
         data = base64.b64encode(path.read_bytes()).decode("ascii")
-        return f'src="data:{mime};base64,{data}"'
+        attr = match.group(0).split("=", 1)[0]      # keep src= / poster=
+        return f'{attr}="data:{mime};base64,{data}"'
 
-    return re.sub(r'src="((?:assets)/[^"]+)"', replace, html)
+    return re.sub(r'(?:src|poster)="((?:assets)/[^"]+)"', replace, html)
 
 
 def gallery_html(key: str) -> str:
@@ -317,23 +324,26 @@ def sidebar(entries: list[tuple[str, str, str]], current: str) -> str:
     return '<nav class="toc">' + "".join(links) + "</nav>"
 
 
-def build(embed: bool) -> dict:
+def build(embed: bool, out: Path | None = None) -> dict:
     from datetime import datetime
 
-    if SITE.exists():
-        shutil.rmtree(SITE)
-    (ASSETS / "diagrams").mkdir(parents=True, exist_ok=True)
-    (ASSETS / "shots").mkdir(parents=True, exist_ok=True)
+    site = out or SITE
+    assets = site / "assets"
+    if site.exists():
+        shutil.rmtree(site)
+    site.mkdir(parents=True, exist_ok=True)
+    (assets / "diagrams").mkdir(parents=True, exist_ok=True)
+    (assets / "shots").mkdir(parents=True, exist_ok=True)
     for svg in (MEDIA / "diagrams").glob("*.svg"):
-        shutil.copy2(svg, ASSETS / "diagrams" / svg.name)
+        shutil.copy2(svg, assets / "diagrams" / svg.name)
     for folder in SHOTS.iterdir():
         if folder.is_dir():
-            target = ASSETS / "shots" / folder.name
+            target = assets / "shots" / folder.name
             shutil.copytree(folder, target, dirs_exist_ok=True)
     if VIDEO.is_dir():
         for folder in VIDEO.iterdir():
             if folder.is_dir():
-                shutil.copytree(folder, ASSETS / "video" / folder.name, dirs_exist_ok=True)
+                shutil.copytree(folder, assets / "video" / folder.name, dirs_exist_ok=True)
 
     chapters = sorted(CHAPTERS.glob("*.md"))
     entries: list[tuple[str, str, str]] = []
@@ -344,7 +354,7 @@ def build(embed: bool) -> dict:
 
     style_block = f"<style>{STYLE}</style>" if embed else '<link rel="stylesheet" href="assets/style.css">'
     if not embed:
-        (ASSETS / "style.css").write_text(STYLE, encoding="utf-8")
+        (assets / "style.css").write_text(STYLE, encoding="utf-8")
 
     built = datetime.now().strftime("%Y-%m-%d %H:%M")
     stats = {"built": built, "chapters": [], "characters": 0}
@@ -363,8 +373,8 @@ def build(embed: bool) -> dict:
             body=html, pager=f'<div class="pager">{prev_link}{next_link}</div>',
         )
         if embed:
-            page = embed_assets(page)
-        (SITE / f"chapter-{key}.html").write_text(page, encoding="utf-8")
+            page = embed_assets(page, site)
+        (site / f"chapter-{key}.html").write_text(page, encoding="utf-8")
         stats["chapters"].append({"key": key, "title": title, "volume": volume,
                                   "characters": len(text), "file": f"chapter-{key}.html"})
         stats["characters"] += len(text)
@@ -376,7 +386,8 @@ def build(embed: bool) -> dict:
                                chars=len((COURSE / "syllabus.md").read_text(encoding="utf-8")),
                                style_block=style_block, sidebar=sidebar(entries, ""),
                                body=body, pager="")
-        (SITE / "syllabus.html").write_text(page, encoding="utf-8")
+        page = embed_assets(page, site) if embed else page
+        (site / "syllabus.html").write_text(page, encoding="utf-8")
 
     # appendix (terminology / FAQ / pitfalls / commands / asset index)
     if (COURSE / "appendix.md").is_file():
@@ -385,7 +396,8 @@ def build(embed: bool) -> dict:
                                built=built, chars=len(raw), style_block=style_block,
                                sidebar=sidebar(entries, "appendix"),
                                body=rewrite_media(md_to_html(raw)), pager="")
-        (SITE / "appendix.html").write_text(page, encoding="utf-8")
+        page = embed_assets(page, site) if embed else page
+        (site / "appendix.html").write_text(page, encoding="utf-8")
 
     # course home
     cards = []
@@ -397,24 +409,37 @@ def build(embed: bool) -> dict:
             '<h2>怎么用</h2><p>Markdown 是设计沟通的载体，<b>本站点是最终成品</b>：'
             '每章内嵌截图与视频位，可直接用于课堂教学、直播与自学。'
             '重新生成：<code>python tools/course_build.py</code>；'
-            '单文件分发：<code>python tools/course_build.py --embed</code>。</p>')
+            '单文件分发：<code>python tools/course_build.py --embed</code>'
+            '（图片与 CSS 内联，单页可直接发送或导入 LMS，视频仍外链）。'
+            '演示短片由 <code>python tools/course_capture.py --video</code> 自动录制。</p>')
     page = TEMPLATE.format(title="雾港造物记 · 用 AI Agent 从 0 做出可发行游戏",
                            volume=f"共 {len(entries)} 章 · {stats['characters']} 字",
                            built=built, chars=stats["characters"], style_block=style_block,
                            sidebar=sidebar(entries, ""), body=body, pager="")
-    (SITE / "index.html").write_text(page, encoding="utf-8")
-    (SITE / "build-info.json").write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8")
+    page = embed_assets(page, site) if embed else page
+    (site / "index.html").write_text(page, encoding="utf-8")
+    (site / "build-info.json").write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8")
+    if embed:
+        # Images and CSS are now inside the pages; only videos stay external.
+        for name in ("shots", "diagrams"):
+            shutil.rmtree(assets / name, ignore_errors=True)
+        (assets / "style.css").unlink(missing_ok=True)
+        if not any(assets.iterdir()):
+            shutil.rmtree(assets, ignore_errors=True)
     return stats
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--embed", action="store_true", help="inline images and CSS into each page")
+    parser.add_argument("--out", help="output directory (default: course/site)")
     parser.add_argument("--serve", type=int, help="serve the site on this port after building")
     args = parser.parse_args()
 
-    stats = build(args.embed)
-    print(f"built {len(stats['chapters'])} chapter(s), {stats['characters']} characters -> {SITE}")
+    out = Path(args.out) if args.out else None
+    stats = build(args.embed, out)
+    target = out or SITE
+    print(f"built {len(stats['chapters'])} chapter(s), {stats['characters']} characters -> {target}")
     for chapter in stats["chapters"]:
         print(f"  {chapter['file']}: {chapter['title']} ({chapter['characters']})")
 
