@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="480" viewBox="0 0 940 480" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="940" height="480" fill="#f7f8ed"/>
+  <text x="470" y="32" text-anchor="middle" font-size="20" fill="#2d514b">build_world：节点树与重建流程</text>
+
+  <rect x="330" y="55" width="280" height="46" rx="10" fill="#497c6b"/>
+  <text x="470" y="84" text-anchor="middle" font-size="15" fill="#ffffff">HarborBuildWorld（唯一根节点）</text>
+
+  <line x1="420" y1="101" x2="200" y2="140" stroke="#789087" stroke-width="2"/>
+  <line x1="470" y1="101" x2="470" y2="140" stroke="#789087" stroke-width="2"/>
+  <line x1="520" y1="101" x2="740" y2="140" stroke="#789087" stroke-width="2"/>
+
+  <rect x="40" y="140" width="220" height="120" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="150" y="166" text-anchor="middle" font-size="14" fill="#2d514b">地形（一个 ArrayMesh）</text>
+  <text x="56" y="192" font-size="12" fill="#789087">· 只画露出的面（面剔除）</text>
+  <text x="56" y="212" font-size="12" fill="#789087">· 顶点色 + 按坐标扰动</text>
+  <text x="56" y="232" font-size="12" fill="#789087">· create_trimesh_shape 做碰撞</text>
+  <text x="56" y="252" font-size="12" fill="#497c6b">→ visible_faces 可被断言</text>
+
+  <rect x="360" y="140" width="220" height="120" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="470" y="166" text-anchor="middle" font-size="14" fill="#2d514b">props（GLB 道具）</text>
+  <text x="376" y="192" font-size="12" fill="#789087">每格一棵子树：</text>
+  <text x="376" y="212" font-size="12" fill="#789087">Node3D → visual(GLB) +</text>
+  <text x="376" y="232" font-size="12" fill="#789087">StaticBody3D.set_meta("cell")</text>
+  <text x="376" y="252" font-size="12" fill="#497c6b">夜间 lamp/beacon 加 OmniLight</text>
+
+  <rect x="680" y="140" width="220" height="120" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="790" y="166" text-anchor="middle" font-size="14" fill="#2d514b">环境 / 光照 / 海面</text>
+  <text x="696" y="192" font-size="12" fill="#789087">WorldEnvironment：雾 + 环境光</text>
+  <text x="696" y="212" font-size="12" fill="#789087">sun：#ffe6bd，带阴影</text>
+  <text x="696" y="232" font-size="12" fill="#789087">海面：ShaderMaterial</text>
+  <text x="696" y="252" font-size="12" fill="#497c6b">set_night() 改参数后重建</text>
+
+  <rect x="40" y="300" width="400" height="150" rx="10" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="240" y="326" text-anchor="middle" font-size="14" fill="#2d514b">rebuild()：全量重建</text>
+  <text x="56" y="354" font-size="12" fill="#789087">1. 清空 props 所有子节点</text>
+  <text x="56" y="374" font-size="12" fill="#789087">2. 遍历 model.cells：cube 类进顶点数组，</text>
+  <text x="56" y="392" font-size="12" fill="#789087">   GLB 类走 _add_prop</text>
+  <text x="56" y="412" font-size="12" fill="#789087">3. 生成 ArrayMesh + trimesh 碰撞</text>
+  <text x="56" y="436" font-size="12" fill="#497c6b">触发时机：model.changed（离散操作，非每帧）</text>
+
+  <rect x="500" y="300" width="400" height="150" rx="10" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="700" y="326" text-anchor="middle" font-size="14" fill="#2d514b">pick()：命中 → 反查原点</text>
+  <text x="516" y="354" font-size="12" fill="#789087">相机发射射线 → 命中 StaticBody3D</text>
+  <text x="516" y="374" font-size="12" fill="#789087">→ get_meta("cell") 取到被点中的格</text>
+  <text x="516" y="394" font-size="12" fill="#789087">→ model.owner_at(cell) 得到原点格</text>
+  <text x="516" y="416" font-size="12" fill="#497c6b">多格模型因此"点哪都删整座"</text>
+  <text x="516" y="436" font-size="12" fill="#789087">ghost 预览：半透明副本，绿可放/红不可放</text>
+
+  <text x="470" y="472" text-anchor="middle" font-size="12" fill="#789087">全量重建的理由：地形是一个大网格 + 道具数量受限，现在够用；上千道具或移动端再改实例化（卷 5 性能专项）</text>
+</svg>

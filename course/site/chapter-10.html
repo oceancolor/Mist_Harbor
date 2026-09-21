@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</h1>
+  <div class="meta">卷 2 · Godot 工程 · 字符数 5238 · 生成于 2026-09-21 13:04</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html" style="color:#2d514b;font-weight:700">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a></nav>
+<main>
+<h1>卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</h1>
+<blockquote><p><strong>本章目标</strong>：读通 <code>build_world.gd</code>——地形网格怎么生成（为什么只画露出的面）、<br>道具（GLB）怎么摆、点击怎么命中、昼夜怎么切换。<br>对应任务：T16 / T39　|　对应文件：<code>project/scripts/build_world.gd</code></p></blockquote>
+<hr>
+<h2>10.1 节点树：一堆 Node 拼出来的舞台</h2>
+<pre><code>HarborBuildWorld (Node3D)
+├─ WorldEnvironment       环境：雾、背景色、环境光
+├─ DirectionalLight3D     sun：暖阳 #ffe6bd，带阴影
+├─ MeshInstance3D         terrain：地形网格（动态生成）
+│  └─ StaticBody3D        地面碰撞（trimesh）
+├─ Node3D                 props：所有 GLB 道具
+├─ Node3D                 ghost：放置预览（半透明）
+└─ 海面 MeshInstance3D    sea_material（ShaderMaterial）</code></pre>
+<p><strong>注意</strong>：这些节点<strong>全部是代码 <code>new()</code> 出来的</strong>，<code>main.tscn</code> 里只有一个根节点。<br>好处是"世界状态"和"场景结构"完全由数据驱动；代价是必须理解 <code>rebuild()</code>。</p>
+<p><img src="assets/diagrams/render-tree.svg" alt="渲染层与重建流程"></p>
+<hr>
+<h2>10.2 地形：只画"露出来的面"</h2>
+<pre><code>for face in FACES:
+    var neighbor = model.get_cell(cell + face.offset)
+    if not neighbor.is_empty() and neighbor 的 mesh == &quot;cube&quot;:
+        continue           # 被同类方块挡住 → 这一面不画
+    visible_faces += 1
+    ...</code></pre>
+<table><thead><tr><th>关键点</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>面剔除</strong></td><td>相邻格也是 cube 类，这一面不可见 → 跳过。省掉大量三角形</td></tr><tr><td><code>visible_faces</code></td><td>实际渲染的面数，<strong>测试会断言它 &gt; 0</strong>（证明地形真的生成了）</td></tr><tr><td>顶点色</td><td><code>color</code> 写进顶点，材质 <code>vertex_color_use_as_albedo = true</code></td></tr><tr><td>颜色扰动</td><td>按坐标 hash 出 ±0.07 的亮度变化，避免大片死板同色</td></tr><tr><td>特殊着色</td><td>草的侧面、水下的石头有专门颜色，让地形有层次</td></tr></tbody></table>
+<blockquote><p>📌 这是典型的"<strong>数据 → 顶点数组 → ArrayMesh</strong>"流程：<br><code>PackedVector3Array</code> + <code>PackedColorArray</code> → <code>add_surface_from_arrays</code> → <code>ArrayMesh</code>。</p></blockquote>
+<hr>
+<h2>10.3 碰撞：从同一个网格生成</h2>
+<pre><code>var shape := mesh.create_trimesh_shape()
+shape.backface_collision = true
+ground_collision.shape = shape</code></pre>
+<p><strong>一份网格，两种用途</strong>（渲染 + 拾取）。<code>backface_collision = true</code> 是为了从内侧也能命中，<br>避免相机穿到地形下方时拾取失效。</p>
+<hr>
+<h2>10.4 道具（GLB）：一个格子一棵子树</h2>
+<pre><code>func _add_prop(cell, item) -&gt; void:
+    var root := Node3D.new()
+    root.position = Vector3(cell) + Vector3(0.5, 0, 0.5)   # 格子中心
+    var visual := _visual(kind)                            # 实例化 GLB 场景
+    visual.rotation.y = item.rot * PI / 2.0                 # 朝向
+    var body := StaticBody3D.new()
+    body.set_meta(&quot;cell&quot;, cell)                            # ← 拾取靠它</code></pre>
+<p><strong><code>set_meta("cell", cell)</code> 是这一章最关键的细节</strong>：<br>射线命中的是 <code>StaticBody3D</code>，但它需要告诉调用方"你点到了哪个格子"——<br>于是把坐标存在 meta 里。这样拾取逻辑和渲染逻辑彻底解耦。</p>
+<hr>
+<h2>10.5 拾取：射线 → meta → 原点格</h2>
+<pre><code>func pick(camera, screen_position) -&gt; Dictionary:
+    # 从相机发射射线，命中 body
+    # 读 body.get_meta(&quot;cell&quot;)
+    # 用 model.owner_at(cell) 反查原点格（多格模型的关键！）</code></pre>
+<p>返回给 <code>main.gd</code> 的是<strong>原点格</strong>（不是被点到的那一格）——这就是第 06 章<br>"点灯塔上半截会删掉整座"的实现落点。</p>
+<hr>
+<h2>10.6 预览与昼夜</h2>
+<table><thead><tr><th>机制</th><th>实现</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>ghost 预览</td><td><code>show_ghost()</code> 实例化一个半透明副本，绿=可放、红=不可放，跟随鼠标</td></tr><tr><td>昼夜</td><td><code>set_night()</code> 改 <code>environment</code> 的背景/环境光/雾色、<code>sun</code> 的颜色与强度、海面 shader 参数；再 <code>needs_rebuild = true</code></td></tr><tr><td>夜间灯光</td><td><code>lamp</code> / <code>beacon</code> 在夜间额外挂 <code>OmniLight3D</code>（暖橙 <code>#ffbd70</code>）</td></tr></tbody></table>
+<hr>
+<h2>10.7 性能：为什么"全量重建"现在够用</h2>
+<p><code>rebuild()</code> 每次都<strong>清空 props 重建整棵树</strong>，听起来很浪费，但在本实训的规模下：</p>
+<ul><li>地形是<strong>一个</strong> ArrayMesh（不是每格一个 MeshInstance）→ Draw Call 极少</li><li>道具数量受 <code>MAX_CELLS=12000</code> 限制，且多数是低模</li><li>重建只在 <code>model.changed</code> 后触发（离散操作，不是每帧）</li></ul>
+<p><strong>什么时候要改</strong>：道具数量上千、或要支持移动端低端机时，就该考虑<br><strong>实例化（MultiMesh / 分块）</strong> 与 <strong>增量重建</strong>。这属于卷 5 的性能专项。</p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>渲染后端</td><td>本地 GPU（本实训见过 GT 630 这类老卡）</td><td>云端预览是 <strong>WebGL 2</strong>（GL Compatibility），更接近最终 Web 成品</td></tr><tr><td>调试手段</td><td><code>dev.py run</code> 直接看</td><td>平台预览 + <code>dev.py test</code> 的 <code>visible_faces</code> 断言（不依赖画面）</td></tr><tr><td>性能基线</td><td>本机测</td><td><strong>建议以云端/WebGL 为准</strong>，因为那是学员真实环境</td></tr><tr><td>排错</td><td><code>get_debug_output</code>（本地 Godot MCP）</td><td>平台日志；逻辑层用断言先排除</td></tr></tbody></table>
+<blockquote><p>🌩 云端没有"本机显卡太老"这个借口：如果在 WebGL 下卡，那就是真的卡。</p></blockquote>
+<hr>
+<h2>10.8 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>地形没出现</td><td>只有 GLB 类建材，没有 cube 类</td><td>断言 <code>visible_faces &gt; 0</code> 会红</td></tr><tr><td>点击位置偏移</td><td>格子中心忘了 +0.5</td><td>检查 <code>_add_prop</code> 的 position</td></tr><tr><td>点上半截只删上半截</td><td>拾取没走 <code>owner_at</code></td><td>必须返回原点格</td></tr><tr><td>夜间没光</td><td>只有 lamp/beacon 挂 OmniLight</td><td>按设计如此</td></tr><tr><td>大世界卡顿</td><td>全量重建 + 逐件 MeshInstance</td><td>卷 5 性能专项</td></tr></tbody></table>
+<hr>
+<h2>10.9 本章作业</h2>
+<ol><li>说出 <code>rebuild()</code> 里"跳过某一面"的条件，以及这带来多少性能收益（估算：一个 3×3×3 实心方块群有多少面被剔掉？）</li><li>找 <code>set_meta("cell", …)</code> 与 <code>owner_at()</code> 的调用点，写出"点灯塔上半截 → 整座消失"的完整调用链</li><li>把 <code>_material()</code> 的 <code>vertex_color_use_as_albedo</code> 关掉，观察地形变成什么样（然后改回）</li><li>回答：为什么地形用<strong>一个</strong> ArrayMesh 而不是每格一个 MeshInstance？</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>渲染是数据的投影</strong>。世界状态一变，整棵树重建——简单、可预测、不会不一致。</li><li><strong>课堂演示</strong>：把 <code>visible_faces</code> 打印出来，放几个方块看数字变化，讲面剔除的意义。</li><li><strong>高频误解</strong>：学生以为"每格是一个 MeshInstance"。强调地形是<strong>合并后的一个大网格</strong>。</li><li><strong>进阶讨论</strong>：全量重建 vs 增量更新——什么时候该换？（引出性能专项）</li><li><strong>批改要点</strong>：作业 2 的调用链必须包含 <code>owner_at</code>。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/10/10-ghost-lamp.png" alt="10-ghost-lamp"><figcaption>10-ghost-lamp.png</figcaption></figure><figure><img src="assets/shots/10/10-island.png" alt="10-island"><figcaption>10-island.png</figcaption></figure><figure><img src="assets/shots/10/10-night.png" alt="10-night"><figcaption>10-night.png</figcaption></figure></div><h2>📹 录屏分镜（10 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>节点树图 + main.tscn 只有一个根节点</td><td>"舞台是代码搭的。"</td></tr><tr><td>01:30–03:30</td><td>面剔除代码 + visible_faces 数字变化</td><td>"看不见的面，一个都不画。"</td></tr><tr><td>03:30–05:00</td><td>道具树 + meta("cell")</td><td>"命中只是开始，反查原点才是关键。"</td></tr><tr><td>05:00–06:30</td><td>拾取链路（点灯塔上半截）</td><td>"数据结构的副产品，再一次。"</td></tr><tr><td>06:30–08:00</td><td>昼夜切换 + 夜间灯光</td><td>"状态切换，整树重建。"</td></tr><tr><td>08:00–09:20</td><td>性能：为什么现在够用 / 什么时候要改</td><td></td></tr><tr><td>09:20–10:00</td><td>作业 + 预告（main.gd）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/10/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>10-island.png</code></td><td>岛屿全貌（地形 + 道具）</td><td><code>python tools/course_capture.py --chapter 10</code></td></tr><tr><td><code>10-ghost-lamp.png</code></td><td>选中暖光灯后的放置预览</td><td>同上</td></tr><tr><td><code>10-night.png</code></td><td>夜景（灯光与海面变化）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，15 分钟）</h2>
+<ul><li><strong>挑战开场</strong>："我在 build_world 里埋了个 bug：点灯塔上半截只删上半截"——让大家找</li><li><strong>演示</strong>：修好（补 <code>owner_at</code>），讲"命中格 vs 原点格"</li><li><strong>互动</strong>：报出各自机器上 <code>visible_faces</code> 数量</li><li><strong>收尾</strong>：预告性能专项</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：为什么要全量重建，不增量更新？</strong><br>A：现在规模下全量重建最简单、最不容易出现"状态不一致"；等真的成为瓶颈再优化（卷 5）。</p>
+<p><strong>Q：ghost 预览会不会影响性能？</strong><br>A：它只有一个节点，跟随鼠标移动，不参与碰撞（<code>MOUSE_FILTER_IGNORE</code> / 非 StaticBody）。</p>
+<p><strong>Q：海面是网格还是 shader？</strong><br>A：一个 MeshInstance + <code>ShaderMaterial</code>，昼夜时改 shader 参数（深/浅水色）。</p>
+<div class="pager"><a href="chapter-09.html">← 卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><span></span></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

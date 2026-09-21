@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</h1>
+  <div class="meta">卷 2 · Godot 工程 · 字符数 4585 · 生成于 2026-09-21 13:04</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html" style="color:#2d514b;font-weight:700">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a></nav>
+<main>
+<h1>卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</h1>
+<blockquote><p><strong>本章目标</strong>：理解 <code>.import</code> 文件与 <code>.godot/</code> 缓存的关系，知道<strong>什么时候必须重新导入</strong>，<br>以及"导入"与"导出"之间那条容易被忽略的过滤链。<br>对应任务：T09 / T41　|　对应提交：<code>3f69241</code>（导出目录移出工程）</p></blockquote>
+<hr>
+<h2>9.1 Godot 不直接用你的 GLB</h2>
+<p>把 <code>barrel.glb</code> 丢进 <code>assets/models/</code>，Godot 会做两件事：</p>
+<ol><li><strong>生成导入产物</strong>：真正的资源（<code>.scn</code> / <code>.res</code> / 纹理）放进 <code>.godot/imported/</code></li><li><strong>生成描述文件</strong>：<code>barrel.glb.import</code>，记录 uid、参数、产物路径</li></ol>
+<p>游戏运行时加载的是<strong>产物</strong>，不是原始 GLB。所以：</p>
+<ul><li><code>.godot/</code> 是缓存 → <strong>可以安全删除</strong>，删了会重新导入（慢一点，不影响正确性）</li><li><code>.import</code> 是配置 → <strong>必须入库</strong>，它决定了"这个模型怎么被导入"</li></ul>
+<pre><code>assets/models/barrel.glb          原始资产（入库）
+assets/models/barrel.glb.import   导入参数（入库）
+.godot/imported/barrel.glb-*.scn  导入产物（不入库，可重建）</code></pre>
+<hr>
+<h2>9.2 <code>.import</code> 里有什么</h2>
+<pre><code>[remap]
+importer=&quot;scene&quot;
+type=&quot;PackedScene&quot;
+uid=&quot;uid://bxxxx&quot;
+path=&quot;res://.godot/imported/barrel.glb-65b4....scn&quot;
+
+[deps]
+source_file=&quot;res://assets/models/barrel.glb&quot;
+dest_files=[&quot;res://.godot/imported/barrel.glb-65b4....scn&quot;]
+
+[params]
+nodes/root_type=&quot;&quot;
+nodes/apply_root_scale=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+gltf/naming_version=1</code></pre>
+<p><strong>重点在 <code>[params]</code></strong>：改这里的任何一个值，都会触发重新导入。<br>本实训的资产管线在写完 GLB 后会自动跑一次 headless 导入，就是为了让它生成/刷新这个文件。</p>
+<hr>
+<h2>9.3 什么时候必须重新导入</h2>
+<table><thead><tr><th>场景</th><th>要不要重新导入</th><th>怎么做</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>改了 GLB 本身</td><td>✅</td><td><code>python tools/dev.py import</code></td></tr><tr><td>改了 <code>.import</code> 参数</td><td>✅</td><td>同上</td></tr><tr><td><strong>换引擎主版本</strong></td><td>✅</td><td>首次打开/导入时自动做</td></tr><tr><td>删了 <code>.godot/</code></td><td>✅（自动）</td><td>下次运行会重建</td></tr><tr><td>只改 GDScript</td><td>❌</td><td>不需要</td></tr></tbody></table>
+<pre><code>python tools/dev.py import     # 等价于 godot --headless --path project --editor --import --quit</code></pre>
+<hr>
+<h2>9.4 一次真实观察：4.7 补写了什么</h2>
+<p>本实训曾删掉 <code>.godot/</code> 让 4.7 重新导入，结果三个 <code>.import</code> 被<strong>补写</strong>了新字段：</p>
+<pre><code>+ nodes/root_script=null
++ mesh_library/use_node_names_as_mesh_names=false
++ array_mesh/deduplicate_surfaces=true
++ nodes/use_name_suffixes=true
++ materials/extract=0
++ gltf/texture_map_mode=0</code></pre>
+<p><strong>要点</strong>：这些都是<strong>新增的默认值</strong>，没有任何既有项被修改——所以导入结果不变，只是 4.7 把自己的新选项写进了文件。<br>这类 diff 出现时不必惊慌，但也别盲合：确认是"新增默认值"再提交。</p>
+<hr>
+<h2>9.5 导入 与 导出：中间还有一层过滤</h2>
+<pre><code>原始资产（含 art/） → 导入（.godot） → 导出过滤 → pck / wasm
+                                        ↑
+                       export_presets.cfg 的 include / exclude</code></pre>
+<ul><li><code>art/</code>（Blender 源与建模脚本）被 <code>exclude_filter</code> 排除 → <strong>不会进包</strong></li><li>但它在工程目录里，所以<strong>会被导入器扫描</strong>——这也是为什么 <code>project/build/</code> 必须移出工程（第 04 章）</li><li><code>tests/</code> 同样被排除，但它的 <code>.py</code> 不会被 Godot 当资源</li></ul>
+<blockquote><p>📌 一句话：<strong>"在工程里"不等于"进包"，也不等于"被导入"</strong>。三件事各有一张清单：<br><code>export_presets.cfg</code>（进包）、<code>.import</code> 存在与否（被导入）、<code>.gitignore</code>（入库）。</p></blockquote>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>导入</td><td><code>dev.py import</code>（本地 Godot 4.7）</td><td>平台内执行同一命令；引擎版本由平台镜像决定</td></tr><tr><td><code>.godot/</code></td><td>本地缓存，删了重建</td><td>同样可重建；<strong>不要把它当产物提交</strong></td></tr><tr><td>排错</td><td>看 <code>logs/import.log</code></td><td>平台日志入口，同样看 <code>SCRIPT ERROR</code> 行</td></tr><tr><td>风险</td><td>版本不一致</td><td>平台引擎版本必须与 <code>project.godot</code> 的 <code>features</code> 对齐，否则重新导入会改写大量 <code>.import</code></td></tr></tbody></table>
+<blockquote><p>🌩 提醒：若云端引擎版本与工程声明不一致，最典型的症状就是<strong>大量 <code>.import</code> 同时变红</strong>。<br>先查版本，再查代码。</p></blockquote>
+<hr>
+<h2>9.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>改了 GLB 但游戏里没变</td><td>没重新导入</td><td><code>dev.py import</code></td></tr><tr><td>大量 <code>.import</code> 同时变化</td><td>引擎版本变了</td><td>确认是有意升级再提交</td></tr><tr><td>导出包里有不该有的文件</td><td><code>exclude_filter</code> 没覆盖</td><td>改 <code>export_presets.cfg</code></td></tr><tr><td>启动日志扫到导出产物</td><td>产物在工程目录内</td><td>移到仓库根的 <code>build/</code></td></tr><tr><td><code>.godot</code> 被误提交</td><td><code>.gitignore</code> 失效</td><td>检查是否被上层规则覆盖</td></tr></tbody></table>
+<hr>
+<h2>9.7 本章作业</h2>
+<ol><li>打开 <code>assets/models/barrel.glb.import</code>，说出 <code>[remap]</code> 里 <code>path</code> 指向哪里，以及它为什么不入库</li><li>删掉 <code>.godot/</code>（或改名），跑一次 <code>dev.py import</code>，记录耗时与文件变化</li><li>找出本工程里"在工程内、但不进包"的两类文件，说明各自为什么被排除</li><li>故意改一个 <code>.import</code> 的 <code>[params]</code>（例如 <code>meshes/generate_lods</code>），重新导入，观察变化后改回</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>原始资产 ≠ 运行时资源</strong>。中间隔着一个"导入器"。</li><li><strong>课堂演示</strong>：删 <code>.godot/</code> → 跑导入 → 看目录重建。让学生理解"缓存可弃、配置要存"。</li><li><strong>高频误解</strong>：学生常把 <code>.godot/imported/</code> 提交进 git。强调它可重建、且体积大。</li><li><strong>讨论题</strong>：为什么 <code>.import</code> 要入库而 <code>.godot/</code> 不要？（前者是决策，后者是结果）</li><li><strong>批改要点</strong>：作业 1 必须答出"产物路径 + 可重建"，只答"缓存"给一半分。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/09/09-game-start.png" alt="09-game-start"><figcaption>09-game-start.png</figcaption></figure><figure><img src="assets/shots/09/09-prop-placed.png" alt="09-prop-placed"><figcaption>09-prop-placed.png</figcaption></figure><figure><img src="assets/shots/09/09-terrain-face.png" alt="09-terrain-face"><figcaption>09-terrain-face.png</figcaption></figure></div><h2>📹 录屏分镜（8 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:20</td><td>GLB / .import / .godot 三者并排</td><td>"游戏用的不是你的 GLB。"</td></tr><tr><td>01:20–02:40</td><td>打开 .import 讲 [remap] [deps] [params]</td><td>"这是决策，要入库。"</td></tr><tr><td>02:40–04:00</td><td>删 .godot 重导入，看目录重建</td><td>"这是结果，可弃。"</td></tr><tr><td>04:00–05:20</td><td>4.7 补写字段的 diff</td><td>"新增默认值，不慌但要看。"</td></tr><tr><td>05:20–07:00</td><td>导入→导出过滤链</td><td>"在工程里 ≠ 进包 ≠ 被导入。"</td></tr><tr><td>07:00–08:00</td><td>作业 + 预告（build_world）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/09/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>09-game-start.png</code></td><td>起始画面</td><td><code>python tools/course_capture.py --chapter 09</code></td></tr><tr><td><code>09-prop-placed.png</code></td><td>放置一件 GLB 道具（小屋）</td><td>同上</td></tr><tr><td><code>09-terrain-face.png</code></td><td>放置地形格（看露出的面）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场提问</strong>："你提交到 git 的是模型本体还是导入产物？"——投票后揭答案</li><li><strong>演示</strong>：删 <code>.godot</code> 重导入（现场计时）</li><li><strong>互动</strong>：让观众读自己工程里一个 <code>.import</code> 的 [params] 并说出改它会怎样</li><li><strong>收尾</strong>：三张清单（进包 / 被导入 / 入库）</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：能关掉导入、直接用 GLB 吗？</strong><br>A：不建议。Godot 的运行时格式是导入后的产物，直接读源格式在导出包里不可用。</p>
+<p><strong>Q：<code>.godot</code> 越来越大怎么办？</strong><br>A：删掉重导入即可。它按内容哈希命名，残留的旧产物会随 <code>git gc</code> 式清理消失（或直接删除目录）。</p>
+<p><strong>Q：为什么我的同事 clone 下来第一次打开很慢？</strong><br>A：因为 <code>.godot/</code> 没有入库，第一次运行要重建全部导入产物——这是<strong>正确行为</strong>。</p>
+<div class="pager"><a href="chapter-08.html">← 卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

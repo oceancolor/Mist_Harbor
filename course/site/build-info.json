@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 12:57",
+  "built": "2026-09-21 13:04",
   "chapters": [
     {
       "key": "01",
@@ -56,7 +56,21 @@
       "volume": "卷 1 · 设计先行",
       "characters": 4383,
       "file": "chapter-08.html"
+    },
+    {
+      "key": "09",
+      "title": "卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源",
+      "volume": "卷 2 · Godot 工程",
+      "characters": 4585,
+      "file": "chapter-09.html"
+    },
+    {
+      "key": "10",
+      "title": "卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛",
+      "volume": "卷 2 · Godot 工程",
+      "characters": 5238,
+      "file": "chapter-10.html"
     }
   ],
-  "characters": 40441
+  "characters": 50264
 }
