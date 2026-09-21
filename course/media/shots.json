@@ -1,0 +1,15 @@
+{
+  "01": [
+    {"manual": true, "shot": "01-console-baseline.png", "note": "终端里 dev.py test 的输出，需手动截"},
+    {"shot": "01-game-first-run.png"},
+    {"select": "cottage", "place": [[720, 420]], "wait": 400, "shot": "01-place-and-undo.png"},
+    {"manual": true, "shot": "01-test-fails.png", "note": "故意改坏 palette.json 后的失败输出"}
+  ],
+  "02": [
+    {"shot": "02-game-ready.png"},
+    {"key": "N", "wait": 1200, "shot": "02-night.png"},
+    {"key": "N", "wait": 800},
+    {"category": "自然", "select": "barrel", "wait": 500, "shot": "02-dock-nature.png"},
+    {"click": "progress", "wait": 800, "shot": "02-progress-panel.png"}
+  ]
+}
