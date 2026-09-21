@@ -11,5 +11,19 @@
     {"key": "N", "wait": 800},
     {"category": "自然", "select": "barrel", "wait": 500, "shot": "02-dock-nature.png"},
     {"click": "progress", "wait": 800, "shot": "02-progress-panel.png"}
+  ],
+  "03": [
+    {"shot": "03-game-start.png"},
+    {"category": "建筑", "select": "cottage",
+     "place": [[700, 430], [760, 470], [820, 410]], "wait": 400, "shot": "03-three-cottages.png"},
+    {"key": "P", "wait": 900, "shot": "03-photo-mode.png"},
+    {"key": "Escape", "wait": 500},
+    {"click": "help", "wait": 800, "shot": "03-help-overlay.png"},
+    {"key": "Escape", "wait": 500}
+  ],
+  "04": [
+    {"shot": "04-game-ready.png"},
+    {"category": "地形", "wait": 600, "shot": "04-dock-terrain.png"},
+    {"category": "建筑", "select": "beacon", "wait": 600, "shot": "04-dock-building-beacon.png"}
   ]
 }

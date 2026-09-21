@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 12:34",
+  "built": "2026-09-21 12:43",
   "chapters": [
     {
       "key": "01",
@@ -14,7 +14,21 @@
       "volume": "卷 0 · 启程",
       "characters": 7369,
       "file": "chapter-02.html"
+    },
+    {
+      "key": "03",
+      "title": "卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议",
+      "volume": "卷 0 · 启程",
+      "characters": 4676,
+      "file": "chapter-03.html"
+    },
+    {
+      "key": "04",
+      "title": "卷 0 · 第 04 章　工程骨架：什么东西住在哪里",
+      "volume": "卷 0 · 启程",
+      "characters": 5055,
+      "file": "chapter-04.html"
     }
   ],
-  "characters": 13398
+  "characters": 23129
 }

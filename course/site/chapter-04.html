@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 0 · 第 04 章　工程骨架：什么东西住在哪里 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 0 · 第 04 章　工程骨架：什么东西住在哪里</h1>
+  <div class="meta">卷 0 · 启程 · 字符数 5055 · 生成于 2026-09-21 12:43</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html" style="color:#2d514b;font-weight:700">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a></nav>
+<main>
+<h1>卷 0 · 第 04 章　工程骨架：什么东西住在哪里</h1>
+<blockquote><p><strong>本章目标</strong>：拿到仓库不再迷路——能说清每个目录的职责、哪些文件会进导出包、<br>本机配置与工程配置怎么分，以及 <code>tools/dev.py</code> 这张"一键地图"上都有什么。<br>对应任务：T04 / T33　|　对应提交：<code>c461437</code>（基线）、<code>3f69241</code>（导出目录移出工程）</p></blockquote>
+<hr>
+<h2>4.1 三层目录：工程 / 工具 / 教程</h2>
+<pre><code>Mist_Harbor/
+├─ project/    游戏工程本体（Godot 打开的就是它）
+├─ tools/      配套工具脚本（Python，全部只依赖标准库）
+├─ course/     本实训（md 设计稿 + site/ 成品 HTML + media/ 素材）
+├─ build/      Web 导出产物（不入库）
+├─ build-win/  Windows 导出产物（不入库）
+└─ logs/       各命令的运行日志（不入库）</code></pre>
+<p><strong>为什么导出目录要在工程之外？</strong> 因为 Godot 会把工程目录里的东西当资源扫描。<br>曾经 <code>project/build/</code> 里的 <code>index.png</code> 被当成资源导入，每次启动多一轮扫描，还在<br><code>.godot</code> 里留下垃圾缓存。移到仓库根之后，启动日志里这类扫描就消失了。</p>
+<blockquote><p>📌 判定口诀：<strong>凡是"生成出来的"，都不要放在 Godot 工程目录里。</strong></p></blockquote>
+<hr>
+<h2>4.2 project/ 内部地图</h2>
+<table><thead><tr><th>路径</th><th>内容</th><th>会进包吗</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>scripts/</code></td><td><code>world_model.gd</code> <code>build_world.gd</code> <code>main.gd</code> <code>minimap.gd</code> <code>achievements.gd</code> <code>model_thumbnail.gd</code></td><td>✅</td></tr><tr><td><code>assets/models/</code></td><td>9 个 GLB + <code>manifest.json</code></td><td>✅</td></tr><tr><td><code>assets/fonts/</code></td><td>子集字体（299KB）</td><td>✅</td></tr><tr><td><code>data/</code></td><td><code>palette.json</code> <code>objectives.json</code> <code>achievements.json</code></td><td>✅</td></tr><tr><td><code>docs/</code></td><td>需求与学习指南</td><td>✅（<code>include_filter</code> 明确列入）</td></tr><tr><td><code>tests/</code></td><td>引擎测试与浏览器验收脚本</td><td>❌（<code>exclude_filter</code>）</td></tr><tr><td><code>art/</code></td><td>Blender 源与建模脚本</td><td>❌</td></tr><tr><td><code>export_presets.cfg</code></td><td>导出预设（Web + Windows）</td><td>❌（引擎自用）</td></tr></tbody></table>
+<p>导出过滤写在 <code>project/export_presets.cfg</code>：</p>
+<pre><code>include_filter=&quot;data/*.json,docs/*.md,assets/models/manifest.json&quot;
+exclude_filter=&quot;art/*,tests/*,build/*&quot;</code></pre>
+<blockquote><p><strong>这两个过滤是"包体清单"</strong>：加新资源时先问自己——它该进包吗？不该就加进 <code>exclude_filter</code>。</p></blockquote>
+<hr>
+<h2>4.3 本机配置 vs 工程配置</h2>
+<table><thead><tr><th>配置</th><th>位置</th><th>入库</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td>引擎/Blender 路径</td><td><code>.codebuddy/local/tools.json</code></td><td>❌</td><td>模板 <code>tools/tools.example.json</code></td></tr><tr><td>MCP 地址与令牌</td><td><code>.codebuddy/local/pilot.json</code></td><td>❌</td><td>模板 <code>tools/pilot.example.json</code></td></tr><tr><td>MCP 服务器清单</td><td>用户级 <code>~/.codebuddy/mcp.json</code></td><td>❌</td><td>第 02 章</td></tr><tr><td>引擎版本声明</td><td><code>project/project.godot</code></td><td>✅</td><td><code>config/features</code></td></tr><tr><td>工具链说明</td><td><code>TOOLCHAIN.md</code></td><td>✅</td><td>给人看</td></tr></tbody></table>
+<p><strong>规则</strong>：换台机器就要改的 → 不入库，但<strong>必须留 <code>.example</code> 模板</strong>并写清改哪里。</p>
+<hr>
+<h2>4.4 一键地图：<code>tools/dev.py</code></h2>
+<table><thead><tr><th>命令</th><th>作用</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><code>python tools/dev.py test</code></td><td>第 1/2 层验证：56 条断言 + 12 条场景冒烟</td></tr><tr><td><code>python tools/dev.py run</code></td><td>启动游戏</td></tr><tr><td><code>python tools/dev.py editor</code></td><td>打开编辑器</td></tr><tr><td><code>python tools/dev.py import</code></td><td>无头导入资源</td></tr><tr><td><code>python tools/dev.py export-web</code></td><td>Web 导出到 <code>build/</code></td></tr><tr><td><code>python tools/dev.py export-windows</code></td><td>Windows 单文件 exe 到 <code>build-win/</code></td></tr><tr><td><code>python tools/dev.py preview</code></td><td>本地起静态服务预览 Web 成品</td></tr><tr><td><code>python tools/dev.py package</code></td><td>打包源码/课程种子/Web 三个 zip</td></tr></tbody></table>
+<p>工具脚本（都在 <code>tools/</code>）：</p>
+<pre><code>asset_pipeline.py    资产管线：脚本 → 远程 Blender → GLB → 建材表
+fetch_templates.py   Godot 导出模板分块续传下载（1.2GB，单次会超时）
+build_font_corpus.py 字体子集：保基准 + 补缺字（改中文文案后必跑）
+course_capture.py    教程配图自动生成（Playwright）
+course_build.py      教程 Markdown → HTML 成品站点
+course_check.py      教程体检：配图引用 / 拍摄计划 / 字数</code></pre>
+<blockquote><p>全部<strong>只依赖 Python 标准库</strong>（除 <code>course_*</code> 在无 markdown 库时用内置转换器）。<br>这是有意的设计：学员 clone 下来就能跑，不需要先配环境。</p></blockquote>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>仓库</td><td>自己 <code>git clone</code></td><td>平台按 PBL 项目预建，<strong>目录结构与本地完全一致</strong></td></tr><tr><td><code>tools/dev.py</code> 命令</td><td>本地终端执行</td><td>平台内执行，<strong>命令与参数相同</strong></td></tr><tr><td>导出产物</td><td><code>build/</code> <code>build-win/</code>（本地磁盘）</td><td>平台工作区；下载或预览入口由平台提供</td></tr><tr><td>本机配置（路径/令牌）</td><td>自己维护 <code>.codebuddy/local/*.json</code></td><td><strong>平台托管</strong>，学员不接触</td></tr><tr><td>预览</td><td><code>dev.py preview</code> 起本地服务</td><td>平台预览入口，底层同源</td></tr></tbody></table>
+<p><strong>一致性是本实训的刻意设计</strong>：目录、命令、脚本在两边完全一样，<br>所以你在本地学到的每一步，到云端都能原样复用；反过来也成立。</p>
+<blockquote><p>🌩 唯一需要适应的差别：<strong>成品去哪了</strong>。本地在你磁盘的 <code>build/</code>，云端在平台工作区——<br>找产物时先问平台"导出目录在哪"，再对照 4.1 的目录表。</p></blockquote>
+<hr>
+<h2>4.5 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>启动日志里出现 <code>index.png</code> 扫描</td><td>导出产物在工程目录内</td><td>导出目录移到仓库根（T33）</td></tr><tr><td>改了 <code>data/</code> 但游戏里没变</td><td>未重新导出/未重跑导入</td><td><code>dev.py import</code> 或重新导出</td></tr><tr><td>包体莫名变大</td><td>不该进包的文件没排除</td><td>检查 <code>exclude_filter</code></td></tr><tr><td><code>dev.py</code> 报找不到引擎</td><td><code>tools.json</code> 路径不对</td><td>改文件，或用 <code>--godot</code> 覆盖</td></tr><tr><td>中文显示方框</td><td>子集字体缺字</td><td>跑 <code>build_font_corpus.py</code>（T28）</td></tr></tbody></table>
+<hr>
+<h2>4.6 本章作业</h2>
+<ol><li>不看文档，默写一遍 <code>project/</code> 下六个目录的职责，然后对照 4.2 表打分</li><li>打开 <code>export_presets.cfg</code>，说出哪两类文件<strong>不会</strong>进包，以及为什么</li><li>跑一次 <code>python tools/dev.py package</code>，看看打出来的三个 zip 各自装了什么</li><li>在 <code>TOOLCHAIN.md</code> 里补一条你自己的"换机器清单"（至少 3 项）</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：仓库是"工厂平面图"。先认路，再开工。</li><li><strong>课堂演示</strong>：现场打开 <code>export_presets.cfg</code> 的 include/exclude，问学生"tests 会进包吗"，</li></ul>
+<p>多数人会答错——这是讲"包体清单"的好切入点。</p>
+<ul><li><strong>常见误解</strong>：学生以为"目录里的文件都会进游戏"。用 4.2 表逐行确认。</li><li><strong>分层教学</strong>：零基础班只要求 4.1 与 4.4；进阶班要求解释"为什么导出目录必须在工程外"。</li><li><strong>批改要点</strong>：作业 2 必须同时答出 <code>tests/</code> 与 <code>art/</code>（或 <code>build/*</code>），只答一个给一半分。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/04/04-dock-building-beacon.png" alt="04-dock-building-beacon"><figcaption>04-dock-building-beacon.png</figcaption></figure><figure><img src="assets/shots/04/04-dock-terrain.png" alt="04-dock-terrain"><figcaption>04-dock-terrain.png</figcaption></figure><figure><img src="assets/shots/04/04-game-ready.png" alt="04-game-ready"><figcaption>04-game-ready.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:20</td><td>资源管理器里展开三层目录</td><td>"工程、工具、教程，各住各的。"</td></tr><tr><td>01:20–03:00</td><td>讲导出目录为什么在工程外（对比日志）</td><td>"生成出来的，别放工程里。"</td></tr><tr><td>03:00–05:00</td><td><code>project/</code> 内部逐个目录 + 进包与否</td><td>"这张表就是包体清单。"</td></tr><tr><td>05:00–06:30</td><td><code>tools/dev.py</code> 命令逐个演示</td><td>"一张地图走完全程。"</td></tr><tr><td>06:30–08:00</td><td>云端/本地对照</td><td>"两边命令一样，只是产物位置不同。"</td></tr><tr><td>08:00–09:00</td><td>作业 + 预告（卷 1：设计先行）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/04/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>04-game-ready.png</code></td><td>工程跑起来后的画面</td><td><code>python tools/course_capture.py --chapter 04</code></td></tr><tr><td><code>04-dock-terrain.png</code></td><td>地形分类建材栏</td><td>同上</td></tr><tr><td><code>04-dock-building-beacon.png</code></td><td>建筑分类选中灯塔</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L2 片段，12 分钟）</h2>
+<ul><li><strong>开场提问</strong>："<code>tests/</code> 目录会打进游戏包吗？"——投票，再揭答案</li><li><strong>演示</strong>：改一次 <code>exclude_filter</code>，重新导出，对比包体大小</li><li><strong>互动</strong>：让观众报出自己工程里"最占空间的文件"</li><li><strong>收尾</strong>：强调"目录即契约"</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：为什么 <code>docs/</code> 要进包？</strong><br>A：它是给玩家/学员看的说明（需求与学习指南），由 <code>include_filter</code> 显式列入。</p>
+<p><strong>Q：云端仓库的目录会和本地一模一样吗？</strong><br>A：会。这是刻意的——同一套命令在两边都能跑，学员不用来回适应。</p>
+<p><strong>Q：我可以把工具脚本写在 <code>project/</code> 里吗？</strong><br>A：不建议。<code>project/</code> 是 Godot 工程，Python 工具放 <code>tools/</code>，避免被当成资源扫描。</p>
+<div class="pager"><a href="chapter-03.html">← 卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><span></span></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

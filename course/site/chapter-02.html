@@ -5,10 +5,10 @@
 <link rel="stylesheet" href="assets/style.css"></head><body>
 <header class="top"><div class="inner">
   <h1>卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</h1>
-  <div class="meta">卷 0 · 启程 · 字符数 7369 · 生成于 2026-09-21 12:34</div>
+  <div class="meta">卷 0 · 启程 · 字符数 7369 · 生成于 2026-09-21 12:43</div>
 </div></header>
 <div class="wrap">
-<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html" style="color:#2d514b;font-weight:700">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a></nav>
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html" style="color:#2d514b;font-weight:700">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a></nav>
 <main>
 <h1>卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</h1>
 <blockquote><p><strong>本章目标</strong>：说清 Godot / Blender / MCP / Git 各自负责什么，为什么引擎版本要"锁"，<br>以及为什么 <strong>Blender 用远程 MCP、Godot 必须用本地 MCP</strong>。<br>对应任务：T02 / T04　|　对应提交：<code>9e5ef74</code>（升级 4.7）、<code>b79d246</code>（切回本地 Godot MCP）</p></blockquote>
@@ -118,7 +118,7 @@ cwd 为工程目录）。写完后用探针列出两边工具数量并贴给我�
 <p><strong>Q：能不能两台都用远程？</strong><br>A：等远程 Godot 支持二进制上传就可以。届时把 <code>mcp.json</code> 里 <code>godot-mcp</code> 的 <code>disabled</code> 改回 <code>false</code> 即可。</p>
 <p><strong>Q：Blender 本地 4.2、远程 5.2，脚本会不兼容吗？</strong><br>A：本项目只用最基础的 bpy API（primitive、modifier、materials），两个版本都验证过。<br>真出问题以<strong>远程为准</strong>，因为资产是从远程产出的。</p>
 <p><strong>Q：MCP 令牌泄露怎么办？</strong><br>A：立即让服务方吊销令牌；仓库侧用 <code>git log -p --all -S"Bearer "</code> 检查，必要时重写历史。</p>
-<div class="pager"><a href="chapter-01.html">← 卷 0 · 第 01 章　先让它跑起来</a><span></span></div>
+<div class="pager"><a href="chapter-01.html">← 卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议 →</a></div>
 </main></div>
 <footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
 </body></html>
