@@ -18,7 +18,7 @@
 python tools/dev.py test          # 导入 + 模型单测(42) + 场景冒烟
 python tools/dev.py editor        # 打开编辑器
 python tools/dev.py export-web    # Web 导出到仓库根 build/（不在 Godot 工程内）
-python tools/dev.py export-windows  # Windows 桌面版到 build-win/（exe + pck，已验证可启动）
+python tools/dev.py export-windows  # Windows 桌面版到 build-win/（单个自包含 exe，pck 已内嵌，可独立启动）
 python tools/dev.py preview       # 本地预览 8188
 python tools/dev.py package       # 打 source/seed/web 三个 zip
 python tools/blender_mcp.py       # 启动 Blender 并自动连上 MCP（需保持窗口）

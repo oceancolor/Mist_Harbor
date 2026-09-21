@@ -83,8 +83,9 @@ def main():
         windows = BUILD_WIN
         windows.mkdir(exist_ok=True)
         invoke(binary, ['--export-release', 'Windows Desktop', str(windows / 'mist-harbor.exe')], 'windows-export')
-        if not all((windows / name).is_file() for name in ['mist-harbor.exe', 'mist-harbor.pck']):
-            raise RuntimeError('Export completed without the Windows executable and pck')
+        # The preset embeds the pck, so a single self-contained exe is the whole build.
+        if not (windows / 'mist-harbor.exe').is_file():
+            raise RuntimeError('Export completed without the Windows executable')
     return 0
 
 if __name__ == '__main__':
