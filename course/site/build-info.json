@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 15:15",
+  "built": "2026-09-21 15:22",
   "chapters": [
     {
       "key": "01",
@@ -191,6 +191,13 @@
       "file": "chapter-27.html"
     },
     {
+      "key": "28",
+      "title": "卷 5 · 第 28 章　体积优化：先测量，再动刀",
+      "volume": "卷 5 · 多端发行",
+      "characters": 4009,
+      "file": "chapter-28.html"
+    },
+    {
       "key": "29",
       "title": "卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的",
       "volume": "卷 6 · 质量与协作",
@@ -210,7 +217,14 @@
       "volume": "卷 6 · 质量与协作",
       "characters": 4327,
       "file": "chapter-31.html"
+    },
+    {
+      "key": "32",
+      "title": "卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目\"能交付给第二个人\"",
+      "volume": "卷 6 · 质量与协作",
+      "characters": 4991,
+      "file": "chapter-32.html"
     }
   ],
-  "characters": 141955
+  "characters": 150955
 }

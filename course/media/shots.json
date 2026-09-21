@@ -124,6 +124,14 @@
     {"resize": [820, 1100], "wait": 1200, "shot": "27-tablet-view.png"},
     {"category": "地形", "select": "stone", "place": [[410, 700]], "wait": 600, "shot": "27-touch-build.png"}
   ],
+  "28": [
+    {"shot": "28-web-running.png"},
+    {"wheel": -300, "wait": 600, "shot": "28-loaded-scene.png"}
+  ],
+  "32": [
+    {"shot": "32-game-ui-fonts.png"},
+    {"click": "progress", "wait": 900, "shot": "32-progress-text.png"}
+  ],
   "14": [
     {"shot": "14-game-start.png"},
     {"category": "建筑", "select": "barrel", "wait": 500, "shot": "14-barrel-selected.png"}

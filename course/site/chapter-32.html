@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人" · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</h1>
+  <div class="meta">卷 6 · 质量与协作 · 字符数 4991 · 生成于 2026-09-21 15:22</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-25.html">卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-26.html">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-28.html">卷 5 · 第 28 章　体积优化：先测量，再动刀</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a><a href="chapter-32.html" style="color:#2d514b;font-weight:700">卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</a></nav>
+<main>
+<h1>卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</h1>
+<blockquote><p><strong>本章目标</strong>：把"能跑"升级为"<strong>可协作、可复现、可自动验证</strong>"——<br>CI 跑什么、字体子集怎么在不改观感的前提下扩展、Git 工作流怎么守住秘密。<br>对应任务：T44–T48　|　对应文件：<code>tools/dev.py</code>、<code>tools/build_font_corpus.py</code>、<code>.gitignore</code></p></blockquote>
+<hr>
+<h2>32.1 CI 该跑什么：只跑"零依赖"的那一层</h2>
+<p>回顾第 29 章的三层：</p>
+<table><thead><tr><th>层</th><th>是否进 CI</th><th>理由</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>L1 模型层（56 项）</strong></td><td>✅ <strong>必跑</strong></td><td>纯逻辑、秒级、<strong>不需要 GPU</strong></td></tr><tr><td><strong>L2 场景层（12 项）</strong></td><td>✅ 建议跑</td><td>需要渲染/物理帧，CI 用 dummy 驱动可行</td></tr><tr><td><strong>L3 浏览器层（23 项）</strong></td><td>⚠️ 定时/发布前</td><td>需 Playwright + Chromium，慢（1–2 分钟）</td></tr></tbody></table>
+<pre><code># .github/workflows/ci.yml（示意）
+- run: python tools/fetch_templates.py      # 模板（或镜像预置）
+- run: python tools/dev.py test              # L1 + L2，失败即退出码非 0
+- run: python tools/dev.py export-web        # 顺带验证导出链路</code></pre>
+<blockquote><p>📌 <strong>CI 能成立的前提</strong>：命令用<strong>退出码</strong>表达成败（第 29 章的 <code>quit(1)</code>）。<br>如果只打印日志不返回非零，CI 永远绿——那是最危险的假象。</p></blockquote>
+<p><strong>本仓库当前没有 CI 配置文件</strong>，这是明确的待办（见 TOOLCHAIN.md）。</p>
+<hr>
+<h2>32.2 一次真实的踩坑：CI 被"写死的数量"骗红</h2>
+<p><code>tools/dev.py test</code> 曾这样判定：</p>
+<pre><code>if &#x27;WORLD_TEST_RESULT passed=42 failed=0&#x27; not in model:
+    raise RuntimeError(&#x27;Expected baseline test summaries missing&#x27;)</code></pre>
+<p>测试增长到 56 项后，<strong>它开始永远失败</strong>（exit=1）——<br>虽然测试其实全绿。<strong>这正是第 31 章那条原则的现身说法</strong>。</p>
+<p>修法是解析而不是写死：</p>
+<pre><code>model_summary = re.search(r&#x27;WORLD_TEST_RESULT passed=(\d+) failed=(\d+)&#x27;, model)
+# failed 必须为 0；passed 必须 &gt; 0（防止&quot;零断言也算通过&quot;）</code></pre>
+<table><thead><tr><th>教训</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>约束写死，统计推导</strong></td><td><code>failed == 0</code> 是约束，可以写死；<code>passed == 42</code> 是统计，必须推导</td></tr><tr><td><strong>防假绿</strong></td><td>只判 <code>failed==0</code> 不够——万一套件没跑（0 项）也是 0，所以要 <code>passed &gt; 0</code></td></tr><tr><td><strong>CI 里的假红比假绿便宜</strong></td><td>假红会被立刻发现；假绿会一直骗人</td></tr></tbody></table>
+<hr>
+<h2>32.3 字体子集：扩展而不改观感</h2>
+<p>shipped 字体 <code>harbor-sc.ttf</code> 只有 <strong>299 KB</strong>，因为它是<strong>子集</strong>（只含游戏会用到的字）。</p>
+<p>新增文案时怎么办？直接重新子集会<strong>改变字重与间距</strong>，整站观感变化——本项目用了一个巧妙做法：</p>
+<pre><code>1. 收集游戏里可能出现的所有字符（脚本扫源码 + 数据）
+2. 保留 base 字体不动（tools/fonts/harbor-sc-base.ttf）
+3. 只从源字体里子集出 base 缺的那些字
+4. 合并进去</code></pre>
+<pre><code>E:/Mist_Harbor/.venv-mcp/Scripts/python.exe tools/build_font_corpus.py</code></pre>
+<table><thead><tr><th>要点</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>base 不动</strong></td><td>已发布的字形不被替换 → 观感不漂移</td></tr><tr><td><strong>增量补充</strong></td><td>只加缺的字 → 体积增长可控</td></tr><tr><td><strong>源字体许可</strong></td><td>Noto Sans SC <strong>OFL 1.1</strong>（可商用，需保留许可声明）</td></tr><tr><td>依赖</td><td><code>fonttools</code>；源字体放 <code>.codebuddy/local/</code>（不入库）</td></tr></tbody></table>
+<blockquote><p>📌 这是"<strong>增量而非重建</strong>"在字体治理上的应用，与第 16 章"重跑不动文案"是同一种思路。</p></blockquote>
+<hr>
+<h2>32.4 Git 工作流：三条硬规则</h2>
+<pre><code>main（唯一主干，始终可运行）
+└─ feat/&lt;主题&gt;   改完跑 dev.py test 再合并</code></pre>
+<table><thead><tr><th>规则</th><th>做法</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>① 秘密不入库</strong></td><td>令牌放 <code>.codebuddy/local/</code>（已 gitignore）；模板入库（<code>tools/*.example.json</code>）</td></tr><tr><td><strong>② 不入库二进制垃圾</strong></td><td><code>.godot/</code>、<code>build/</code>、<code>logs/</code>、<code>.venv-mcp/</code>、<code>.codebuddy/</code> 全部忽略</td></tr><tr><td><strong>③ 提交前跑测试</strong></td><td><code>python tools/dev.py test</code>（L1+L2，秒级）</td></tr></tbody></table>
+<p><strong>提交信息约定</strong>（本仓库一直在用）：</p>
+<pre><code>&lt;类型&gt;: &lt;一句话摘要&gt;
+
+- 要点 1
+- 要点 2</code></pre>
+<p>类型用 <code>教程:</code> / <code>修复:</code> / <code>资产:</code> / <code>工具:</code> / <code>文档:</code> 等中文前缀，<br><strong>正文说明"为什么"</strong>，而不只是"改了什么"。</p>
+<hr>
+<h2>32.5 交接清单：换一个人也能跑起来</h2>
+<pre><code>1. 装 Godot 4.7（版本必须与 project.godot 的 features 一致）
+2. 复制 tools/tools.example.json → .codebuddy/local/tools.json，改路径
+3. python tools/fetch_templates.py（装导出模板，约 1.28 GB，可续传）
+4. python tools/dev.py test          应通过
+5. python tools/dev.py export-web    应产出 build/
+6. （可选）复制 tools/pilot.example.json → .codebuddy/local/pilot.json 填远程凭据</code></pre>
+<p><strong>这套流程的判据</strong>：一个新人在干净机器上照做，<strong>不需要问任何人</strong>。</p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>CI</td><td>本地/自建 runner</td><td><strong>云端原生流水线</strong>——L1/L2 零依赖，是最划算的门禁</td></tr><tr><td>模板</td><td>每人下载 1.28 GB</td><td><strong>云端镜像预置一次，全员复用</strong></td></tr><tr><td>字体工具链</td><td>本地 venv + fonttools</td><td>云端同样可跑；<strong>建议把字体产物入库</strong>（避免每台机器结果不同）</td></tr><tr><td>秘密</td><td><code>.codebuddy/local/</code></td><td><strong>平台凭据托管</strong>，比本地文件更安全</td></tr><tr><td>交接</td><td>文档</td><td>云端可做到"打开就能跑"——但要保证<strong>版本与模板一致</strong></td></tr></tbody></table>
+<blockquote><p>🌩 云端最大的收益：<strong>新人零配置</strong>。前提是镜像里的引擎版本与工程声明严格一致。</p></blockquote>
+<hr>
+<h2>32.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>CI 永远绿</td><td>命令不用退出码表达失败</td><td>检查 <code>quit(1)</code> 与 <code>raise</code></td></tr><tr><td>CI 假红</td><td>判定里写死了数量</td><td>改为解析（32.2）</td></tr><tr><td>套件没跑却显示通过</td><td>只判 <code>failed==0</code></td><td>加 <code>passed &gt; 0</code></td></tr><tr><td>字体观感变了</td><td>重新子集了整个字体</td><td>用增量方案（base 不动）</td></tr><tr><td>换机器跑不起来</td><td>路径写死在入库文件里</td><td>用 <code>.codebuddy/local/</code> + example 模板</td></tr><tr><td>令牌被提交</td><td>秘密放进了受控目录</td><td>放 gitignore 的本地文件</td></tr></tbody></table>
+<hr>
+<h2>32.7 本章作业</h2>
+<ol><li>说明 CI 里该跑哪两层、为什么，以及"命令用退出码"为何是前提</li><li>复述 32.2 的踩坑：为什么写死 42 会失败，正确判定要同时满足哪两个条件</li><li>说明字体"增量补充"为什么能保持观感不变</li><li>按 32.5 的清单，在<strong>一台干净目录</strong>里 clone 本仓库并跑通前五步，记录卡住的地方</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>可交付 &gt; 能运行</strong>。第二个人能不能跑起来，才是工程化与否的分水岭。</li><li><strong>课堂演示</strong>：把 <code>dev.py</code> 的判定改回写死 42，看 CI 变红而测试其实全绿。</li><li><strong>高频误解</strong>：学生以为 CI 就是"自动跑一下"。强调：<strong>退出码 + 防假绿</strong>。</li><li><strong>讨论题</strong>：你的项目换一台机器要几步？哪一步最可能卡住？</li><li><strong>批改要点</strong>：作业 2 要答出 <code>failed==0</code> <strong>且</strong> <code>passed&gt;0</code> 两个条件。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/32/32-game-ui-fonts.png" alt="32-game-ui-fonts"><figcaption>32-game-ui-fonts.png</figcaption></figure><figure><img src="assets/shots/32/32-progress-text.png" alt="32-progress-text"><figcaption>32-progress-text.png</figcaption></figure></div><h2>📹 录屏分镜（10 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:40</td><td>三层 × 是否进 CI</td><td>"零依赖的那层最该进 CI。"</td></tr><tr><td>01:40–03:30</td><td>写死 42 的假红现场</td><td>"统计不能写死，约束可以。"</td></tr><tr><td>03:30–05:00</td><td>字体增量方案</td><td>"base 不动，观感不漂。"</td></tr><tr><td>05:00–06:30</td><td>Git 三条硬规则</td><td></td></tr><tr><td>06:30–08:30</td><td>六步交接清单</td><td>"新人不需要问任何人。"</td></tr><tr><td>08:30–10:00</td><td>作业 + 卷 6 小结</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/32/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>32-game-ui-fonts.png</code></td><td>中文 UI 与字体渲染效果（子集的成果）</td><td><code>python tools/course_capture.py --chapter 32</code></td></tr><tr><td><code>32-progress-text.png</code></td><td>含大量中文的进度面板（字形覆盖验证）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，12 分钟）</h2>
+<ul><li><strong>开场</strong>："把项目交给同事，他会卡在第几步？"</li><li><strong>演示</strong>：干净目录 clone → 照清单跑，现场记录卡点</li><li><strong>互动</strong>：让观众列出自己项目的"新人上手清单"</li><li><strong>收尾</strong>：卷 6 小结 + 预告卷 7 商业化</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：<code>.codebuddy/</code> 被忽略，那工具路径怎么共享？</strong><br>A：靠 <code>tools/tools.example.json</code> 模板——新人复制后改路径。秘密同理（<code>pilot.example.json</code>）。</p>
+<p><strong>Q：字体子集产物要入库吗？</strong><br>A：<strong>要</strong>。它是构建产物但又是运行时必需，且依赖本地 fonttools 版本；<br>入库能保证所有人拿到同一个字体（避免"我这边字不一样"）。</p>
+<p><strong>Q：CI 要不要跑浏览器验收？</strong><br>A：建议放在<strong>发布前或定时</strong>任务，不放每次提交——它慢（1–2 分钟）且依赖浏览器。</p>
+<div class="pager"><a href="chapter-31.html">← 卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a><span></span></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

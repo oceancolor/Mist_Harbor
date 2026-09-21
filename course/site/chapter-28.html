@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 5 · 第 28 章　体积优化：先测量，再动刀 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 5 · 第 28 章　体积优化：先测量，再动刀</h1>
+  <div class="meta">卷 5 · 多端发行 · 字符数 4009 · 生成于 2026-09-21 15:22</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-25.html">卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-26.html">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-28.html" style="color:#2d514b;font-weight:700">卷 5 · 第 28 章　体积优化：先测量，再动刀</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a><a href="chapter-32.html">卷 6 · 第 32 章　CI、字体子集与 Git 工作流：让项目"能交付给第二个人"</a></nav>
+<main>
+<h1>卷 5 · 第 28 章　体积优化：先测量，再动刀</h1>
+<blockquote><p><strong>本章目标</strong>：建立一套<strong>按顺序做</strong>的优化方法论——<br>从"零成本的服务器压缩"到"最高成本的自定义构建"，每一档的收益与代价都写清楚。<br>对应任务：T33（体积）　|　对应文件：<code>export_presets.cfg</code>、<code>project/docs/requirements.md</code></p></blockquote>
+<hr>
+<h2>28.1 先测量：钱花在哪</h2>
+<p>当前 Web 产物（第 25 章实测）：</p>
+<table><thead><tr><th>文件</th><th>大小</th><th>占比</th></tr></thead><tbody><tr><td>---</td><td>---:</td><td>---:</td></tr><tr><td><code>index.wasm</code></td><td>37.68 MB</td><td><strong>98.3%</strong></td></tr><tr><td><code>index.pck</code></td><td>0.40 MB</td><td>1.0%</td></tr><tr><td><code>index.js</code></td><td>0.27 MB</td><td>0.7%</td></tr></tbody></table>
+<p><strong>结论：资产不是问题，引擎才是。</strong><br>我们的 9 件 GLB 合计才 282 KB（第 17 章），再怎么压也救不了 37 MB。</p>
+<blockquote><p>📌 第 25 章强调过一次，这里再强调：<strong>优化的第一性问题是"能不能用更小的引擎"</strong>。</p></blockquote>
+<hr>
+<h2>28.2 四档优化，按顺序做</h2>
+<table><thead><tr><th>档</th><th>手段</th><th>收益</th><th>代价</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>① 零成本</strong></td><td>服务器开 <strong>gzip / Brotli</strong></td><td>传输体积大幅下降（wasm 压缩率很高）</td><td>只需配服务器</td></tr><tr><td><strong>② 低成本</strong></td><td>加载进度 + 首屏提示</td><td><strong>体感</strong>改善最明显</td><td>改几行 HTML/JS</td></tr><tr><td><strong>③ 中成本</strong></td><td>纹理压缩、外部 pck 按需加载、砍无用资源</td><td>有限（我们资产本身很小）</td><td>需要重构加载</td></tr><tr><td><strong>④ 高成本</strong></td><td><strong>自定义引擎构建</strong>（去掉不用模块）</td><td><strong>最大</strong>，可降到十几 MB</td><td>需自行用 SCons 编译模板</td></tr></tbody></table>
+<p><strong>顺序原则</strong>：先做 ①②（几乎白拿），再评估要不要上 ④。</p>
+<hr>
+<h2>28.3 ① 服务器压缩：最容易忘的一档</h2>
+<p>.wasm 是二进制但<strong>压缩率很高</strong>，托管时开启：</p>
+<pre><code>Nginx:   gzip on;  gzip_types application/wasm;
+         # 或 brotli
+Vercel / Netlify / GitHub Pages: 多数默认已对静态资源压缩
+自托管 python -m http.server:    不压缩（仅本地预览，别拿它测体积）</code></pre>
+<p><strong>验证方法</strong>：用浏览器开发者工具的 Network 面板看<br><strong><code>content-encoding: br/gzip</code></strong> 与<strong>实际传输大小</strong>（不是资源大小）。</p>
+<blockquote><p>📌 很多人以为"37 MB 太大没法上线"，其实<strong>传输的可能只有十几 MB</strong>——<br>前提是托管服务真的开了压缩。这一档经常被完全忽略。</p></blockquote>
+<hr>
+<h2>28.4 ② 加载体验：等待需要反馈</h2>
+<p>37 MB 即使压缩也要几秒。玩家在这几秒里需要看到：</p>
+<pre><code>进度百分比 / 进度条 → 游戏标题与一句提示 → 加载完成后自动获得焦点</code></pre>
+<p>Godot 的 Web 外壳自带一个加载条，但可以做三件事：</p>
+<table><thead><tr><th>改进</th><th>做法</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>自定义 HTML 外壳</strong></td><td><code>html/custom_html_shell</code> 指向自己的模板</td></tr><tr><td><strong>主题色一致</strong></td><td><code>html/head_include</code> 里加 <code>theme-color</code>（已做）</td></tr><tr><td><strong>首屏不空白</strong></td><td>外壳里放静态的标题与背景色，避免白屏</td></tr></tbody></table>
+<p><strong>判断标准</strong>：玩家<strong>知道在加载</strong>，就不会以为坏了。</p>
+<hr>
+<h2>28.5 ④ 自定义构建：什么时候值得</h2>
+<p>Godot 支持用 SCons 编译<strong>裁剪过的引擎模板</strong>：</p>
+<pre><code>去掉不用的模块：如 OpenXR、WebXR、部分 2D/3D 特性、第三方库…
+收益：wasm 可显著减小（取决于裁掉了什么）
+代价：需要构建环境、编译时间、每次升级引擎都要重编</code></pre>
+<p><strong>什么时候值得做</strong>：</p>
+<ul><li>目标用户对首屏极度敏感（广告投放、展会扫码）</li><li>已确定不会用到被裁掉的模块</li><li>有 CI 能自动产出模板（第 32 章）</li></ul>
+<p><strong>什么时候别做</strong>：体积没成为真实瓶颈时——它引入的维护成本是长期的。</p>
+<hr>
+<h2>28.6 别忘了"内容侧"的预算</h2>
+<p>即使引擎占大头，<strong>资产预算仍要定死</strong>（第 17、18 章）：</p>
+<table><thead><tr><th>预算项</th><th>当前</th><th>建议上限</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>GLB 总体积</td><td>282 KB</td><td>1 MB</td></tr><tr><td>单件三角面</td><td>≤ 632</td><td>1500</td></tr><tr><td>字体子集</td><td>299 KB</td><td>保持只含用到的字</td></tr><tr><td>存档</td><td>—</td><td>≤ 4 MB（<code>requirements.md</code>）</td></tr></tbody></table>
+<p><strong>把预算写进文档</strong>，新增资产时才有裁判（第 18 章的检查清单）。</p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>压缩验证</td><td>本地起服务（注意：<code>http.server</code> <strong>不压缩</strong>）</td><td>云端托管通常已开 → <strong>用云端测真实传输体积</strong></td></tr><tr><td>自定义构建</td><td>本地 SCons 编译</td><td><strong>云端最适合</strong>：编译一次，团队共用模板</td></tr><tr><td>产物归档</td><td>本地目录</td><td>云端归档 wasm/pck，便于对比每次构建的体积</td></tr><tr><td>建议</td><td>—</td><td><strong>把"产物大小"做成构建日志里的一行</strong>，长期跟踪</td></tr></tbody></table>
+<blockquote><p>🌩 云端最有价值的组合：<strong>自定义构建在云端做一次 + 产物体积写进构建日志</strong>，<br>之后任何人都能看到"这次改动让包体变了多少"。</p></blockquote>
+<hr>
+<h2>28.7 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>上线后还是慢</td><td>服务器没开压缩</td><td>检查 <code>content-encoding</code></td></tr><tr><td>本地测出 37 MB 就放弃</td><td>用 <code>http.server</code> 测（不压缩）</td><td>用真实托管环境测</td></tr><tr><td>玩家以为卡死</td><td>没进度反馈</td><td>自定义外壳 + 首屏</td></tr><tr><td>压缩资产没效果</td><td>资产本来就小</td><td>别在资产上浪费时间</td></tr><tr><td>自定义构建后功能缺失</td><td>裁掉了还在用的模块</td><td>先列"确实用不到的模块清单"</td></tr><tr><td>体积长期失控</td><td>没有记录基线</td><td>构建日志输出各产物大小</td></tr></tbody></table>
+<hr>
+<h2>28.8 本章作业</h2>
+<ol><li>按顺序列出四档优化，说明各自收益与代价，指出为什么 ① 最该先做</li><li>解释为什么"本地用 <code>http.server</code> 测体积"会得出错误结论</li><li>说出三个内容侧预算值，并说明新增资产时谁来当裁判</li><li>用浏览器 Network 面板查看一次 Web 导出，记录资源大小与传输大小的差值</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>优化顺序 = 收益/成本比排序</strong>。不是"哪个效果大先做哪个"。</li><li><strong>课堂演示</strong>：同一个页面，开/关 gzip 两次加载，看 Network 面板差异。</li><li><strong>高频误解</strong>：学生一上来就想"压缩贴图"。用占比数据纠正。</li><li><strong>讨论题</strong>：什么情况下你应该做自定义构建？（答：体积成为真实转化瓶颈时）</li><li><strong>批改要点</strong>：作业 1 必须指出 ① 零成本且常被忽略。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/28/28-loaded-scene.png" alt="28-loaded-scene"><figcaption>28-loaded-scene.png</figcaption></figure><figure><img src="assets/shots/28/28-web-running.png" alt="28-web-running"><figcaption>28-web-running.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>产物占比表</td><td>"98% 是引擎。"</td></tr><tr><td>01:30–03:00</td><td>四档优化排序</td><td>"先白拿，再动刀。"</td></tr><tr><td>03:00–04:40</td><td>Network 面板：资源大小 vs 传输大小</td><td>"压缩是白给的。"</td></tr><tr><td>04:40–06:00</td><td>加载体验三件事</td><td>"等待需要反馈。"</td></tr><tr><td>06:00–07:30</td><td>自定义构建的取舍</td><td></td></tr><tr><td>07:30–09:00</td><td>内容预算 + 作业</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/28/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>28-web-running.png</code></td><td>Web 版运行画面（优化的对象）</td><td><code>python tools/course_capture.py --chapter 28</code></td></tr><tr><td><code>28-loaded-scene.png</code></td><td>加载完成后的场景</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："37 MB 能不能上线？"——先问"传输是多少"</li><li><strong>演示</strong>：Network 面板看 content-encoding 与传输大小</li><li><strong>互动</strong>：让观众报自己站点的压缩配置</li><li><strong>收尾</strong>：卷 5 小结（Web/Windows/移动端/体积）</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：Brotli 比 gzip 好多少？</strong><br>A：通常更好（尤其对 wasm 这类大二进制），但具体比例要实测——<strong>别猜，测</strong>。</p>
+<p><strong>Q：能不能只加载用到的引擎功能（动态）？</strong><br>A：当前 Godot Web 构建是整体 wasm，不做运行时按需加载；只能靠构建期裁剪。</p>
+<p><strong>Q：字体占多少？值得优化吗？</strong><br>A：299 KB（子集后）。相对 37 MB 很小，但<strong>它是"能省且不损害体验"的典型</strong>，见第 32 章。</p>
+<div class="pager"><a href="chapter-27.html">← 卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>
