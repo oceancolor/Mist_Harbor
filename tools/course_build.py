@@ -272,7 +272,7 @@ def gallery_html(key: str) -> str:
     return '<h2>🖼 本章图集</h2><div class="gallery">' + "".join(items) + "</div>"
 
 
-def video_html(key: str) -> str:
+def video_html(key: str, video_base: str = "") -> str:
     directory = VIDEO / key
     sources = sorted(
         p for p in (directory.glob("*") if directory.is_dir() else [])
@@ -284,19 +284,25 @@ def video_html(key: str) -> str:
         if cover:
             poster = f' poster="assets/shots/{key}/{cover[0].name}"'
         video = sources[0]
+        if video_base:
+            # Keep clips out of the deployed tree: point at the external origin.
+            src = f"{video_base.rstrip('/')}/{key}/{video.name}"
+            note = f'<p class="meta">视频外链：{src}</p>'
+        else:
+            src = f"assets/video/{key}/{video.name}"
+            note = (f'<p class="meta">若浏览器不支持，可直接打开 '
+                    f'<code>course/media/video/{key}/{video.name}</code></p>')
         return (f'<h2>🎬 本章视频</h2><video controls{poster} preload="metadata">'
-                f'<source src="assets/video/{key}/{video.name}"></video>'
-                f'<p class="meta">若浏览器不支持，可直接打开 '
-                f'<code>course/media/video/{key}/{video.name}</code></p>')
+                f'<source src="{src}"></video>' + note)
     return ('<div class="card"><h4>🎬 视频位（待录制）</h4>'
             '把录好的视频放到 <code>course/media/video/' + key + '/</code>'
             '（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；'
             '首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div>')
 
 
-def insert_media_sections(html: str, key: str) -> str:
+def insert_media_sections(html: str, key: str, video_base: str = "") -> str:
     gallery = gallery_html(key)
-    video = video_html(key)
+    video = video_html(key, video_base)
     pattern = re.compile(r"<h2[^>]*>[^<]*录屏分镜[^<]*</h2>")
     match = pattern.search(html)
     if not match:
@@ -324,7 +330,7 @@ def sidebar(entries: list[tuple[str, str, str]], current: str) -> str:
     return '<nav class="toc">' + "".join(links) + "</nav>"
 
 
-def build(embed: bool, out: Path | None = None) -> dict:
+def build(embed: bool, out: Path | None = None, video_base: str = "") -> dict:
     from datetime import datetime
 
     site = out or SITE
@@ -340,7 +346,7 @@ def build(embed: bool, out: Path | None = None) -> dict:
         if folder.is_dir():
             target = assets / "shots" / folder.name
             shutil.copytree(folder, target, dirs_exist_ok=True)
-    if VIDEO.is_dir():
+    if VIDEO.is_dir() and not video_base:
         for folder in VIDEO.iterdir():
             if folder.is_dir():
                 shutil.copytree(folder, assets / "video" / folder.name, dirs_exist_ok=True)
@@ -362,7 +368,7 @@ def build(embed: bool, out: Path | None = None) -> dict:
         path = next(p for p in chapters if chapter_key(p) == key)
         text = path.read_text(encoding="utf-8")
         html = rewrite_media(md_to_html(text))
-        html = insert_media_sections(html, key)
+        html = insert_media_sections(html, key, video_base)
         prev_link = (f'<a href="chapter-{entries[index-1][0]}.html">← {entries[index-1][1]}</a>'
                      if index > 0 else '<span></span>')
         next_link = (f'<a href="chapter-{entries[index+1][0]}.html">{entries[index+1][1]} →</a>'
@@ -433,11 +439,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--embed", action="store_true", help="inline images and CSS into each page")
     parser.add_argument("--out", help="output directory (default: course/site)")
+    parser.add_argument("--video-base", default="",
+                        help="serve chapter clips from this URL base instead of copying them")
     parser.add_argument("--serve", type=int, help="serve the site on this port after building")
     args = parser.parse_args()
 
     out = Path(args.out) if args.out else None
-    stats = build(args.embed, out)
+    stats = build(args.embed, out, args.video_base)
     target = out or SITE
     print(f"built {len(stats['chapters'])} chapter(s), {stats['characters']} characters -> {target}")
     for chapter in stats["chapters"]:
