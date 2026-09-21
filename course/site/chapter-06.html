@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</h1>
+  <div class="meta">卷 1 · 设计先行 · 字符数 3962 · 生成于 2026-09-21 12:50</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html" style="color:#2d514b;font-weight:700">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a></nav>
+<main>
+<h1>卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</h1>
+<blockquote><p><strong>本章目标</strong>：理解《雾港》为什么能"放了就能撤销、高处不能悬空"——<br>全部答案都在 <code>project/scripts/world_model.gd</code> 的数据结构里。<br>对应任务：T16 / T17　|　对应文件：<code>project/scripts/world_model.gd</code></p></blockquote>
+<hr>
+<h2>6.1 世界就是两个字典</h2>
+<pre><code>var cells: Dictionary = {}       # Vector3i -&gt; {&quot;kind&quot;:String,&quot;rot&quot;:int,&quot;natural&quot;:bool}
+var occupancy: Dictionary = {}   # Vector3i(被占用的格) -&gt; Vector3i(它属于哪个原点)</code></pre>
+<ul><li><code>cells</code> 只记录<strong>原点格</strong>（模型的左下后角）</li><li><code>occupancy</code> 记录<strong>模型占住的每一格</strong>（含上方的格），值指向它的原点</li></ul>
+<p>为什么要两份？因为两个问题回答起来都必须是 O(1)：<br><strong>"这一格放了什么？"</strong>（<code>occupancy</code> 反查 <code>cells</code>）与 <strong>"这个模型占了哪些格？"</strong>（按高度展开）。</p>
+<p><img src="assets/diagrams/world-model.svg" alt="世界模型数据结构"></p>
+<p><strong>高度</strong>：每种建材在 <code>palette.json</code> 里声明 <code>height</code>（占几格）。灯塔 3 格、树/灯/风车 2 格、其余 1 格。<br>所以删除"灯塔的上半截"，整座灯塔都会消失——这是 <code>occupancy → cells</code> 的直接后果，也是一条测试断言。</p>
+<hr>
+<h2>6.2 放置规则：四组校验</h2>
+<pre><code>func can_place(cell, kind) -&gt; bool:
+    if not palette.has(kind) or cells.size() &gt;= MAX_CELLS: return false   # ① 白名单 + 总量
+    if not in_bounds(cell, height): return false                          # ② 边界（±25 / y -4..20）
+    for dy in height:
+        if occupancy.has(cell + dy): return false                          # ③ 重叠
+    # ④ 支撑：水面可直接打地基；空中的新格必须与既有格相接</code></pre>
+<table><thead><tr><th>规则</th><th>常量/来源</th><th>对应断言</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>建材必须存在、总量不超</td><td><code>palette</code> / <code>MAX_CELLS=12000</code></td><td>"unknown material rejected"</td></tr><tr><td>边界</td><td><code>EDGE=25</code> <code>MIN_Y=-4</code> <code>MAX_Y=20</code></td><td>"world bounds enforced" / "height bounds enforced"</td></tr><tr><td>重叠</td><td><code>occupancy</code></td><td>"cannot intersect tall model"</td></tr><tr><td>支撑</td><td>邻接检查</td><td>"unsupported midair cell rejected"</td></tr></tbody></table>
+<blockquote><p>📌 这四条不是"游戏感觉"，是<strong>四条可执行断言</strong>。改任何一条，测试会立刻告诉你。</p></blockquote>
+<hr>
+<h2>6.3 撤销：命令模式 + 双栈</h2>
+<p>每次成功操作都记一条"命令"：</p>
+<pre><code>undo_stack.append({&quot;cell&quot;: cell, &quot;before&quot;: before, &quot;after&quot;: after.duplicate()})</code></pre>
+<ul><li><code>undo()</code>：把 <code>cell</code> 恢复成 <code>before</code>，弹入 <code>redo_stack</code></li><li><code>redo()</code>：反向重放</li><li><strong>新操作会清空 <code>redo_stack</code></strong>（这是刻意设计：分支历史不保留）</li><li>上限 <code>MAX_HISTORY = 160</code>，超出从队首丢弃</li></ul>
+<p><strong>为什么撤销是"数据问题"而不是"UI 问题"？</strong> 因为 UI 只负责调用 <code>model.undo()</code>；<br>真正的状态在 <code>cells/occupancy</code> 里，UI 通过 <code>changed</code> 信号被动刷新。<strong>任何 UI 都不可能和世界状态不一致</strong>——<br>这就是本实训敢把撤销写进断言的原因。</p>
+<hr>
+<h2>6.4 一条完整的链路（放下一间小屋）</h2>
+<pre><code>玩家点击 → main.gd 计算目标格 → model.place(cell, &quot;cottage&quot;, rot)
+        → can_place 四组校验 → _set_raw 写 cells/occupancy → _touch()
+        → changed 信号 → build_world 重建网格 → UI 刷新计数</code></pre>
+<p><strong>撤销时走同一条路的反向</strong>：<code>undo()</code> → <code>_set_raw(before)</code> → <code>changed</code> → 重建 → 刷新。<br>没有"特判的 UI 回滚"。</p>
+<hr>
+<h2>6.5 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>删上半截导致整座消失</td><td>多格模型由 <code>occupancy</code> 统一管理</td><td>这是<strong>正确行为</strong>，见断言</td></tr><tr><td>撤销后 UI 不刷新</td><td>没触发 <code>changed</code> 信号</td><td>所有写操作都要走 <code>_set_raw</code>/<code>_touch</code></td></tr><tr><td>空中放不下</td><td>支撑规则</td><td>先连到既有格，或从水面起地基</td></tr><tr><td>撤销步数不够</td><td><code>MAX_HISTORY=160</code></td><td>调整常量并同步测试断言</td></tr><tr><td>加了高建材却穿模</td><td><code>palette.height</code> 没同步</td><td>改 palette 后重跑测试</td></tr></tbody></table>
+<hr>
+<h2>6.6 本章作业</h2>
+<ol><li>画出 <code>cells</code> 与 <code>occupancy</code> 的关系图（放一座 3 格灯塔后，两张表里各有几条记录？）</li><li>为"新操作会清空重做分支"写一条断言并跑通</li><li>把灯塔的 <code>height</code> 从 3 改成 4，跑测试，观察哪些断言报警（然后改回）</li><li>回答：为什么删除"灯塔上半截"要整座消失？</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>先有数据结构，再有玩法</strong>。撤销/重叠/支撑都是数据结构的副产品。</li><li><strong>课堂演示</strong>：现场改 <code>palette.json</code> 里灯塔的 <code>height</code>，跑测试看哪些断言红——</li></ul>
+<p>这是讲"数据驱动 + 断言保护"最直观的演示。</p>
+<ul><li><strong>高频误解</strong>：学生以为撤销是"记住 UI 操作"。强调它记的是<strong>世界状态的前后值</strong>。</li><li><strong>进阶讨论</strong>：为什么 <code>redo_stack</code> 要清空？（保留分支会让状态机复杂化，且用户心智负担大）</li><li><strong>批改要点</strong>：作业 1 必须算对数量（灯塔：cells +1，occupancy +3）。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/06/06-beacon-placed.png" alt="06-beacon-placed"><figcaption>06-beacon-placed.png</figcaption></figure><figure><img src="assets/shots/06/06-start.png" alt="06-start"><figcaption>06-start.png</figcaption></figure><figure><img src="assets/shots/06/06-undo.png" alt="06-undo"><figcaption>06-undo.png</figcaption></figure></div><h2>📹 录屏分镜（10 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>两个字典的代码 + 示意图</td><td>"世界就是两张表。"</td></tr><tr><td>01:30–03:30</td><td>放灯塔，逐格 occupancy 高亮</td><td>"高模型占多格，删一格整座没。"</td></tr><tr><td>03:30–05:30</td><td>四组校验代码逐段 + 断言名</td><td>"每条规则都有断言守着。"</td></tr><tr><td>05:30–07:30</td><td>撤销/重做演示（含新操作清分支）</td><td>"撤销记的是状态，不是动作。"</td></tr><tr><td>07:30–09:00</td><td>现场改 height 看测试变红</td><td>"数据一改，断言立刻告诉你。"</td></tr><tr><td>09:00–10:00</td><td>作业 + 预告（数据驱动三张表）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/06/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>06-start.png</code></td><td>起始画面</td><td><code>python tools/course_capture.py --chapter 06</code></td></tr><tr><td><code>06-beacon-placed.png</code></td><td>放下灯塔（3 格高度）</td><td>同上</td></tr><tr><td><code>06-undo.png</code></td><td>Ctrl+Z 之后（灯塔消失）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，15 分钟）</h2>
+<ul><li><strong>挑战开场</strong>："我故意在世界模型里埋了一个 bug，看谁能先找到"——现场演示撤销不刷新 UI</li><li><strong>演示</strong>：修掉（缺 <code>changed</code> 信号），讲"数据驱动 UI"</li><li><strong>互动</strong>：让观众猜改 <code>height</code> 会让几条断言变红</li><li><strong>收尾</strong>：布置作业 3（改 height 观察报警）</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：为什么不用数组/八叉树而用字典？</strong><br>A：世界是稀疏的（大部分格子是空的），字典按坐标直接命中，O(1) 且实现简单；<br>12000 上限下内存与性能都够。</p>
+<p><strong>Q：撤销栈为什么是 160？</strong><br>A：产品权衡——足够覆盖一次建造会话的操作量，又不至于无限增长。它是常量，可按需调整。</p>
+<p><strong>Q：多格模型的旋转会影响占位吗？</strong><br>A：占位按高度（Y 轴）展开，旋转只影响朝向，不影响占格数量。</p>
+<div class="pager"><a href="chapter-05.html">← 卷 1 · 第 05 章　设计先行：约束比功能更重要</a><span></span></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

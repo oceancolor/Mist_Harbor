@@ -25,5 +25,18 @@
     {"shot": "04-game-ready.png"},
     {"category": "地形", "wait": 600, "shot": "04-dock-terrain.png"},
     {"category": "建筑", "select": "beacon", "wait": 600, "shot": "04-dock-building-beacon.png"}
+  ],
+  "05": [
+    {"shot": "05-game-start.png"},
+    {"category": "地形", "select": "wood", "place": [[700, 430], [730, 460], [760, 490]], "wait": 400,
+     "shot": "05-boardwalk.png"},
+    {"click": "progress", "wait": 800, "shot": "05-progress-first-chapter.png"},
+    {"key": "Escape", "wait": 500}
+  ],
+  "06": [
+    {"shot": "06-start.png"},
+    {"category": "建筑", "select": "beacon", "place": [[720, 430]], "wait": 600,
+     "shot": "06-beacon-placed.png"},
+    {"key": "Control+z", "wait": 800, "shot": "06-undo.png"}
   ]
 }

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 1 · 第 05 章　设计先行：约束比功能更重要 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 1 · 第 05 章　设计先行：约束比功能更重要</h1>
+  <div class="meta">卷 1 · 设计先行 · 字符数 4033 · 生成于 2026-09-21 12:50</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html" style="color:#2d514b;font-weight:700">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a></nav>
+<main>
+<h1>卷 1 · 第 05 章　设计先行：约束比功能更重要</h1>
+<blockquote><p><strong>本章目标</strong>：读懂 <code>project/docs/requirements.md</code>，理解为什么<strong>约束优先于功能</strong>，<br>并学会把"好听的需求"翻译成"机器可验证的验收标准"。<br>对应任务：T06 / T26　|　对应文件：<code>project/docs/requirements.md</code></p></blockquote>
+<hr>
+<h2>5.1 先读契约，再写代码</h2>
+<p><code>project/docs/requirements.md</code> 只有一页，却决定了后面所有系统。它分六段：</p>
+<table><thead><tr><th>段落</th><th>回答的问题</th><th>例子</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>项目目标</td><td>我们到底在做什么</td><td>原创、单人、3D 海岛自由建造</td></tr><tr><td>已设计的玩法</td><td>最小可玩集是什么</td><td>13 种建材、堆叠/旋转/拆除、撤销 160 步、昼夜、拍照</td></tr><tr><td><strong>约束条件</strong></td><td><strong>什么绝对不能做</strong></td><td>Godot 4.7 / GL Compatibility、<strong>不接公网数据库</strong>、<strong>不联机</strong>、建材上限 12000</td></tr><tr><td>验收标准</td><td>怎么算"真的做成了"</td><td>放置/撤销/旋转<strong>真的改变场景</strong>；8 种模型<strong>实际导入</strong></td></tr><tr><td>交付物</td><td>最后交什么</td><td>Godot 工程、Blender 源、Web 成品、课程资源</td></tr><tr><td>不属于本样板的范围</td><td>明确不做什么</td><td>不是 Minecraft 克隆、不是第一人称 RPG、不自动评分</td></tr></tbody></table>
+<p><strong>六段里最重要的是"约束"和"不属于本范围"</strong>——功能可以加，约束一旦破了，整个架构要重来。</p>
+<hr>
+<h2>5.2 约束怎么决定架构（三个真实例子）</h2>
+<table><thead><tr><th>约束</th><th>它直接砍掉了什么</th><th>它逼出来的设计</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>不接公网数据库</strong></td><td>云存档、排行榜、账号体系</td><td>本地存档槽 + 导出 JSON；成就存 <code>user://</code></td></tr><tr><td><strong>不联机</strong></td><td>多人协作、交易、公会</td><td>单机体验做到位：撤销、拍照、章节引导</td></tr><tr><td><strong>Web 导出关闭线程依赖</strong></td><td>多线程加载、复杂物理</td><td>单线程导出预设；资源一次性打进 pck</td></tr><tr><td><strong>建材上限 12000 / 世界 ±25</strong></td><td>无限地图、流式加载</td><td>固定边界校验 + <code>MAX_CELLS</code> 常量，写入测试断言</td></tr></tbody></table>
+<blockquote><p>📌 记这个因果链：<strong>约束 → 砍功能 → 逼出替代设计 → 落成断言</strong>。<br>本实训每条约束最后都能在 <code>tests/</code> 里找到对应断言（例如"越界拒绝""超限拒绝"）。</p></blockquote>
+<hr>
+<h2>5.3 把需求翻译成"机器可验证"</h2>
+<p>对比两句需求，看差别：</p>
+<table><thead><tr><th>❌ 不可验证</th><th>✅ 可验证</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>"放置功能要好用"</td><td><code>check(model.place(...))</code> 且 <code>get_cell(...)["kind"] == "cottage"</code></td></tr><tr><td>"撤销要正确"</td><td><code>undo()</code> 后 <code>has_cell()</code> 为 false；<code>redo()</code> 后回到原值</td></tr><tr><td>"存档要安全"</td><td>9 类非法输入全部被拒，且<strong>当前世界不被破坏</strong></td></tr><tr><td>"模型都导入了"</td><td><code>scenes.size()</code> 等于从 <code>palette.json</code> 推导出的数量</td></tr></tbody></table>
+<p><strong>四条翻译规则：</strong></p>
+<ol><li>用<strong>命令或断言</strong>表达，不用形容词（"好用/流畅/合理"都不是验收）</li><li>每条验收都对应<strong>一个具体的反例</strong>（越界、超长、错误版本）</li><li>数字从<strong>数据源推导</strong>，不要写死（见第 02 章"13 种建材"翻车案例）</li><li>写清<strong>失败时世界必须保持原样</strong>（原子性）</li></ol>
+<p>🤖 让 Agent 帮你做翻译：</p>
+<pre><code>读 project/docs/requirements.md，把&quot;验收标准&quot;那一段逐条翻译成
+project/tests/test_world.gd 里可执行的断言；每条给出：断言名、验证什么、对应的反例。
+约束：不要修改 requirements.md 的语义；不要为了让断言通过而放松校验规则。</code></pre>
+<hr>
+<h2>5.4 需求变了怎么办（变更流程）</h2>
+<pre><code>1. 改 requirements.md（先改契约，不是先改代码）
+2. 找出受影响的章节与任务（本实训每章都标了&quot;对应任务&quot;）
+3. 新增/修改断言 → 跑三层验证
+4. 更新 TOOLCHAIN.md 与教程对应章节 → 重跑 course_build.py</code></pre>
+<p><strong>真实案例</strong>：本实训后来加了"木桶"建材，触发三处连锁更新——<br><code>palette.json</code>、写死数量的断言（改为从数据推导）、字体子集（补"桶/橡"两个字）。<br><strong>任何一处漏了，测试或画面就会告诉你。</strong></p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>需求文档</td><td>自己读 <code>docs/requirements.md</code></td><td>平台预置项目说明/skill，<strong>可能已把约束写进 Agent 上下文</strong></td></tr><tr><td>约束的落地</td><td>自己翻译成断言</td><td>模板可能已带基础断言，但需要你<strong>按本项目调整</strong></td></tr><tr><td>变更流程</td><td>自己改文档 + 改代码 + 改测试</td><td>流程一致；平台提供 diff/预览帮助评审</td></tr><tr><td>验收执行</td><td>本地 <code>dev.py test</code></td><td>平台一键运行，同一套断言</td></tr></tbody></table>
+<blockquote><p>🌩 云端的便利在于"约束已经在上下文里"，风险在于<strong>你可能以为它替你把关了</strong>。<br>记住：<strong>平台提供约束，验证仍然要跑命令看输出。</strong></p></blockquote>
+<hr>
+<h2>5.5 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>需求写了但没人验证</td><td>验收不可执行</td><td>按 5.3 四条规则重写</td></tr><tr><td>加了功能，测试红了</td><td>断言写死数量</td><td>改为从数据源推导</td></tr><tr><td>新文案出现豆腐块</td><td>子集字体缺字</td><td>跑 <code>build_font_corpus.py</code>（T28）</td></tr><tr><td>云端与本地行为不一致</td><td>平台模板与仓库不同步</td><td>以仓库 <code>requirements.md</code> + 测试为准，差异写进 TOOLCHAIN.md</td></tr></tbody></table>
+<hr>
+<h2>5.6 本章作业</h2>
+<ol><li>列出 <code>requirements.md</code> 里<strong>三条最硬的约束</strong>，各写一句"它砍掉了什么功能"</li><li>把"玩家可以保存作品"翻译成 3 条可执行断言（提示：正常、超长、错误版本）</li><li>找出本实训中"因为约束而诞生的设计"两处，写出因果链</li><li>若要把"不联机"改成"支持两人协作"，列出<strong>至少 5 处</strong>需要改的地方（不用实现）</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：需求文档是<strong>契约</strong>，不是愿望清单；最值钱的是"不做什么"。</li><li><strong>课堂演示</strong>：现场把"放置功能要好用"改成可执行断言，让学生体会差别。</li><li><strong>高频误解</strong>：学生以为"约束越少越好"。举例说明"不联机"反而让单机体验更聚焦。</li><li><strong>讨论题（很适合当作业）</strong>：作业 4 是开放题，用来训练"变更影响面"思维。</li><li><strong>批改要点</strong>：作业 2 必须包含<strong>反例</strong>（超长/错误版本），只写正向用例给一半分。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/05/05-boardwalk.png" alt="05-boardwalk"><figcaption>05-boardwalk.png</figcaption></figure><figure><img src="assets/shots/05/05-game-start.png" alt="05-game-start"><figcaption>05-game-start.png</figcaption></figure><figure><img src="assets/shots/05/05-progress-first-chapter.png" alt="05-progress-first-chapter"><figcaption>05-progress-first-chapter.png</figcaption></figure></div><h2>📹 录屏分镜（8 分 30 秒）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:10</td><td>打开 requirements.md，六段逐段闪过</td><td>"一页纸，决定后面所有系统。"</td></tr><tr><td>01:10–03:00</td><td>约束→砍功能→逼出设计 三个例子</td><td>"约束不是限制，是设计方向。"</td></tr><tr><td>03:00–05:00</td><td>不可验证 vs 可验证 对照表</td><td>"'好用'不是验收，命令才是。"</td></tr><tr><td>05:00–06:30</td><td>现场用 Agent 翻译验收为断言</td><td>"把形容词换成断言。"</td></tr><tr><td>06:30–08:00</td><td>云端对照 + 变更流程</td><td>"先改契约，再改代码。"</td></tr><tr><td>08:00–08:30</td><td>作业 + 预告（世界模型）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/05/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>05-game-start.png</code></td><td>起始画面（对照"最小可玩集"）</td><td><code>python tools/course_capture.py --chapter 05</code></td></tr><tr><td><code>05-boardwalk.png</code></td><td>连铺三块木栈道（"延伸一段木栈道"目标）</td><td>同上</td></tr><tr><td><code>05-progress-first-chapter.png</code></td><td>第一章进度面板（验收可视化）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L2 片段，12 分钟）</h2>
+<ul><li><strong>开场投票</strong>："<code>不联机</code>是优点还是缺点？"——引发讨论后再讲约束的价值</li><li><strong>演示</strong>：现场把一条形容词需求改写成断言并跑测试</li><li><strong>互动</strong>：让观众给出自己的项目约束，一起推演"它砍掉了什么"</li><li><strong>收尾</strong>：强调"先改契约再改代码"</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：需求文档要写多细？</strong><br>A：细到"每条都能翻译成一条断言或一条命令"。写不出验收的需求，等于没想清楚。</p>
+<p><strong>Q：云端平台给的模板需求，我能改吗？</strong><br>A：能，而且应该按你的 PBL 项目改。改完记得同步断言与教程（5.4 流程）。</p>
+<p><strong>Q：约束会不会限制创意？</strong><br>A：恰恰相反。本实训 9 件资产、三章引导，都是在"不联机、不接库"的约束下长出来的。</p>
+<div class="pager"><a href="chapter-04.html">← 卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

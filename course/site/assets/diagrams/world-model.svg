@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="470" viewBox="0 0 940 470" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="940" height="470" fill="#f7f8ed"/>
+  <text x="470" y="34" text-anchor="middle" font-size="20" fill="#2d514b">世界模型：两张表 + 四组校验 + 双栈撤销</text>
+
+  <rect x="30" y="60" width="270" height="150" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="165" y="88" text-anchor="middle" font-size="15" fill="#2d514b">cells（只记原点）</text>
+  <text x="50" y="116" font-size="12" fill="#789087">Vector3i(23,0,22) → {kind:beacon,</text>
+  <text x="50" y="136" font-size="12" fill="#789087">                     rot:0, natural:false}</text>
+  <text x="50" y="164" font-size="12" fill="#789087">Vector3i(24,0,24) → {kind:cottage, ...}</text>
+  <text x="50" y="192" font-size="12" fill="#497c6b">放一座灯塔 = +1 条记录</text>
+
+  <rect x="340" y="60" width="270" height="150" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="475" y="88" text-anchor="middle" font-size="15" fill="#2d514b">occupancy（记每一格）</text>
+  <text x="360" y="116" font-size="12" fill="#789087">(23,0,22) → (23,0,22)</text>
+  <text x="360" y="136" font-size="12" fill="#789087">(23,1,22) → (23,0,22)</text>
+  <text x="360" y="156" font-size="12" fill="#789087">(23,2,22) → (23,0,22)</text>
+  <text x="360" y="184" font-size="12" fill="#497c6b">灯塔 height=3 → +3 条记录</text>
+
+  <rect x="650" y="60" width="260" height="150" rx="12" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="780" y="88" text-anchor="middle" font-size="15" fill="#2d514b">由此直接得到</text>
+  <text x="670" y="116" font-size="12" fill="#789087">· 点上半截 = 删整座</text>
+  <text x="670" y="140" font-size="12" fill="#789087">· 重叠检测 O(1)</text>
+  <text x="670" y="164" font-size="12" fill="#789087">· 高度边界一并校验</text>
+  <text x="670" y="192" font-size="12" fill="#497c6b">都不是特判，是数据结构</text>
+
+  <line x1="300" y1="135" x2="336" y2="135" stroke="#789087" stroke-width="2"/>
+  <line x1="610" y1="135" x2="646" y2="135" stroke="#789087" stroke-width="2"/>
+
+  <rect x="30" y="240" width="420" height="190" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="240" y="268" text-anchor="middle" font-size="15" fill="#2d514b">can_place 四组校验</text>
+  <text x="52" y="298" font-size="12" fill="#789087">① 白名单 + 总量：palette 有此 kind，cells &lt; 12000</text>
+  <text x="52" y="326" font-size="12" fill="#789087">② 边界：|x|,|z| ≤ 25，y ∈ [-4, 20]，y+height ≤ 20</text>
+  <text x="52" y="354" font-size="12" fill="#789087">③ 重叠：height 展开的每一格都不在 occupancy 里</text>
+  <text x="52" y="382" font-size="12" fill="#789087">④ 支撑：水面可打地基；空中新格须与既有格相接</text>
+  <text x="52" y="412" font-size="12" fill="#497c6b">四条 → 四条可执行断言</text>
+
+  <rect x="490" y="240" width="420" height="190" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="700" y="268" text-anchor="middle" font-size="15" fill="#2d514b">撤销：双栈 + 状态前后值</text>
+  <text x="512" y="298" font-size="12" fill="#789087">undo_stack: [{cell, before, after}, ...]  上限 160</text>
+  <text x="512" y="326" font-size="12" fill="#789087">undo()  → _set_raw(before) → changed → 重建 → 刷新</text>
+  <text x="512" y="354" font-size="12" fill="#789087">redo()  → _set_raw(after)  → 同一条链路反向</text>
+  <text x="512" y="382" font-size="12" fill="#789087">新操作 → redo_stack.clear()（不保留分支）</text>
+  <text x="512" y="412" font-size="12" fill="#497c6b">记的是世界状态，不是 UI 动作</text>
+
+  <text x="470" y="456" text-anchor="middle" font-size="12" fill="#789087">UI 只调用 model 的方法并监听 changed 信号 —— 因此 UI 不可能与世界状态不一致</text>
+</svg>

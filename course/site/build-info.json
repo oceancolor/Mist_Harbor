@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 12:43",
+  "built": "2026-09-21 12:50",
   "chapters": [
     {
       "key": "01",
@@ -28,7 +28,21 @@
       "volume": "卷 0 · 启程",
       "characters": 5055,
       "file": "chapter-04.html"
+    },
+    {
+      "key": "05",
+      "title": "卷 1 · 第 05 章　设计先行：约束比功能更重要",
+      "volume": "卷 1 · 设计先行",
+      "characters": 4033,
+      "file": "chapter-05.html"
+    },
+    {
+      "key": "06",
+      "title": "卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销",
+      "volume": "卷 1 · 设计先行",
+      "characters": 3962,
+      "file": "chapter-06.html"
     }
   ],
-  "characters": 23129
+  "characters": 31124
 }
