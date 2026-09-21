@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</h1>
+  <div class="meta">卷 5 · 多端发行 · 字符数 4555 · 生成于 2026-09-21 15:15</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-25.html" style="color:#2d514b;font-weight:700">卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-26.html">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</h1>
+<blockquote><p><strong>本章目标</strong>：读懂 <code>export_presets.cfg</code> 的 Web 预设，知道产物里<br><strong>谁占了多少</strong>、以及"关线程 / 关扩展"这些开关为什么必须这么设。<br>对应任务：T25 / T26　|　对应文件：<code>project/export_presets.cfg</code>、<code>tools/dev.py</code></p></blockquote>
+<hr>
+<h2>25.1 一条命令与四个产物</h2>
+<pre><code>python tools/dev.py export-web      # → build/</code></pre>
+<table><thead><tr><th>文件</th><th>大小</th><th>是什么</th></tr></thead><tbody><tr><td>---</td><td>---:</td><td>---</td></tr><tr><td><code>index.wasm</code></td><td><strong>37.68 MB</strong></td><td>Godot 引擎本体（WebAssembly 编译产物）</td></tr><tr><td><code>index.pck</code></td><td>0.40 MB</td><td>你的游戏资源包（脚本/场景/GLB/数据）</td></tr><tr><td><code>index.js</code></td><td>0.27 MB</td><td>加载器（启动 wasm、挂载 canvas）</td></tr><tr><td><code>index.html</code> + 图标</td><td>~0.04 MB</td><td>页面外壳</td></tr></tbody></table>
+<p><strong>结论先说</strong>：包体里 <strong>99% 是引擎，不是你的资产</strong>。<br>所以"优化体积"的第一性问题永远是：<strong>能不能用更小的引擎构建</strong>，而不是"再压一压贴图"。</p>
+<hr>
+<h2>25.2 预设里的关键开关</h2>
+<pre><code>[preset.0.options]
+variant/extensions_support=false          # 关 GDExtension
+variant/thread_support=false              # 关线程
+vram_texture_compression/for_desktop=true
+html/canvas_resize_policy=2               # 自适应
+html/focus_canvas_on_start=true           # 启动即获得焦点（否则要点一下才能操作）
+html/head_include=&quot;&lt;meta name=\&quot;theme-color\&quot; content=\&quot;#d9ece6\&quot; /&gt;&quot;
+progressive_web_app/enabled=false</code></pre>
+<table><thead><tr><th>开关</th><th>为什么</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><code>thread_support=false</code></td><td>关线程 → <strong>体积更小、兼容性更好</strong>；本游戏是单线程模型，不需要</td></tr><tr><td><code>extensions_support=false</code></td><td>不用 GDExtension → 省体积</td></tr><tr><td><code>canvas_resize_policy=2</code></td><td>canvas 跟随窗口，适配不同分辨率与平板</td></tr><tr><td><code>focus_canvas_on_start</code></td><td>否则玩家打开页面后第一次点击会被浏览器吞掉</td></tr><tr><td><code>head_include</code> 的 theme-color</td><td>移动端浏览器地址栏配色与游戏一致</td></tr></tbody></table>
+<blockquote><p>📌 <code>focus_canvas_on_start</code> 是很典型的一类"<strong>不影响功能但毁体验</strong>"的开关——<br>少了它，新手会以为游戏卡住了。</p></blockquote>
+<hr>
+<h2>25.3 过滤：什么进包，什么不进</h2>
+<pre><code>include_filter=&quot;data/*.json,docs/*.md,assets/models/manifest.json&quot;
+exclude_filter=&quot;art/*,tests/*,build/*&quot;</code></pre>
+<table><thead><tr><th>目录</th><th>是否进包</th><th>原因</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>assets/models/*.glb</code></td><td>✅</td><td>运行时资源（默认 all_resources 已含）</td></tr><tr><td><code>assets/models/manifest.json</code></td><td>✅ 显式 include</td><td>运行时要读 bounds（第 16 章）</td></tr><tr><td><code>data/*.json</code></td><td>✅ 显式 include</td><td>palette / objectives / achievements</td></tr><tr><td><code>art/*</code></td><td>❌ exclude</td><td>Blender 源、预览、溯源——<strong>只服务开发</strong></td></tr><tr><td><code>tests/*</code></td><td>❌ exclude</td><td>测试脚本不该进成品</td></tr><tr><td><code>build/*</code></td><td>❌ exclude</td><td>导出产物本身（且它已在工程外）</td></tr></tbody></table>
+<blockquote><p>📌 第 04 章"导出目录必须在工程外"的意义在这里闭合：<br>如果不排除，导出会把上一版的产物<strong>再打进新包里</strong>，包体越导越大。</p></blockquote>
+<hr>
+<h2>25.4 模板：版本必须对齐</h2>
+<pre><code>%APPDATA%\Godot\export_templates\4.7.stable\</code></pre>
+<ul><li>模板版本必须<strong>与引擎版本完全一致</strong>（<code>4.7.stable</code> ↔ Godot 4.7.stable）</li><li>缺失时导出会直接失败</li><li>换机器用 <code>python tools/fetch_templates.py</code> 分块续传下载（约 1.28 GB）</li></ul>
+<hr>
+<h2>25.5 体积优化的方向（按性价比排序）</h2>
+<table><thead><tr><th>方向</th><th>收益</th><th>成本</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>自定义构建（去掉不用模块）</strong></td><td><strong>最大</strong>（可降到十几 MB）</td><td>需自行编译引擎模板</td></tr><tr><td>纹理压缩 / 资产分包</td><td>中</td><td>低</td></tr><tr><td>加载进度条 + 首屏</td><td>体验提升明显</td><td>低</td></tr><tr><td>删无用资源</td><td>小（我们的资产才 282 KB）</td><td>极低</td></tr></tbody></table>
+<blockquote><p>📌 现状判断：<strong>我们的资产只有约 0.4 MB</strong>，优化资产是徒劳的。<br>真正的大头是引擎，所以要么接受 37 MB，要么走自定义构建（卷 5 第 28 章）。</p></blockquote>
+<p><img src="assets/diagrams/web-export.svg" alt="Web 导出产物构成"></p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>导出命令</td><td><code>dev.py export-web</code></td><td>同（平台执行同一命令）</td></tr><tr><td>模板</td><td>本地 <code>%APPDATA%</code></td><td>云端镜像需<strong>同版本模板</strong>（4.7.stable）</td></tr><tr><td>预览</td><td>本地 <code>http.server</code></td><td>云端预览（<strong>WebGL 2，等于学员真实环境</strong>）</td></tr><tr><td>验收</td><td>本地 Chromium</td><td>云端跑 <code>browser_smoke.py</code> 的 23 项</td></tr><tr><td>体积关注</td><td>本地看</td><td><strong>云端更要关注</strong>：学员是在浏览器里下载 37 MB</td></tr></tbody></table>
+<blockquote><p>🌩 云端最容易忽略的一点：<strong>首屏等待</strong>。37 MB 在云端内网很快，<br>但学员的网络可能很慢——加载进度条不是锦上添花，是必需。</p></blockquote>
+<hr>
+<h2>25.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>导出报缺模板</td><td>模板版本不匹配</td><td>装同版本模板</td></tr><tr><td>打开页面点了没反应</td><td>没开 <code>focus_canvas_on_start</code></td><td>打开它</td></tr><tr><td>包体越导越大</td><td>产物在工程内没排除</td><td><code>exclude_filter</code> + 产物放工程外</td></tr><tr><td>运行时缺 manifest</td><td>没 include 它</td><td>加进 <code>include_filter</code></td></tr><tr><td>手机上地址栏配色突兀</td><td>没设 theme-color</td><td><code>head_include</code></td></tr><tr><td>移动端模糊</td><td>canvas resize 策略不对</td><td><code>canvas_resize_policy=2</code></td></tr></tbody></table>
+<hr>
+<h2>25.7 本章作业</h2>
+<ol><li>列出四个产物及大小，指出体积大头是什么，并说明优化优先级</li><li>解释 <code>thread_support=false</code> 与 <code>focus_canvas_on_start</code> 各自解决了什么问题</li><li>说明 <code>exclude_filter</code> 里三项各自的理由，并解释"产物放工程外"与它的关系</li><li>跑一次 <code>dev.py export-web</code>，记录产物大小，与本章数字对比（引擎版本不同会有差异）</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>先测量，再优化</strong>。37 MB 里 99% 是引擎，别去压 0.4 MB 的资产。</li><li><strong>课堂演示</strong>：现场导出并列出产物大小，让学员猜比例（通常会猜错）。</li><li><strong>高频误解</strong>：学生以为"贴图太多导致包大"。用数据打破直觉。</li><li><strong>讨论题</strong>：37 MB 你能接受吗？什么情况下必须做自定义构建？</li><li><strong>批改要点</strong>：作业 1 必须指出"大头是引擎 wasm"。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/25/25-desktop-full.png" alt="25-desktop-full"><figcaption>25-desktop-full.png</figcaption></figure><figure><img src="assets/shots/25/25-web-running.png" alt="25-web-running"><figcaption>25-web-running.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:40</td><td>导出命令 + 产物大小列表</td><td>"99% 是引擎。"</td></tr><tr><td>01:40–03:30</td><td>预设关键开关逐条</td><td>"关线程省体积，focus 决定手感。"</td></tr><tr><td>03:30–05:00</td><td>include/exclude 过滤</td><td>"开发资产不进包。"</td></tr><tr><td>05:00–06:30</td><td>模板版本对齐 + fetch_templates</td><td></td></tr><tr><td>06:30–09:00</td><td>优化方向排序 + 作业</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/25/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>25-web-running.png</code></td><td>浏览器中运行的 Web 导出</td><td><code>python tools/course_capture.py --chapter 25</code></td></tr><tr><td><code>25-desktop-full.png</code></td><td>桌面视口完整画面</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："猜猜这个游戏的资产占包体多少？"——答案 1%</li><li><strong>演示</strong>：导出 + 列大小 + 打开页面</li><li><strong>互动</strong>：让观众报自己项目的包体构成</li><li><strong>收尾</strong>：预告 Windows 单文件</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：37 MB 一定要下载完才能玩吗？</strong><br>A：是（当前未做流式加载）。所以加载进度条与首屏提示很重要。</p>
+<p><strong>Q：能不能把 pck 单独托管、按需加载？</strong><br>A：可以（Godot 支持外部 pck 加载），是"资产分包"方向，属于体积优化专项（第 28 章）。</p>
+<p><strong>Q：为什么 index.pck 只有 0.4 MB？</strong><br>A：因为资产是低模 + 纯色材质（约 282 KB GLB），没有贴图和音频——第 17/18 章的风格决策在这里变现。</p>
+<div class="pager"><a href="chapter-24.html">← 卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-26.html">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部" →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

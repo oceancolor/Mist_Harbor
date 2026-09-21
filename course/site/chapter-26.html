@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部" · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</h1>
+  <div class="meta">卷 5 · 多端发行 · 字符数 4293 · 生成于 2026-09-21 15:15</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-25.html">卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-26.html" style="color:#2d514b;font-weight:700">卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与"一个 exe 就是全部"</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 5 · 第 26 章　Windows 单文件：<code>embed_pck</code> 与"一个 exe 就是全部"</h1>
+<blockquote><p><strong>本章目标</strong>：读懂 Windows 预设里那个关键开关，理解<br><strong>单文件发布</strong>为什么对教学/分发场景特别友好，以及它还缺什么才够"商业级"。<br>对应任务：T26 / T27　|　对应文件：<code>export_presets.cfg</code> 的 <code>[preset.1]</code>、<code>tools/dev.py</code></p></blockquote>
+<hr>
+<h2>26.1 一条命令，一个文件</h2>
+<pre><code>python tools/dev.py export-windows      # → build-win/mist-harbor.exe</code></pre>
+<p>导出后目录里<strong>只有 <code>mist-harbor.exe</code></strong>——没有 pck、没有 DLL、没有附属文件夹。</p>
+<p>原因就在这一行：</p>
+<pre><code>[preset.1.options]
+binary_format/embed_pck=true       # ← 把资源包嵌进 exe</code></pre>
+<table><thead><tr><th>开关</th><th>含义</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><code>embed_pck=true</code></td><td>pck 嵌入 exe → <strong>单文件</strong>，拷给别人就能跑</td></tr><tr><td><code>embed_pck=false</code></td><td>exe + 独立 pck → 两文件，更新资源方便但容易丢文件</td></tr></tbody></table>
+<p><strong>为什么选单文件？</strong><br>本实训的分发场景是"发给学员/朋友/展会演示"——<strong>少一个文件就少一类"我打不开"的问题</strong>。</p>
+<hr>
+<h2>26.2 预设里其它值得注意的项</h2>
+<pre><code>binary_format/architecture=&quot;x86_64&quot;
+texture_format/s3tc_bptc=true            # 桌面显卡通用压缩
+texture_format/etc2_astc=false           # 移动端格式，桌面不需要
+debug/export_console_wrapper=1           # 带一个控制台窗口（便于看日志）
+codesign/enable=false                    # 未签名
+application/modify_resources=true
+application/icon=&quot;&quot;                      # 未设图标
+application/export_angle=0
+application/export_d3d12=0</code></pre>
+<table><thead><tr><th>项</th><th>当前</th><th>商业级还差什么</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>application/icon</code></td><td>空</td><td><strong>换成自己的图标</strong>（工程里已有 <code>assets/icon.svg</code>，可导出 ico）</td></tr><tr><td><code>codesign/enable</code></td><td>false</td><td>加<strong>代码签名证书</strong>，否则 Windows SmartScreen 会警告</td></tr><tr><td>版本号/产品名</td><td>未设</td><td>在 <code>application/*</code> 里填（便于安装程序与升级）</td></tr><tr><td><code>export_console_wrapper</code></td><td>1（有控制台）</td><td>正式发布应改为 0，避免黑窗口</td></tr><tr><td>架构</td><td>仅 x86_64</td><td>若要支持 ARM Windows 需额外架构</td></tr></tbody></table>
+<blockquote><p>📌 一句话：<strong>现在是"能跑的单文件"，还不是"能卖的安装包"</strong>。</p></blockquote>
+<hr>
+<h2>26.3 三个平台一个过滤规则</h2>
+<p>Windows 预设与 Web 预设共用同一套过滤：</p>
+<pre><code>include_filter=&quot;data/*.json,docs/*.md,assets/models/manifest.json&quot;
+exclude_filter=&quot;art/*,tests/*,build/*&quot;</code></pre>
+<p>好处：<strong>一份规则管三端</strong>（第 25 章）。<br>新增平台时复制这两行即可，不会出现"Web 包里有 art、Windows 包里没有"的不一致。</p>
+<hr>
+<h2>26.4 验证：单文件也要能跑</h2>
+<pre><code># tools/dev.py
+elif args.action == &#x27;export-windows&#x27;:
+    invoke(binary, [&#x27;--export-release&#x27;, &#x27;Windows Desktop&#x27;, str(windows / &#x27;mist-harbor.exe&#x27;)], &#x27;windows-export&#x27;)
+    # The preset embeds the pck, so a single self-contained exe is the whole build.
+    if not (windows / &#x27;mist-harbor.exe&#x27;).is_file():
+        raise RuntimeError(&#x27;Export completed without the Windows executable&#x27;)</code></pre>
+<p><strong>验证策略的三层</strong>（与 Web 同理）：</p>
+<table><thead><tr><th>层</th><th>做法</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>存在性</td><td>exe 生成了吗（上面这行）</td></tr><tr><td>启动性</td><td>双击能否进主界面、日志无 <code>SCRIPT ERROR</code></td></tr><tr><td>内容性</td><td>GLB 是否都加载、地形是否生成（可用快照思路验证）</td></tr></tbody></table>
+<blockquote><p>📌 桌面端<strong>没有</strong> <code>window.harborState</code> 可断言，所以自动化程度天然低于 Web。<br>这也是为什么 Web 端的 23 项验收如此有价值——<strong>它是最容易自动化的平台</strong>。</p></blockquote>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>导出 exe</td><td>本地直接出</td><td>云端（Linux）<strong>可以交叉导出</strong>，但产物要下载回来</td></tr><tr><td>验证</td><td>双击运行</td><td><strong>云端无法双击</strong> → 只能验证"产物存在 + 大小合理"</td></tr><tr><td>建议</td><td>本地做最终人工验证</td><td>云端把 exe 作为<strong>构建产物归档</strong>，人工下载后验证</td></tr><tr><td>签名</td><td>本地需证书</td><td>云端签名要配证书，<strong>通常放在本地或 CI 的安全环境</strong></td></tr></tbody></table>
+<blockquote><p>🌩 云端做桌面端的现实定位：<strong>负责"能构建出来"，不负责"能跑起来"</strong>。<br>最终人工验收仍要在真机上做。</p></blockquote>
+<hr>
+<h2>26.5 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>只有 exe 打不开/缺资源</td><td>pck 没嵌入</td><td><code>embed_pck=true</code></td></tr><tr><td>双击后闪退</td><td>缺 Visual C++ 运行库 / 驱动</td><td>检查日志（先用 console wrapper=1）</td></tr><tr><td>SmartScreen 警告</td><td>未签名</td><td>申请代码签名证书</td></tr><tr><td>图标还是 Godot 默认</td><td><code>application/icon</code> 为空</td><td>用 <code>assets/icon.svg</code> 生成 ico</td></tr><tr><td>有个黑框控制台</td><td>console wrapper</td><td>发布时改 0</td></tr><tr><td>ARM 机器跑不了</td><td>只出了 x86_64</td><td>补架构（或说明支持范围）</td></tr></tbody></table>
+<hr>
+<h2>26.6 本章作业</h2>
+<ol><li>说明 <code>embed_pck</code> 开启与否的差别，各适合什么场景</li><li>列出"能跑的单文件"到"能卖的安装包"之间还差的四件事</li><li>说出三个平台共用过滤规则的好处</li><li>跑一次 <code>dev.py export-windows</code>，检查产物并说明你会做哪些人工验证</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>分发形态由场景决定</strong>——教学/演示要单文件，正式发行要安装包。</li><li><strong>课堂演示</strong>：把 exe 拷到另一台没装 Godot 的电脑上运行（最有说服力的时刻）。</li><li><strong>高频误解</strong>：学生以为"导出成功 = 能发布"。追问：图标、签名、版本号、控制台黑框呢？</li><li><strong>讨论题</strong>：单文件 vs 安装包，你的项目选哪个？为什么？</li><li><strong>批改要点</strong>：作业 2 要答出图标、签名、版本号、控制台四项。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/26/26-game-windows.png" alt="26-game-windows"><figcaption>26-game-windows.png</figcaption></figure></div><h2>📹 录屏分镜（8 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:20</td><td>导出 → 目录里只有一个 exe</td><td>"一个文件就是全部。"</td></tr><tr><td>01:20–02:40</td><td>embed_pck 开关对比</td><td>"少一个文件，少一类问题。"</td></tr><tr><td>02:40–04:30</td><td>商业级还差什么（图标/签名/版本/黑框）</td><td>"能跑 ≠ 能卖。"</td></tr><tr><td>04:30–06:00</td><td>三端共用过滤 + 三层验证</td><td></td></tr><tr><td>06:00–08:00</td><td>作业 + 预告（移动端）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/26/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>26-game-windows.png</code></td><td>Windows 版运行画面（同引擎同资源，观感一致）</td><td><code>python tools/course_capture.py --chapter 26</code></td></tr></tbody></table>
+<blockquote><p>📌 「导出目录里只有 <code>mist-harbor.exe</code>」这一事实建议<strong>现场演示或自行截图</strong>——<br>资源管理器画面无法用浏览器自动化生成。</p></blockquote>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："把游戏发给朋友，最怕他说什么？"——"我双击没反应"</li><li><strong>演示</strong>：拷贝 exe 到另一台机器运行</li><li><strong>互动</strong>：让观众列出自己发布时踩过的坑</li><li><strong>收尾</strong>：预告移动端</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：Mac 版呢？</strong><br>A：Godot 支持 macOS 导出，但<strong>需要在 macOS 上构建</strong>（签名与公证流程依赖 Xcode）。<br>本实训未覆盖。</p>
+<p><strong>Q：Linux 版呢？</strong><br>A：可直接在任何平台交叉导出，但由于桌面 Linux 发行版碎片化，通常只做 tar/AppImage。</p>
+<p><strong>Q：exe 有多大？</strong><br>A：约 40–60 MB（引擎 + 嵌入式资源），具体取决于构建选项与引擎版本。</p>
+<div class="pager"><a href="chapter-25.html">← 卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的</a><a href="chapter-27.html">卷 5 · 第 27 章　移动端：为什么"能跑"和"能上線"差着一个量级 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

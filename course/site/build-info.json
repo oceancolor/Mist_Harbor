@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 15:07",
+  "built": "2026-09-21 15:15",
   "chapters": [
     {
       "key": "01",
@@ -170,6 +170,27 @@
       "file": "chapter-24.html"
     },
     {
+      "key": "25",
+      "title": "卷 5 · 第 25 章　Web 导出：预设、模板与 37.7 MB 是怎么来的",
+      "volume": "卷 5 · 多端发行",
+      "characters": 4555,
+      "file": "chapter-25.html"
+    },
+    {
+      "key": "26",
+      "title": "卷 5 · 第 26 章　Windows 单文件：`embed_pck` 与\"一个 exe 就是全部\"",
+      "volume": "卷 5 · 多端发行",
+      "characters": 4293,
+      "file": "chapter-26.html"
+    },
+    {
+      "key": "27",
+      "title": "卷 5 · 第 27 章　移动端：为什么\"能跑\"和\"能上線\"差着一个量级",
+      "volume": "卷 5 · 多端发行",
+      "characters": 3884,
+      "file": "chapter-27.html"
+    },
+    {
       "key": "29",
       "title": "卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的",
       "volume": "卷 6 · 质量与协作",
@@ -191,5 +212,5 @@
       "file": "chapter-31.html"
     }
   ],
-  "characters": 129223
+  "characters": 141955
 }

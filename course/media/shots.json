@@ -113,6 +113,17 @@
     {"shot": "24-hud-visible.png"},
     {"key": "P", "wait": 900, "shot": "24-hud-hidden.png"}
   ],
+  "25": [
+    {"shot": "25-web-running.png"},
+    {"wheel": -400, "shot": "25-desktop-full.png"}
+  ],
+  "26": [
+    {"shot": "26-game-windows.png"}
+  ],
+  "27": [
+    {"resize": [820, 1100], "wait": 1200, "shot": "27-tablet-view.png"},
+    {"category": "地形", "select": "stone", "place": [[410, 700]], "wait": 600, "shot": "27-touch-build.png"}
+  ],
   "14": [
     {"shot": "14-game-start.png"},
     {"category": "建筑", "select": "barrel", "wait": 500, "shot": "14-barrel-selected.png"}

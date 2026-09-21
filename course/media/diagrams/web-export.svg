@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="430" viewBox="0 0 900 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="900" height="430" fill="#f7f8ed"/>
+  <text x="450" y="32" text-anchor="middle" font-size="20" fill="#2d514b">Web 导出产物构成：99% 是引擎，不是资产</text>
+
+  <rect x="50" y="70" width="700" height="46" rx="6" fill="#497c6b"/>
+  <text x="70" y="99" font-size="14" fill="#ffffff">index.wasm　37.68 MB　Godot 引擎本体（WebAssembly）</text>
+
+  <rect x="50" y="124" width="60" height="46" rx="6" fill="#9dbda9"/>
+  <text x="80" y="153" text-anchor="middle" font-size="12" fill="#ffffff">pck</text>
+  <text x="130" y="140" font-size="13" fill="#2d514b">index.pck　0.40 MB　你的资源（脚本/场景/GLB/数据）</text>
+  <text x="130" y="162" font-size="12" fill="#789087">其中资产仅约 282 KB：9 件 GLB，2722 三角面</text>
+
+  <rect x="50" y="178" width="45" height="46" rx="6" fill="#9dbda9"/>
+  <text x="72" y="207" text-anchor="middle" font-size="12" fill="#ffffff">js</text>
+  <text x="110" y="194" font-size="13" fill="#2d514b">index.js　0.27 MB　加载器（启动 wasm、挂载 canvas）</text>
+  <text x="110" y="214" font-size="12" fill="#789087">index.html + 图标　约 0.04 MB</text>
+
+  <text x="450" y="256" text-anchor="middle" font-size="14" fill="#2d514b">结论：优化体积要问"能不能用更小的引擎构建"，而不是"再压一压贴图"</text>
+
+  <rect x="50" y="278" width="390" height="132" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="245" y="304" text-anchor="middle" font-size="14" fill="#2d514b">预设关键开关</text>
+  <text x="66" y="328" font-size="12" fill="#789087">thread_support=false　关线程 → 更小更兼容</text>
+  <text x="66" y="348" font-size="12" fill="#789087">extensions_support=false　不用 GDExtension</text>
+  <text x="66" y="368" font-size="12" fill="#789087">canvas_resize_policy=2　自适应分辨率/平板</text>
+  <text x="66" y="388" font-size="12" fill="#789087">focus_canvas_on_start=true　否则首次点击被吞</text>
+
+  <rect x="460" y="278" width="390" height="132" rx="10" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="655" y="304" text-anchor="middle" font-size="14" fill="#2d514b">进包 / 不进包</text>
+  <text x="476" y="328" font-size="12" fill="#789087">include: data/*.json · docs/*.md · manifest.json</text>
+  <text x="476" y="348" font-size="12" fill="#789087">exclude: art/*（Blender 源与预览，只服务开发）</text>
+  <text x="476" y="368" font-size="12" fill="#789087">exclude: tests/*（测试不该进成品）</text>
+  <text x="476" y="388" font-size="12" fill="#789087">exclude: build/*（产物本身，且已在工程外）</text>
+
+  <text x="450" y="424" text-anchor="middle" font-size="12" fill="#789087">模板版本必须与引擎完全一致（4.7.stable）；换机器用 python tools/fetch_templates.py 分块续传下载</text>
+</svg>

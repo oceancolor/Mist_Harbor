@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -71,8 +72,18 @@ def main():
     if args.action == 'test':
         model = invoke(binary, ['--script', 'res://tests/test_world.gd'], 'model-tests', isolated=True)
         scene = invoke(binary, ['--script', 'res://tests/smoke_scene.gd'], 'scene-tests', isolated=True)
-        if 'WORLD_TEST_RESULT passed=42 failed=0' not in model or 'SCENE_SMOKE_RESULT failed=0' not in scene:
+        # Parse the summaries instead of hard-coding a count: assertions grow with the
+        # game, and a frozen number turns every new test into a false failure.
+        model_summary = re.search(r'WORLD_TEST_RESULT passed=(\d+) failed=(\d+)', model)
+        scene_summary = re.search(r'SCENE_SMOKE_RESULT failed=(\d+)', scene)
+        if model_summary is None or scene_summary is None:
             raise RuntimeError('Expected baseline test summaries missing; check logs before changing assertions.')
+        model_passed = int(model_summary.group(1))
+        if int(model_summary.group(2)) or int(scene_summary.group(1)):
+            raise RuntimeError('Test failures reported; see logs/model-tests.log and logs/scene-tests.log')
+        if model_passed <= 0:
+            raise RuntimeError('Model tests reported zero assertions; the suite did not really run')
+        print(f'test summary: model passed={model_passed}, scene failed=0')
     elif args.action == 'export-web':
         web = BUILD
         web.mkdir(exist_ok=True)
