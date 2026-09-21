@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</h1>
+  <div class="meta">卷 4 · 玩法系统 · 字符数 4933 · 生成于 2026-09-21 15:07</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html" style="color:#2d514b;font-weight:700">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</h1>
+<blockquote><p><strong>本章目标</strong>：打通"成就"这条链路——定义在哪、进度怎么算、<br>解锁怎么通知、<strong>写盘为什么必须延后</strong>（第 13 章的续集）。<br>对应任务：T30　|　对应文件：<code>scripts/achievements.gd</code>、<code>data/achievements.json</code></p></blockquote>
+<hr>
+<h2>23.1 两端分离：定义 vs 状态</h2>
+<table><thead><tr><th></th><th>位置</th><th>内容</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><strong>定义</strong></td><td><code>res://data/achievements.json</code></td><td>8 条：<code>id / title / description / kind / target</code></td></tr><tr><td><strong>状态</strong></td><td><code>user://achievements.json</code></td><td><code>{schema_version, unlocked: {id: 时间}}</code></td></tr></tbody></table>
+<p><strong>为什么分开？</strong></p>
+<ul><li>定义是<strong>游戏内容</strong>，随版本走，可随时增删</li><li>状态是<strong>玩家数据</strong>，属于玩家不属于存档槽（第 13 章）</li></ul>
+<hr>
+<h2>23.2 进度计算：一个函数覆盖所有 kind</h2>
+<pre><code>func progress_value(kind: String, model, photos: Dictionary) -&gt; int:
+	if kind == &quot;total&quot;:       return model.placed_count()
+	if kind == &quot;variety&quot;:     return 用了几种建材
+	if kind == &quot;undone&quot;:      return model.stats[&quot;undone&quot;]
+	if kind == &quot;saved&quot;:       return model.stats[&quot;saved&quot;]
+	if kind == &quot;night_photo&quot;: return photos[&quot;night_photos&quot;]
+	if kind.begins_with(&quot;kind:&quot;):
+		return model.player_counts().get(kind.substr(5), 0)
+	return 0</code></pre>
+<table><thead><tr><th>kind</th><th>含义</th><th>例子</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>total</code></td><td>累计放置数</td><td>熟练学徒 50 / 造岛大师 200</td></tr><tr><td><code>variety</code></td><td>用过的建材种类</td><td>材料收藏家 8</td></tr><tr><td><code>undone</code></td><td>撤销次数</td><td>谨慎的手 10</td></tr><tr><td><code>saved</code></td><td>保存次数</td><td>档案管理员 5</td></tr><tr><td><code>night_photo</code></td><td>夜景照片数</td><td>夜观察者 1</td></tr><tr><td><code>kind:&lt;id&gt;</code></td><td>某建材的数量</td><td>桥匠 <code>kind:arch</code> 10</td></tr></tbody></table>
+<blockquote><p>📌 <code>kind:</code> 前缀让"按建材计数"这类成就<strong>不需要写代码</strong>——<br>新增一种建材，就能新增一条成就，只改 JSON。</p></blockquote>
+<hr>
+<h2>23.3 评估与通知</h2>
+<pre><code>func evaluate(model, photos) -&gt; Array:
+	var fresh := []
+	for entry in entries:
+		if id == &quot;&quot; or unlocked_at.has(id): continue      # 已解锁跳过
+		if progress_value(...) &gt;= int(entry[&quot;target&quot;]):
+			unlocked_at[id] = Time.get_datetime_string_from_system(true)
+			fresh.append(entry)
+	if not fresh.is_empty(): _pending_flush = true
+	return fresh</code></pre>
+<p>调用点在 <code>main.gd</code>：</p>
+<pre><code>func _check_achievements() -&gt; void:
+	for entry in achievements.evaluate(model, photo_stats):
+		_on_achievement_unlocked(entry)
+
+func _on_achievement_unlocked(entry) -&gt; void:
+	_toast(&quot;成就达成 · %s：%s&quot; % [...], 4.5)</code></pre>
+<p><strong>链路</strong>：<code>_refresh_ui()</code> → <code>_check_achievements()</code> → <code>evaluate()</code> →<br>新解锁 → <code>unlocked</code> 信号 / 返回值 → toast 提示。</p>
+<blockquote><p>📌 评估是在 <strong>UI 刷新时</strong>顺带做的，不是每帧轮询——省开销且时机自然。</p></blockquote>
+<hr>
+<h2>23.4 写盘：为什么必须延后（重点回顾）</h2>
+<pre><code># Web writes to user:// asynchronously (IndexedDB): writing this file AFTER a
+# world save loses the save. So unlocks are only flushed immediately BEFORE a
+# world save (main.gd calls flush()) or when the app closes.
+var _pending_flush := false</code></pre>
+<pre><code>解锁 → 只改内存 + _pending_flush = true
+玩家 Ctrl+S → main.gd 先 achievements.flush() → 再写世界存档
+关闭窗口 / 返回键 / 对象销毁 → flush()</code></pre>
+<p>三个退出钩子都挂上了 flush：</p>
+<pre><code>func _notification(what):
+	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		flush()
+	if what == NOTIFICATION_PREDELETE:
+		flush()</code></pre>
+<p><code>WM_GO_BACK_REQUEST</code> 是<strong>移动端返回键</strong>——Web/移动端最容易漏的就是它。</p>
+<hr>
+<h2>23.5 成就与目标的分工</h2>
+<table><thead><tr><th></th><th>章节目标（第 22 章）</th><th>成就</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>数据</td><td><code>objectives.json</code></td><td><code>achievements.json</code></td></tr><tr><td>状态</td><td><strong>不保存</strong>（每次重算）</td><td><strong>保存</strong>（跨会话累计）</td></tr><tr><td>语义</td><td>当前作品的进度</td><td>玩家的累计行为</td></tr><tr><td>回退</td><td>撤销/拆除会回退</td><td><strong>不会回退</strong>（撤销次数反而 +1）</td></tr></tbody></table>
+<blockquote><p>📌 一句话：<strong>目标问"你这座岛现在怎么样"，成就问"你玩了多久、怎么玩"</strong>。</p></blockquote>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>定义/状态</td><td>res:// + user://</td><td>同</td></tr><tr><td><strong>写盘顺序</strong></td><td>本地近同步，可能不复现</td><td><strong>Web/IndexedDB 异步，最容易复现这个坑</strong></td></tr><tr><td>验证</td><td>手动</td><td><strong>建议做组合用例</strong>：解锁成就 → 立即存档 → 刷新 → 两者都在</td></tr><tr><td>风险</td><td>低</td><td>高：<strong>偶发丢档</strong>是这类 bug 的典型表现</td></tr></tbody></table>
+<blockquote><p>🌩 这条链路在云端必须专门验一次。它跨了"写盘顺序 + 平台异步"两件事，<br>单测永远测不到，只有真实浏览器能暴露（第 30 章）。</p></blockquote>
+<hr>
+<h2>23.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>解锁后存档丢失</td><td>写盘顺序反了</td><td>存档前先 <code>flush()</code></td></tr><tr><td>换槽位成就没了</td><td>存进了存档槽</td><td>成就存 <code>user://</code>，与槽位无关</td></tr><tr><td>关窗口后成就没保存</td><td>没接 <code>WM_CLOSE_REQUEST</code></td><td>挂 flush</td></tr><tr><td>移动端返回后丢失</td><td>漏了 <code>WM_GO_BACK_REQUEST</code></td><td>同上</td></tr><tr><td>成就进度不涨</td><td>kind 拼错</td><td>注意 <code>kind:</code> 前缀与 substr(5)</td></tr><tr><td>撤销后成就回退</td><td>用错了数据源</td><td>成就用累计 stats，不用当前 cells</td></tr></tbody></table>
+<hr>
+<h2>23.7 本章作业</h2>
+<ol><li>画出成就链路：谁调用 <code>evaluate()</code>、解锁后谁提示、谁负责写盘</li><li>说出三个 flush 时机，并说明移动端返回键为什么要单独处理</li><li>新增一条成就：<code>kind: "kind:barrel"</code>、<code>target: 5</code>，验证进度与解锁</li><li>对比"章节目标"与"成就"，说明为什么一个不保存、另一个必须保存</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>语义决定存储方式</strong>——"当前态"重算，"累计态"持久化。</li><li><strong>课堂演示</strong>：在浏览器里解锁成就 → 立即存档 → 刷新，验证两者都在（这正是 L3 的用例）。</li><li><strong>高频误解</strong>：学生把成就存进存档槽。追问：换槽位该不该丢成就？</li><li><strong>讨论题</strong>：如果要加"隐藏成就"（解锁前不显示描述），数据要加什么字段？</li><li><strong>批改要点</strong>：作业 4 要说出"当前作品 vs 玩家累计"的区别。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/23/23-achievement-toast.png" alt="23-achievement-toast"><figcaption>23-achievement-toast.png</figcaption></figure><figure><img src="assets/shots/23/23-progress-achievements.png" alt="23-progress-achievements"><figcaption>23-progress-achievements.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:40</td><td>定义 vs 状态两张表</td><td>"内容归内容，玩家归玩家。"</td></tr><tr><td>01:40–03:20</td><td>progress_value 的 kind 分支</td><td>"kind: 前缀让新成就零代码。"</td></tr><tr><td>03:20–05:00</td><td>evaluate → toast 链路</td><td>"顺带评估，不每帧轮询。"</td></tr><tr><td>05:00–07:00</td><td>写盘顺序图 + 三个 flush 钩子</td><td>"先 flush 再存档，反了丢档。"</td></tr><tr><td>07:00–09:00</td><td>目标 vs 成就分工 + 作业</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/23/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>23-progress-achievements.png</code></td><td>进度面板里的成就区（含进度）</td><td><code>python tools/course_capture.py --chapter 23</code></td></tr><tr><td><code>23-achievement-toast.png</code></td><td>解锁成就的提示条</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，12 分钟）</h2>
+<ul><li><strong>开场</strong>："存档神秘消失案"——回顾排查过程（第 13 章伏笔回收）</li><li><strong>演示</strong>：在浏览器里复现"顺序反了就丢档"</li><li><strong>互动</strong>：观众投票决定新增哪项成就（大纲里的 L5 环节）</li><li><strong>收尾</strong>：预告截图与摄影模式</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：成就解锁时间记来干嘛？</strong><br>A：<code>unlocked_at[id] = 时间字符串</code>，便于展示"何时达成"，也是调试与排序依据。</p>
+<p><strong>Q：能重置成就吗？</strong><br>A：删掉 <code>user://achievements.json</code> 即可（各平台路径见第 13 章 FAQ）。</p>
+<p><strong>Q：<code>variety</code> 用的是 <code>player_counts()</code> 吗？</strong><br>A：是——只统计非 <code>natural</code> 的格子，所以起始村庄不会白送成就。</p>
+<div class="pager"><a href="chapter-22.html">← 卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-24.html">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

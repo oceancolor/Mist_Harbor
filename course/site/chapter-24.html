@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</h1>
+  <div class="meta">卷 4 · 玩法系统 · 字符数 4650 · 生成于 2026-09-21 15:07</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-22.html">卷 4 · 第 22 章　章节引导：把"随便玩"变成"有目标的练习"</a><a href="chapter-23.html">卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-24.html" style="color:#2d514b;font-weight:700">卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载</h1>
+<blockquote><p><strong>本章目标</strong>：读懂"按 C 拍一张干净照片"背后藏着的三个坑——<br><strong>为什么等两帧</strong>、Web 上怎么把文件交给浏览器、以及为什么 <code>P</code> 与 <code>C</code> 要分开。<br>对应任务：T31 / T32　|　对应文件：<code>main.gd</code> 的 <code>_capture_photo()</code></p></blockquote>
+<hr>
+<h2>24.1 一张干净照片的四步</h2>
+<pre><code>func _capture_photo() -&gt; void:
+	var was_visible := hud.visible
+	hud.visible = false                       # ① 藏 HUD
+	await RenderingServer.frame_post_draw     # ② 等两帧
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	hud.visible = was_visible                 # ③ 立刻恢复
+	...                                       # ④ 保存 + 通知</code></pre>
+<table><thead><tr><th>步骤</th><th>为什么</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>① 藏 HUD</td><td>截图要的是<strong>纯游戏画面</strong>，不要面板和按钮</td></tr><tr><td>② <strong>等两帧</strong></td><td><code>hud.visible = false</code> 只是标记，要等<strong>渲染管线真的画完</strong>才生效</td></tr><tr><td>③ 立刻恢复</td><td>拿到 image 就恢复，用户几乎无感</td></tr><tr><td>④ 保存</td><td><code>user://photos/</code> + 时间戳文件名</td></tr></tbody></table>
+<p><strong>为什么是两帧不是一帧？</strong></p>
+<ul><li>第一帧：提交隐藏 HUD 的绘制指令</li><li>第二帧：确保 GPU 缓冲里已经是"无 HUD"的画面</li></ul>
+<p>只等一帧，很可能截到<strong>还带着 HUD</strong> 的画面——这个 bug 极难发现，因为它偶发。</p>
+<blockquote><p>📌 同样的"等两帧"也出现在缩略图渲染里（第 13 章的 <code>_render_one</code>）。<br><strong>凡是"改了场景立刻取画面"，都要等帧。</strong></p></blockquote>
+<hr>
+<h2>24.2 Web 上把文件交给浏览器</h2>
+<pre><code>DirAccess.make_dir_recursive_absolute(&quot;user://photos&quot;)
+var stamp := Time.get_datetime_string_from_system(true).replace(&quot;:&quot;, &quot;-&quot;)
+var file_name := &quot;mist-harbor-%s.png&quot; % [stamp]
+if image.save_png(&quot;user://photos/&quot; + file_name) != OK:
+	_toast(&quot;截图保存失败。&quot;); return
+photo_stats[&quot;photos&quot;] += 1
+if world.night:
+	photo_stats[&quot;night_photos&quot;] += 1
+if OS.has_feature(&quot;web&quot;):
+	JavaScriptBridge.download_buffer(image.save_png_to_buffer(), file_name, &quot;image/png&quot;)
+	_toast(&quot;照片已保存并开始下载。&quot;)
+else:
+	_toast(&quot;照片已保存：%s&quot; % [ProjectSettings.globalize_path(&quot;user://photos/&quot; + file_name)], 5.0)</code></pre>
+<table><thead><tr><th>平台</th><th>行为</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>桌面</strong></td><td>直接写文件，toast 显示真实路径（用 <code>globalize_path</code> 把 <code>user://</code> 转成系统路径）</td></tr><tr><td><strong>Web</strong></td><td>写 IndexedDB <strong>之外</strong>，还要用 <code>JavaScriptBridge.download_buffer()</code> <strong>触发浏览器下载</strong>——否则玩家根本拿不到文件</td></tr></tbody></table>
+<p><strong>注意 <code>replace(":", "-")</code></strong>：时间戳里的冒号在 Windows 文件名里非法，必须替换。<br>这类"跨平台文件名卫生"问题很常见，值得记住。</p>
+<hr>
+<h2>24.3 <code>P</code> 与 <code>C</code> 为什么要分开</h2>
+<pre><code>elif event.keycode == KEY_P: hud.visible = not hud.visible     # 切换 HUD
+elif event.keycode == KEY_C: _capture_photo()                  # 拍一张</code></pre>
+<table><thead><tr><th>键</th><th>用途</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>P</strong></td><td><strong>手动</strong>切换 HUD 显隐——玩家自己构图、调整视角，慢慢找角度</td></tr><tr><td><strong>C</strong></td><td><strong>自动</strong>完成"隐藏 → 截图 → 恢复"——一键拿到成品</td></tr></tbody></table>
+<p>分成两个键的价值：<strong>想慢慢构图的人用 P，想快的人按 C</strong>。<br>如果只有一个键，就会变成"要么拍到 HUD，要么看不见自己在干嘛"。</p>
+<hr>
+<h2>24.4 照片也是游戏数据</h2>
+<pre><code>photo_stats[&quot;photos&quot;] += 1
+if world.night: photo_stats[&quot;night_photos&quot;] += 1</code></pre>
+<p><code>photo_stats</code> 会流向两个地方：</p>
+<ul><li><strong>章节目标</strong> <code>night_photo</code>：夜色里拍一张（第 22 章）</li><li><strong>成就</strong> <code>night_owl</code> 夜观察者（第 23 章）</li></ul>
+<p>所以 <code>_capture_photo()</code> 最后调 <code>_refresh_ui()</code>——<br>刷新会触发 <code>_check_achievements()</code>，<strong>拍完照立刻可能解锁成就</strong>。</p>
+<blockquote><p>📌 这是一条完整闭环：<strong>玩法 → 数据 → 目标/成就 → UI 反馈</strong>。</p></blockquote>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>截图</td><td>写本地文件</td><td><strong>必须走 <code>download_buffer</code></strong>，否则文件只在 IndexedDB 里拿不出来</td></tr><tr><td>等帧</td><td>本地 GPU</td><td>WebGL 同样需要等两帧，<strong>云端更明显</strong>（渲染管线更长）</td></tr><tr><td>验收</td><td>看文件是否生成</td><td>云端断言 <code>photos</code> / <code>night_photos</code> 计数 + toast 文案</td></tr><tr><td>注意</td><td>路径分隔符、冒号</td><td><strong>同</strong>；另外 Web 下载行为受浏览器策略影响（弹窗拦截）</td></tr></tbody></table>
+<blockquote><p>🌩 云端验收建议：别去检查文件（拿不到），<strong>断言 <code>photo_stats</code> 的变化</strong>——<br>这正是第 11 章"断言语义不断言像素"的又一次应用。</p></blockquote>
+<hr>
+<h2>24.5 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>截图里还有 HUD</td><td>只等了一帧</td><td>等两帧 <code>frame_post_draw</code></td></tr><tr><td>Web 上点了没反应</td><td>没调 <code>download_buffer</code></td><td>加 JS 桥下载</td></tr><tr><td>文件名保存失败</td><td>时间戳含冒号</td><td><code>replace(":", "-")</code></td></tr><tr><td>夜景照片不算数</td><td>没判 <code>world.night</code></td><td>拍照时判断当前是否夜景</td></tr><tr><td>拍完成就没弹</td><td>没调 <code>_refresh_ui()</code></td><td>触发成就评估</td></tr><tr><td>toast 显示 user:// 路径</td><td>没 globalize</td><td>桌面端用 <code>globalize_path</code></td></tr></tbody></table>
+<hr>
+<h2>24.6 本章作业</h2>
+<ol><li>解释为什么要 <code>await frame_post_draw</code> <strong>两次</strong>，只等一次会怎样</li><li>说明 Web 与桌面在"把照片交给用户"这件事上的差异，指出关键 API</li><li>说出 <code>P</code> 与 <code>C</code> 的分工，以及为什么不该合并成一个键</li><li>追踪一次"夜景拍照"的完整数据链路：按键 → 计数 → 目标/成就 → UI 反馈</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>渲染是异步的</strong>——改了场景，画面不会立刻变。</li><li><strong>课堂演示</strong>：把第二次 <code>await</code> 删掉，连拍十次，统计有几张带 HUD（现场翻车很有说服力）。</li><li><strong>高频误解</strong>：学生以为 <code>hud.visible = false</code> 之后下一行就能拿到干净画面。</li><li><strong>讨论题</strong>：如果要做"连拍/延时摄影"，这段代码该怎么扩展？</li><li><strong>批改要点</strong>：作业 1 要提到"第一帧提交指令、第二帧确保画完"。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/24/24-hud-hidden.png" alt="24-hud-hidden"><figcaption>24-hud-hidden.png</figcaption></figure><figure><img src="assets/shots/24/24-hud-visible.png" alt="24-hud-visible"><figcaption>24-hud-visible.png</figcaption></figure></div><h2>📹 录屏分镜（8 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>按 C 拍一张，看 toast 与文件</td><td>"一键拿到干净画面。"</td></tr><tr><td>01:30–03:00</td><td>四步代码（重点是两帧）</td><td>"改了场景，画面不会立刻变。"</td></tr><tr><td>03:00–04:30</td><td>Web 的 download_buffer vs 桌面 globalize_path</td><td>"Web 上要主动交给浏览器。"</td></tr><tr><td>04:30–06:00</td><td>P vs C 的分工演示</td><td></td></tr><tr><td>06:00–08:00</td><td>照片 → 目标/成就闭环 + 作业</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/24/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>24-hud-visible.png</code></td><td>正常带 HUD 的画面</td><td><code>python tools/course_capture.py --chapter 24</code></td></tr><tr><td><code>24-hud-hidden.png</code></td><td>按 P 隐藏 HUD 后的纯画面</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："为什么我的截图里总有半截面板？"——引出等帧</li><li><strong>演示</strong>：删掉第二次 await，连拍十张找 bug</li><li><strong>互动</strong>：让观众设计一个"最佳角度"投票玩法（用截图功能）</li><li><strong>收尾</strong>：卷 4 总结（规则 → 历史 → 存档 → 引导 → 成就 → 摄影）</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：照片会进导出包吗？</strong><br>A：不会，它在 <code>user://photos/</code>（玩家目录），属于用户数据。</p>
+<p><strong>Q：能拍多大分辨率？</strong><br>A：等于当前视口分辨率；要更高需渲染到离屏 SubViewport（同缩略图做法，第 13 章）。</p>
+<p><strong>Q：<code>photo_stats</code> 会存档吗？</strong><br>A：当前它是<strong>会话内</strong>的运行时统计（<code>var photo_stats: Dictionary</code>），<br>用于目标与成就的即时反馈；跨会话持久化可作为扩展练习。</p>
+<div class="pager"><a href="chapter-23.html">← 卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

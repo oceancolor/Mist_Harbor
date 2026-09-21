@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 15:02",
+  "built": "2026-09-21 15:07",
   "chapters": [
     {
       "key": "01",
@@ -149,6 +149,27 @@
       "file": "chapter-21.html"
     },
     {
+      "key": "22",
+      "title": "卷 4 · 第 22 章　章节引导：把\"随便玩\"变成\"有目标的练习\"",
+      "volume": "卷 4 · 玩法系统",
+      "characters": 4158,
+      "file": "chapter-22.html"
+    },
+    {
+      "key": "23",
+      "title": "卷 4 · 第 23 章　成就系统：从定义到解锁的完整链路",
+      "volume": "卷 4 · 玩法系统",
+      "characters": 4933,
+      "file": "chapter-23.html"
+    },
+    {
+      "key": "24",
+      "title": "卷 4 · 第 24 章　截图与摄影模式：两帧等待与 Web 下载",
+      "volume": "卷 4 · 玩法系统",
+      "characters": 4650,
+      "file": "chapter-24.html"
+    },
+    {
       "key": "29",
       "title": "卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的",
       "volume": "卷 6 · 质量与协作",
@@ -170,5 +191,5 @@
       "file": "chapter-31.html"
     }
   ],
-  "characters": 115482
+  "characters": 129223
 }

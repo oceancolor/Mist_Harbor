@@ -100,6 +100,19 @@
     {"key": "Escape", "wait": 600},
     {"key": "Control+s", "wait": 1200, "shot": "21-saved-state.png"}
   ],
+  "22": [
+    {"click": "progress", "wait": 900, "shot": "22-progress-panel.png"},
+    {"key": "Escape", "wait": 600, "shot": "22-chapter-title.png"}
+  ],
+  "23": [
+    {"click": "progress", "wait": 900, "shot": "23-progress-achievements.png"},
+    {"key": "Escape", "wait": 500},
+    {"place": [[700, 460]], "wait": 900, "shot": "23-achievement-toast.png"}
+  ],
+  "24": [
+    {"shot": "24-hud-visible.png"},
+    {"key": "P", "wait": 900, "shot": "24-hud-hidden.png"}
+  ],
   "14": [
     {"shot": "14-game-start.png"},
     {"category": "建筑", "select": "barrel", "wait": 500, "shot": "14-barrel-selected.png"}
