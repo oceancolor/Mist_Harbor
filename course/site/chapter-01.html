@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="assets/style.css"></head><body>
 <header class="top"><div class="inner">
   <h1>卷 0 · 第 01 章　先让它跑起来</h1>
-  <div class="meta">卷 0 · 启程 · 字符数 5415 · 生成于 2026-09-21 12:09</div>
+  <div class="meta">卷 0 · 启程 · 字符数 6029 · 生成于 2026-09-21 12:34</div>
 </div></header>
 <div class="wrap">
 <nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html" style="color:#2d514b;font-weight:700">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a></nav>
@@ -14,13 +14,13 @@
 <blockquote><p><strong>本章目标</strong>：20 分钟内，在本机得到一个<strong>真正能玩</strong>的《雾港造物记》，并且用它自带的测试<br>证明"它不是我看着像能跑，而是真的能跑"。<br>对应任务：T01 / T03　|　对应提交：<code>c461437</code>（工程基线）</p></blockquote>
 <hr>
 <h2>1.1 为什么第一件事是"跑起来"，而不是"学概念"</h2>
-<p>游戏开发最容易骗人的地方在于：<strong>它几乎总能"看起来能跑"</strong>。<br>一个空场景也能打开，一个报错的脚本也可能只是静静躺在日志里。所以本书的第一课不是概念，<br>而是建立一条<strong>可验证的基线</strong>——后面所有改动，都以"这条基线还绿不绿"作为唯一裁判。</p>
+<p>游戏开发最容易骗人的地方在于：<strong>它几乎总能"看起来能跑"</strong>。<br>一个空场景也能打开，一个报错的脚本也可能只是静静躺在日志里。所以本实训的第一课不是概念，<br>而是建立一条<strong>可验证的基线</strong>——后面所有改动，都以"这条基线还绿不绿"作为唯一裁判。</p>
 <p>这条基线长这样：</p>
 <pre><code>WORLD_TEST_RESULT passed=56 failed=0
 SCENE_SMOKE_RESULT failed=0</code></pre>
 <p>第一行是世界模型的 56 条断言（放置、撤销、存档校验、边界……），<br>第二行是"真的把主场景实例化出来点了几下"的 12 条冒烟。</p>
 <blockquote><p>关于数字：本章写作时仓库里是 <strong>56 条</strong>；工程早期曾是 42 条，后面还会更多。<br><strong>不要记数字，记规则：failed 必须永远是 0。</strong> 数字增长只说明保护变厚了。</p></blockquote>
-<blockquote><p>📌 本书约定：任何一次改动之后，<code>failed</code> 不是 0 就不许往下走。这不是洁癖，<br>是让 48 个任务能叠成一栋楼而不是一堆沙的唯一办法。</p></blockquote>
+<blockquote><p>📌 本实训约定：任何一次改动之后，<code>failed</code> 不是 0 就不许往下走。这不是洁癖，<br>是让 48 个任务能叠成一栋楼而不是一堆沙的唯一办法。</p></blockquote>
 <hr>
 <h2>1.2 准备：三样东西</h2>
 <table><thead><tr><th>需要</th><th>怎么确认</th><th>不对怎么办</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>Godot 4.7.stable</td><td><code>&amp; D:\Godot_v4.7\Godot_v4.7-stable_win64_console.exe --version</code></td><td>改 <code>.codebuddy/local/tools.json</code></td></tr><tr><td>Python 3.11+</td><td><code>python --version</code></td><td>装 Python；注意别用坏的 <code>C:\Python311</code></td></tr><tr><td>Node 18+</td><td><code>node -v</code></td><td>装 Node LTS</td></tr></tbody></table>
@@ -29,6 +29,11 @@ SCENE_SMOKE_RESULT failed=0</code></pre>
   &quot;blender&quot;: &quot;D:/Blender/blender-4.2.0-windows-x64/blender.exe&quot; }</code></pre>
 <p>这个文件<strong>被 git 故意忽略</strong>（它是"你这台机器"的信息，不是工程信息）。<br>换机器时从 <code>tools/tools.example.json</code> 复制一份改路径即可——这就是为什么仓库里要有模板文件。</p>
 <blockquote><p>⚠️ 常见坑：<code>Python 3.11</code> 装在 <code>C:\Python311\python.exe</code> 但那个解释器已经损坏，<br>执行任何脚本都会报"无法创建进程"。用 <code>python --version</code> 先确认你调的是哪一个。</p></blockquote>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<p><strong>本实训的正式运行环境是云端 agent（web-cb）</strong>：它会按每个 PBL 项目的需要，在云端预先准备好<br>MCP 服务、skill、托管平台，甚至基础代码仓库。也就是说——</p>
+<table><thead><tr><th></th><th>🖥 本地路线（可选：离线、可改引擎）</th><th>🌩 云端 agent（web-cb，默认）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>Godot / Blender</td><td>自己装，路径写进 <code>.codebuddy/local/tools.json</code></td><td>平台镜像内置，开箱即用</td></tr><tr><td>两套 MCP</td><td>自己改用户级 <code>mcp.json</code>（见第 02 章）</td><td><strong>平台预置</strong>，学员无需配置</td></tr><tr><td>代码仓库</td><td>自己 <code>git clone</code></td><td>平台按项目预建基础仓库</td></tr><tr><td>跑测试</td><td><code>python tools/dev.py test</code></td><td>同一条命令（统一入口）</td></tr><tr><td>看画面</td><td><code>python tools/dev.py run</code></td><td>云端提供预览入口，同样由 <code>dev.py</code> 驱动</td></tr></tbody></table>
+<p>所以云端里你<strong>不需要</strong>处理本节的"三样东西"，但<strong>必须知道它们是什么</strong>：<br>出问题时才能判断是"平台环境没起来"还是"我的代码改坏了"。</p>
+<blockquote><p>📌 两条路线共用同一套命令入口（<code>tools/dev.py</code>），这正是本实训把它当唯一入口的原因：<br>换环境不换命令。</p></blockquote>
 <hr>
 <h2>1.3 动手：三条命令</h2>
 <pre><code># 1) 取代码（如果你还没取）
@@ -57,7 +62,7 @@ SCENE_SMOKE_RESULT failed=0</code></pre>
 <h2>1.4 玩五分钟：确认它不是张图片</h2>
 <p>新手最容易犯的错，是"看到画面就以为成了"。请用下面这张清单确认它真在跑：</p>
 <ul><li>[ ] 左侧建材栏点一间「海湾小屋」，然后在岛上点一下 → 小屋真的出现了</li><li>[ ] 按 <code>R</code> → 下一件建材的朝向变成 90°</li><li>[ ] 按 <code>Ctrl+Z</code> → 刚才放的小屋消失；<code>Ctrl+Y</code> 又回来</li><li>[ ] 按 <code>B</code> 进入拆除模式，点一下方块 → 它消失</li><li>[ ] 按 <code>N</code> → 昼夜切换；再按一次切回</li><li>[ ] 右键拖动 → 相机环绕；滚轮 → 缩放</li><li>[ ] 按 <code>P</code> → 界面隐藏（拍照模式）；<code>Esc</code> → 回来</li></ul>
-<p>这七条对应的是<strong>真实的世界状态变化</strong>，不是 UI 开关。本书后面每一章讲的机制，<br>最终都要落到"点了之后世界真的变了"这一条上。</p>
+<p>这七条对应的是<strong>真实的世界状态变化</strong>，不是 UI 开关。本实训后面每一章讲的机制，<br>最终都要落到"点了之后世界真的变了"这一条上。</p>
 <hr>
 <h2>1.5 理解你刚才跑的两套测试</h2>
 <pre><code>project/tests/test_world.gd      纯逻辑：不渲染，直接测世界模型
@@ -89,7 +94,7 @@ project/tests/browser_smoke.py   真浏览器：Web 导出后由 Playwright 驱�
 <ul><li><strong>开场（2 min）</strong>：现场投票"你觉得这台机器上第一条测试会不会过？"——90% 的人会猜错</li><li><strong>演示（6 min）</strong>：按本章 1.3 顺序跑一遍，中途故意用错 Python 版本让大家看报错</li><li><strong>互动（4 min）</strong>：让观众在聊天区报自己的 <code>passed=</code> 数字，收集不同环境</li><li><strong>收尾（3 min）</strong>：布置作业，预告下一场的"云端建模"</li></ul>
 <h2>❓ 本章 FAQ</h2>
 <p><strong>Q：我的是 macOS / Linux，命令不一样吗？</strong><br>A：只差路径分隔符和 <code>python</code>→<code>python3</code>。<code>tools/dev.py</code> 本身是跨平台的。</p>
-<p><strong>Q：测试数字和书上不一样（比如 56 而不是 42）正常吗？</strong><br>A：正常，本书后面会不断加断言。<strong>只要 <code>failed=0</code></strong>，数字越大说明保护越厚。</p>
+<p><strong>Q：测试数字和书上不一样（比如 56 而不是 42）正常吗？</strong><br>A：正常，本实训后面会不断加断言。<strong>只要 <code>failed=0</code></strong>，数字越大说明保护越厚。</p>
 <p><strong>Q：可以跳过测试直接开发吗？</strong><br>A：可以，但你会发现第 5 次改动之后就不知道是谁弄坏的了。这条安全带是给自己留的。</p>
 <div class="pager"><span></span><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP →</a></div>
 </main></div>

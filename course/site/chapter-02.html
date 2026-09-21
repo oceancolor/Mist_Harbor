@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="assets/style.css"></head><body>
 <header class="top"><div class="inner">
   <h1>卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</h1>
-  <div class="meta">卷 0 · 启程 · 字符数 6621 · 生成于 2026-09-21 12:09</div>
+  <div class="meta">卷 0 · 启程 · 字符数 7369 · 生成于 2026-09-21 12:34</div>
 </div></header>
 <div class="wrap">
 <nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html" style="color:#2d514b;font-weight:700">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a></nav>
@@ -25,7 +25,7 @@
 <ol><li><strong>Godot 高版本打开低版本工程会升级它，且回不去</strong>——所以升级前必须 git 有提交</li><li><strong>导出模板版本必须和引擎完全一致</strong>，差一个小版本都导不出来</li><li><strong>测试断言不要写死数量</strong>（"13 种建材"在加了木桶后立刻变红）。正确做法是从数据源推导：</li></ol>
 <pre><code>   var expected := (palette_file as Dictionary).get(&quot;items&quot;, []).size()
    check(model.palette.size() == expected, &quot;palette matches data/palette.json&quot;)</code></pre>
-<blockquote><p>📌 本书约定：引擎版本只写在 <code>.codebuddy/local/tools.json</code>（本机），<br>工程侧写在 <code>project.godot</code> 的 <code>config/features</code>（给引擎看），<br>文档侧写在 <code>TOOLCHAIN.md</code>（给人看）。三处必须一致。</p></blockquote>
+<blockquote><p>📌 本实训约定：引擎版本只写在 <code>.codebuddy/local/tools.json</code>（本机），<br>工程侧写在 <code>project.godot</code> 的 <code>config/features</code>（给引擎看），<br>文档侧写在 <code>TOOLCHAIN.md</code>（给人看）。三处必须一致。</p></blockquote>
 <hr>
 <h2>2.3 两台 MCP：一个远程、一个本地（关键决策）</h2>
 <pre><code>web-cb-blender-pilot   →  远程 streamableHttp   →  负责&quot;造资产&quot;
@@ -43,7 +43,8 @@ blender_artifacts 列出产物：GLB、预览 PNG、glb-inspect.json、日志、
 <table><thead><tr><th>限制</th><th>后果</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>服务端锁 4.7.1（我们是 4.7.stable）</td><td>版本不完全一致</td></tr><tr><td><code>godot_apply_files</code> <strong>只接受 UTF-8 文本</strong></td><td><strong>GLB、字体、图标这些二进制传不上去</strong></td></tr></tbody></table>
 <p>《雾港》有 9 个 GLB + 一个子集字体 + 图标 SVG——<strong>二进制是主体</strong>，<br>所以 Godot 侧只能用本地 MCP（直接操作你磁盘上的工程）。</p>
 <blockquote><p>🖼 配图：<code>02-dock-nature.png</code> —— 建材栏里的 GLB 缩略图（远程 Blender 造、本地 Godot 导入的成果）。<br>📊 示意图：<code>assets/diagrams/mcp-topology.svg</code></p></blockquote>
-<h3>2.3.1 动手：接通两台 MCP</h3>
+<h3>2.3.1 🖥 本地路线：手动接通两台 MCP</h3>
+<blockquote><p>云端 agent（web-cb）学员<strong>跳过本节</strong>，直接看 2.3.2。本节只在本地环境需要。</p></blockquote>
 <p>编辑用户级配置 <code>C:\Users\&lt;你&gt;\.codebuddy\mcp.json</code>（<strong>这个文件不入仓库</strong>）：</p>
 <pre><code>{
   &quot;mcpServers&quot;: {
@@ -76,6 +77,11 @@ web-cb-blender-pilot（streamableHttp，地址与令牌我稍后给你）与
 godot（本地 npx @coding-solo/godot-mcp，GODOT_PATH 指向 D:/Godot_v4.7 的 console 版，
 cwd 为工程目录）。写完后用探针列出两边工具数量并贴给我。
 约束：令牌只写入被 gitignore 的用户级配置，不要写进仓库任何文件。</code></pre>
+<h3>2.3.2 🌩 在云端 agent（web-cb）里：这些已经配好了</h3>
+<table><thead><tr><th>项目</th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>MCP 服务</td><td>手改用户级 <code>mcp.json</code> + 令牌</td><td><strong>平台预置并托管令牌</strong>，学员无需配置</td></tr><tr><td>引擎与 Blender</td><td>自己装，写 <code>tools.json</code></td><td>平台镜像内置</td></tr><tr><td>基础仓库</td><td>自己 <code>git clone</code></td><td>平台按 PBL 项目预建</td></tr><tr><td>托管/预览</td><td>自己起本地服务</td><td>平台提供预览入口</td></tr></tbody></table>
+<p><strong>既然不用配，为什么还要学这一章？</strong> 因为排查问题时你必须能回答三个问题：</p>
+<ol><li>这次操作<strong>走的是哪条链路</strong>（Agent → MCP → Godot/Blender → 我的文件）？</li><li>失败发生在<strong>哪一段</strong>（脚本被拒？引擎导入失败？还是我的断言写错了）？</li><li>这一段在<strong>本地</strong>要怎么复现（换成 <code>dev.py</code>/探针命令单独跑一次）？</li></ol>
+<blockquote><p>📌 判断口诀：<strong>先分段，再复现。</strong> 用探针单独问 MCP（第 2.3.1 的两条命令），<br>用 <code>dev.py test</code> 单独问引擎，两者都过还出问题，才是你的业务代码。</p></blockquote>
 <hr>
 <h2>2.4 Git：什么该入库，什么不该</h2>
 <pre><code>✅ 入库：project/（源码、资源、数据、文档、测试）、tools/、course/、配置文件
@@ -83,6 +89,7 @@ cwd 为工程目录）。写完后用探针列出两边工具数量并贴给我�
 <p><strong>为什么 <code>.codebuddy/</code> 整个忽略？</strong> 因为它装的是"你这台机器"的信息：</p>
 <table><thead><tr><th>文件</th><th>内容</th><th>模板</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>.codebuddy/local/tools.json</code></td><td>Godot/Blender 路径</td><td><code>tools/tools.example.json</code></td></tr><tr><td><code>.codebuddy/local/pilot.json</code></td><td>远程 MCP 地址与令牌</td><td><code>tools/pilot.example.json</code></td></tr></tbody></table>
 <p><strong>规则</strong>：凡是"换台机器就要改"的配置，都不入库；但必须在仓库里留一个 <code>.example</code> 模板，<br>并写清"复制后改哪里"。否则三个月后你自己都装不回来。</p>
+<blockquote><p>🌩 云端 agent（web-cb）里，这层"机器相关配置"由<strong>平台托管</strong>：仓库是预建的，<br>令牌在平台侧，学员 clone 下来的就是干净的工程。上面两条 <code>*.example.json</code><br>依然存在——它们是<strong>本地路线</strong>的说明书，也是你理解"平台替你做了什么"的对照表。</p></blockquote>
 <p><img src="assets/diagrams/project-layout.svg" alt="仓库结构与入库边界"></p>
 <blockquote><p>⚠️ 令牌属于敏感信息。本项目把它放在被忽略的 <code>pilot.json</code> 里；<br>如果你要公开仓库，请确认没有任何令牌被 <code>git add</code>。可用<br><code>git log -p --all -S"Bearer "</code> 自查历史里是否混入过。</p></blockquote>
 <hr>
