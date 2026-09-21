@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 13:41",
+  "built": "2026-09-21 15:02",
   "chapters": [
     {
       "key": "01",
@@ -75,7 +75,7 @@
       "key": "11",
       "title": "卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架",
       "volume": "卷 2 · Godot 工程",
-      "characters": 5410,
+      "characters": 5646,
       "file": "chapter-11.html"
     },
     {
@@ -128,6 +128,27 @@
       "file": "chapter-18.html"
     },
     {
+      "key": "19",
+      "title": "卷 4 · 第 19 章　放置规则：支撑、占位与世界边界",
+      "volume": "卷 4 · 玩法系统",
+      "characters": 5175,
+      "file": "chapter-19.html"
+    },
+    {
+      "key": "20",
+      "title": "卷 4 · 第 20 章　撤销栈：一次点击，一个命令",
+      "volume": "卷 4 · 玩法系统",
+      "characters": 4124,
+      "file": "chapter-20.html"
+    },
+    {
+      "key": "21",
+      "title": "卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品",
+      "volume": "卷 4 · 玩法系统",
+      "characters": 5255,
+      "file": "chapter-21.html"
+    },
+    {
       "key": "29",
       "title": "卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的",
       "volume": "卷 6 · 质量与协作",
@@ -138,7 +159,7 @@
       "key": "30",
       "title": "卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState",
       "volume": "卷 6 · 质量与协作",
-      "characters": 5203,
+      "characters": 5205,
       "file": "chapter-30.html"
     },
     {
@@ -149,5 +170,5 @@
       "file": "chapter-31.html"
     }
   ],
-  "characters": 100690
+  "characters": 115482
 }

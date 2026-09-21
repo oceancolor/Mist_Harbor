@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="440" viewBox="0 0 900 440" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="900" height="440" fill="#f7f8ed"/>
+  <text x="450" y="32" text-anchor="middle" font-size="20" fill="#2d514b">can_place()：放置判定的四道闸门</text>
+
+  <rect x="40" y="60" width="190" height="86" rx="8" fill="#497c6b"/>
+  <text x="135" y="86" text-anchor="middle" font-size="14" fill="#ffffff">① 合法性 + 总量</text>
+  <text x="135" y="108" text-anchor="middle" font-size="12" fill="#dff0e6">kind 在 palette 里</text>
+  <text x="135" y="128" text-anchor="middle" font-size="12" fill="#dff0e6">cells.size() &lt; 12000</text>
+
+  <rect x="255" y="60" width="190" height="86" rx="8" fill="#497c6b"/>
+  <text x="350" y="86" text-anchor="middle" font-size="14" fill="#ffffff">② 世界边界</text>
+  <text x="350" y="108" text-anchor="middle" font-size="12" fill="#dff0e6">|x|,|z| ≤ 25</text>
+  <text x="350" y="128" text-anchor="middle" font-size="12" fill="#dff0e6">y ∈ [-4,20) 且 y+h ≤ 20</text>
+
+  <rect x="470" y="60" width="190" height="86" rx="8" fill="#497c6b"/>
+  <text x="565" y="86" text-anchor="middle" font-size="14" fill="#ffffff">③ 占位冲突</text>
+  <text x="565" y="108" text-anchor="middle" font-size="12" fill="#dff0e6">占用 h 格（item_height）</text>
+  <text x="565" y="128" text-anchor="middle" font-size="12" fill="#dff0e6">任一格已占 → 拒绝</text>
+
+  <rect x="685" y="60" width="175" height="86" rx="8" fill="#497c6b"/>
+  <text x="772" y="86" text-anchor="middle" font-size="14" fill="#ffffff">④ 支撑</text>
+  <text x="772" y="108" text-anchor="middle" font-size="12" fill="#dff0e6">y ≤ 0：可直接打地基</text>
+  <text x="772" y="128" text-anchor="middle" font-size="12" fill="#dff0e6">空中：六邻面须有格</text>
+
+  <line x1="230" y1="103" x2="253" y2="103" stroke="#789087" stroke-width="2"/>
+  <line x1="445" y1="103" x2="468" y2="103" stroke="#789087" stroke-width="2"/>
+  <line x1="660" y1="103" x2="683" y2="103" stroke="#789087" stroke-width="2"/>
+
+  <text x="450" y="178" text-anchor="middle" font-size="13" fill="#2d514b">四关全过 → place() 写入；任一不过 → 返回 false（UI 显示红色 ghost）</text>
+
+  <rect x="40" y="200" width="400" height="200" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="240" y="226" text-anchor="middle" font-size="14" fill="#2d514b">双字典：cells 与 occupancy</text>
+  <text x="60" y="252" font-size="12" fill="#789087">cells：原点格 → {kind, rot, natural}</text>
+  <text x="60" y="274" font-size="12" fill="#789087">occupancy：每一格 → 所属原点格</text>
+  <text x="60" y="304" font-size="12" fill="#497c6b">放一个 3 格灯塔于 (0,0,0)：</text>
+  <text x="60" y="326" font-size="12" fill="#789087">cells[(0,0,0)] = {kind:"beacon"}</text>
+  <text x="60" y="346" font-size="12" fill="#789087">occupancy[(0,0,0)] = (0,0,0)</text>
+  <text x="60" y="364" font-size="12" fill="#789087">occupancy[(0,1,0)] = (0,0,0)</text>
+  <text x="60" y="382" font-size="12" fill="#789087">occupancy[(0,2,0)] = (0,0,0)</text>
+
+  <rect x="460" y="200" width="400" height="200" rx="10" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="660" y="226" text-anchor="middle" font-size="14" fill="#2d514b">为什么规则在模型层</text>
+  <text x="480" y="252" font-size="12" fill="#789087">· 测试不需要渲染（L1 共 56 项）</text>
+  <text x="480" y="274" font-size="12" fill="#789087">· 规则与表现解耦（换端不改）</text>
+  <text x="480" y="296" font-size="12" fill="#789087">· last_error 可直接断言</text>
+  <text x="480" y="326" font-size="12" fill="#497c6b">place / erase 的对称：</text>
+  <text x="480" y="346" font-size="12" fill="#789087">erase 先 owner_at(cell) 反查原点</text>
+  <text x="480" y="366" font-size="12" fill="#789087">→ 删除永远针对整件</text>
+  <text x="480" y="386" font-size="12" fill="#789087">旋转值 posmod(rotation, 4) 规范化</text>
+
+  <text x="450" y="424" text-anchor="middle" font-size="12" fill="#789087">反模式：把"能不能放"写在渲染/UI 里 → 无法单测、易与 UI 状态打架</text>
+</svg>

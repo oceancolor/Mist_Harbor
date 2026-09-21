@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</h1>
+  <div class="meta">卷 4 · 玩法系统 · 字符数 5255 · 生成于 2026-09-21 15:02</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html" style="color:#2d514b;font-weight:700">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</h1>
+<blockquote><p><strong>本章目标</strong>：读懂 <code>load_document()</code> 的<strong>全量校验 + 原子替换</strong>，<br>以及"先写 .tmp 再改名"为什么在 Web 上尤其重要。<br>对应任务：T18 / T19（存档槽）　|　对应文件：<code>world_model.gd</code> 的文档与槽位部分</p></blockquote>
+<hr>
+<h2>21.1 文档长什么样</h2>
+<pre><code>{
+  &quot;schema_version&quot;: 1,
+  &quot;game&quot;: &quot;mist-harbor&quot;,
+  &quot;seed&quot;: 240910,
+  &quot;cells&quot;: [
+    {&quot;position&quot;: [0,0,0], &quot;kind&quot;: &quot;beacon&quot;, &quot;rotation&quot;: 0, &quot;natural&quot;: false},
+    {&quot;position&quot;: [3,0,2], &quot;kind&quot;: &quot;cottage&quot;, &quot;rotation&quot;: 2, &quot;natural&quot;: false}
+  ],
+  &quot;stats&quot;: {&quot;rotated&quot;: 12, &quot;undone&quot;: 3, &quot;saved&quot;: 5, &quot;removed&quot;: 1}
+}</code></pre>
+<table><thead><tr><th>字段</th><th>作用</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><code>schema_version</code> / <code>game</code></td><td><strong>格式标识</strong>：拒绝别的游戏/别的版本的文件</td></tr><tr><td><code>seed</code></td><td>世界种子，保证地形可复现</td></tr><tr><td><code>cells</code></td><td>只存<strong>原点格</strong>（+ rotation），多格由 <code>height</code> 推导占哪些格</td></tr><tr><td><code>natural</code></td><td>区分起始村庄与玩家建造</td></tr><tr><td><code>stats</code></td><td>操作统计（成就跨会话累计）</td></tr></tbody></table>
+<p><strong>按 (x, y, z) 排序后写入</strong> → 同一份世界每次序列化结果完全一致，<br>方便 diff 与校验（第 17 章的"可复现"是同一思路）。</p>
+<hr>
+<h2>21.2 载入：先全量校验，再整体替换</h2>
+<pre><code>func load_document(document) -&gt; bool:
+	last_error = &quot;&quot;
+	if not document is Dictionary or document.get(&quot;game&quot;) != &quot;mist-harbor&quot; \
+	   or document.get(&quot;schema_version&quot;) != SAVE_VERSION:
+		last_error = &quot;不是受支持的雾港存档（需要版本 1）。&quot;
+		return false
+	...
+	# 全部验证完成后才替换现场，坏存档不能破坏当前作品。
+	var next_cells := {}
+	var next_occupancy := {}
+	for entry in entries:
+		...  # 逐条校验，任何一条不合法就 return false（此时 cells 没被动过）
+	cells = next_cells          # ← 只有走到这里才替换
+	occupancy = next_occupancy</code></pre>
+<p><strong>这是本章最重要的一行注释。</strong> 两种做法的差别：</p>
+<table><thead><tr><th>做法</th><th>后果</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>❌ 边读边写</td><td>读到第 500 条发现非法 → 前 499 条已生效，作品<strong>半损坏</strong></td></tr><tr><td>✅ 先建临时结构，全部通过再替换</td><td>非法 → 直接返回 false，<strong>现场完好无损</strong></td></tr></tbody></table>
+<p>校验清单（每层都写 <code>last_error</code>，UI 能直接显示中文原因）：</p>
+<pre><code>游戏标识 / 版本 → 格子总数 ≤ 12000 → seed 是整数 →
+每条：是字典？position 长度 3？kind 在 palette 里？坐标在范围内？
+      rotation ∈ [0,3]？natural 是 bool？模型高度不越界？→ 占位不重叠？
+stats：四个字段都是整数且在范围内</code></pre>
+<p><code>_integer()</code> 还专门检查<strong>有限数</strong>与<strong>整数性</strong>，挡住 <code>NaN</code> / <code>1.5</code> / 超大值。</p>
+<hr>
+<h2>21.3 保存：先写 <code>.tmp</code>，再改名</h2>
+<pre><code>func save_slot(index) -&gt; bool:
+	stats[&quot;saved&quot;] += 1
+	var output := FileAccess.open(path + &quot;.tmp&quot;, FileAccess.WRITE)
+	if output == null:
+		stats[&quot;saved&quot;] -= 1        # ← 失败要回滚计数器
+		last_error = &quot;无法写入存档槽 %d，请使用导出 JSON。&quot;
+		return false
+	output.store_string(JSON.stringify(to_document()))
+	output.flush(); output.close()
+	if DirAccess.rename_absolute(path + &quot;.tmp&quot;, path) != OK:
+		stats[&quot;saved&quot;] -= 1
+		last_error = &quot;保存失败，请导出 JSON 备份。&quot;
+		return false
+	current_slot = index
+	dirty = false</code></pre>
+<p><strong>为什么多一步改名？</strong><br>写一半断电/崩溃 → 只会留下一个 <code>.tmp</code> 垃圾文件，<strong>原来的存档完好</strong>。<br>直接写目标文件则可能留下<strong>半截 JSON</strong>——下次再也读不回来。</p>
+<blockquote><p>📌 这个模式叫 <strong>atomic write</strong>，是本地与 Web 都通用的稳妥做法。</p></blockquote>
+<p><strong>另一个细节</strong>：<code>stats["saved"] += 1</code> 之后若失败要 <code>-= 1</code>，<br>否则"档案管理员"成就（保存 5 次）会被失败的操作注满水。</p>
+<hr>
+<h2>21.4 三个槽位与旧存档迁移</h2>
+<pre><code>const SLOT_COUNT := 3
+static func slot_path(index: int) -&gt; String:
+	return &quot;user://slot_%d.json&quot; % [clampi(index, 1, SLOT_COUNT)]
+
+func migrate_legacy_save() -&gt; bool:
+	&quot;&quot;&quot;First run after the slot upgrade: keep the old single save as slot 1.&quot;&quot;&quot;
+	if not FileAccess.file_exists(SAVE_PATH) or FileAccess.file_exists(slot_path(1)):
+		return false
+	return DirAccess.copy_absolute(SAVE_PATH, slot_path(1)) == OK</code></pre>
+<ul><li>槽位是 <code>clampi</code> 过的 → 越界索引不会写出奇怪的路径</li><li><strong>迁移只做一次</strong>，且不覆盖已有 slot 1</li><li>老用户升级后作品还在——这是"<strong>数据格式演进</strong>"的最小成本做法</li></ul>
+<p><code>slot_info()</code> 还支持读存档的<strong>修改时间</strong>与<strong>格子数</strong>，UI 直接显示"槽位 2：128 格，9 月 15 日保存"。</p>
+<hr>
+<p><img src="assets/diagrams/save-flow.svg" alt="存档读写的安全边界"></p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>user://</code></td><td>本地文件（同步/近同步）</td><td><strong>Web = IndexedDB，异步写</strong>（第 13 章的坑）</td></tr><tr><td>atomic write</td><td>本地 rename 很快</td><td>同样有效；<strong>更要避免"写完再写别的"</strong></td></tr><tr><td>校验</td><td><code>load_document</code></td><td>同；<strong>云端建议加一条"坏存档不改变现场"的断言</strong></td></tr><tr><td>风险</td><td>相对低</td><td><strong>Web 上写盘顺序/时机更容易出问题</strong></td></tr><tr><td>验证</td><td>L1 往返一致</td><td>L3 的"保存 → 刷新 → 世界还在"（第 30 章）</td></tr></tbody></table>
+<blockquote><p>🌩 云端必测组合：<strong>写入存档 → 立刻刷新 → 内容一致</strong>。<br>这是唯一能验证 IndexedDB 异步写是否真的落盘的手段。</p></blockquote>
+<hr>
+<h2>21.5 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>坏存档把作品搞坏</td><td>边读边写</td><td>先建临时结构，全通过再替换</td></tr><tr><td>崩溃后存档读不了</td><td>直接写目标文件</td><td><code>.tmp</code> + rename</td></tr><tr><td>成就计数虚高</td><td>失败时没回滚 <code>stats</code></td><td>失败路径 <code>-= 1</code></td></tr><tr><td>别的游戏存档能载入</td><td>没校验 <code>game</code> 字段</td><td>校验标识与版本</td></tr><tr><td><code>NaN</code> / 小数坐标进来了</td><td>只判了类型没判整数性</td><td><code>_integer()</code> 三合一检查</td></tr><tr><td>槽位路径越界</td><td>没 <code>clampi</code></td><td><code>clampi(index, 1, SLOT_COUNT)</code></td></tr></tbody></table>
+<hr>
+<h2>21.6 本章作业</h2>
+<ol><li>说明"先全量校验再替换"能防止什么，写一个会触发该 bug 的操作序列</li><li>解释 atomic write 的两步，以及崩溃发生在两步之间会怎样</li><li>找出 <code>load_document</code> 里所有会写 <code>last_error</code> 的分支，说明 UI 怎么用它</li><li>设计一条断言：载入一个<strong>非法</strong>存档后，<code>placed_count()</code> 与 <code>revision</code> 应如何变化？</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>失败要可回滚，写入要原子</strong>。数据安全的两个基本动作。</li><li><strong>课堂演示</strong>：手写一个缺字段的 JSON，载入后看 UI 弹出中文错误且世界完好。</li><li><strong>高频误解</strong>：学生觉得"自己写的存档不会坏"。提醒：用户会手改、会跨版本、会传输截断。</li><li><strong>讨论题</strong>：如果要支持 schema_version 2（比如加旋转轴），迁移代码该怎么写？</li><li><strong>批改要点</strong>：作业 4 必须答出"两者都不变"（非法存档不应触碰现场）。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/21/21-saved-state.png" alt="21-saved-state"><figcaption>21-saved-state.png</figcaption></figure><figure><img src="assets/shots/21/21-slots-dialog.png" alt="21-slots-dialog"><figcaption>21-slots-dialog.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>文档结构逐字段</td><td>"只存原点格，多格靠 height 推。"</td></tr><tr><td>01:30–03:30</td><td>load_document 的临时结构 + 注释</td><td>"坏存档不能毁掉当前作品。"</td></tr><tr><td>03:30–05:00</td><td>校验清单（含 _integer 三合一）</td><td></td></tr><tr><td>05:00–06:30</td><td>atomic write 两步 + 计数回滚</td><td>"先写 tmp，再改名。"</td></tr><tr><td>06:30–08:00</td><td>槽位与旧存档迁移</td><td></td></tr><tr><td>08:00–09:00</td><td>作业 + 预告（章节引导）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/21/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>21-slots-dialog.png</code></td><td>存档槽对话框（三个槽位信息）</td><td><code>python tools/course_capture.py --chapter 21</code></td></tr><tr><td><code>21-saved-state.png</code></td><td>保存后的状态（dirty 消失）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，12 分钟）</h2>
+<ul><li><strong>开场</strong>："你的存档有多脆弱？"——演示一个半截 JSON</li><li><strong>演示</strong>：手改存档文件（删一个字段），看游戏优雅拒绝且作品完好</li><li><strong>互动</strong>：让观众检查自己项目的存档是否有校验</li><li><strong>收尾</strong>：预告章节引导与成就</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：存档多大？</strong><br>A：上限 4 MB（<code>requirements.md</code>）。12000 格按当前格式估算远小于此，主要给未来留余量。</p>
+<p><strong>Q：能导出成文件分享吗？</strong><br>A：可以——<code>import_json()</code> 支持导入文本，<code>to_document()</code> 可导出 JSON，社区分享作品就靠它。</p>
+<p><strong>Q：三个槽位够吗？</strong><br>A：对本实训的创作规模足够；要扩展只需改 <code>SLOT_COUNT</code>，UI 会自动跟随（数据驱动）。</p>
+<div class="pager"><a href="chapter-20.html">← 卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="400" viewBox="0 0 900 400" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="900" height="400" fill="#f7f8ed"/>
+  <text x="450" y="32" text-anchor="middle" font-size="20" fill="#2d514b">存档读写的安全边界</text>
+
+  <text x="225" y="62" text-anchor="middle" font-size="14" fill="#2d514b">写入：atomic write</text>
+  <rect x="60" y="76" width="200" height="52" rx="8" fill="#497c6b"/>
+  <text x="160" y="99" text-anchor="middle" font-size="13" fill="#ffffff">写 slot_N.json.tmp</text>
+  <text x="160" y="119" text-anchor="middle" font-size="12" fill="#dff0e6">flush + close</text>
+  <rect x="300" y="76" width="200" height="52" rx="8" fill="#6d9e88"/>
+  <text x="400" y="99" text-anchor="middle" font-size="13" fill="#ffffff">rename → slot_N.json</text>
+  <text x="400" y="119" text-anchor="middle" font-size="12" fill="#eef7f0">原子替换</text>
+  <line x1="260" y1="102" x2="298" y2="102" stroke="#789087" stroke-width="2" marker-end="url(#b)"/>
+  <text x="225" y="150" text-anchor="middle" font-size="12" fill="#789087">两步之间崩溃 → 只留 .tmp 垃圾，原存档完好</text>
+  <text x="225" y="172" text-anchor="middle" font-size="12" fill="#789087">失败路径要把 stats["saved"] -= 1（防成就注水）</text>
+
+  <text x="675" y="62" text-anchor="middle" font-size="14" fill="#2d514b">读取：全量校验后替换</text>
+  <rect x="540" y="76" width="270" height="52" rx="8" fill="#497c6b"/>
+  <text x="675" y="99" text-anchor="middle" font-size="13" fill="#ffffff">逐条校验进临时结构</text>
+  <text x="675" y="119" text-anchor="middle" font-size="12" fill="#dff0e6">任一条非法 → return false</text>
+  <rect x="540" y="150" width="270" height="52" rx="8" fill="#6d9e88"/>
+  <text x="675" y="173" text-anchor="middle" font-size="13" fill="#ffffff">全部通过才替换现场</text>
+  <text x="675" y="193" text-anchor="middle" font-size="12" fill="#eef7f0">cells / occupancy / stats</text>
+  <line x1="675" y1="128" x2="675" y2="148" stroke="#789087" stroke-width="2" marker-end="url(#b)"/>
+
+  <rect x="60" y="210" width="780" height="130" rx="10" fill="#ffffff" stroke="#789087"/>
+  <text x="450" y="236" text-anchor="middle" font-size="14" fill="#2d514b">校验清单（每层都写 last_error，UI 直接显示中文原因）</text>
+  <text x="80" y="262" font-size="12" fill="#789087">game == "mist-harbor" · schema_version == 1 · cells ≤ 12000 · seed 是整数</text>
+  <text x="80" y="284" font-size="12" fill="#789087">每条：字典？position 长度 3？kind 在 palette？坐标在界内？</text>
+  <text x="80" y="304" font-size="12" fill="#789087">rotation ∈ [0,3]？natural 是 bool？模型高度不越界？占位不重叠？</text>
+  <text x="80" y="326" font-size="12" fill="#789087">stats：四个字段都是整数且在范围内（_integer 三合一：有限数 + 整数性 + 范围）</text>
+
+  <rect x="60" y="352" width="380" height="34" rx="6" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="250" y="374" text-anchor="middle" font-size="12" fill="#2d514b">❌ 边读边写：读到第 500 条非法 → 作品半损坏</text>
+  <rect x="460" y="352" width="380" height="34" rx="6" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="650" y="374" text-anchor="middle" font-size="12" fill="#2d514b">✅ 临时结构：非法 → 直接返回，现场完好</text>
+
+  <defs>
+    <marker id="b" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#789087"/>
+    </marker>
+  </defs>
+</svg>

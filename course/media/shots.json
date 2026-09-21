@@ -86,6 +86,20 @@
     {"shot": "18-palette-colors.png"},
     {"category": "地形", "select": "glass", "place": [[700, 460]], "wait": 600, "shot": "18-glass-accent.png"}
   ],
+  "19": [
+    {"category": "地形", "select": "stone", "place": [[700, 450], [730, 470]], "wait": 600, "shot": "19-place-build.png"},
+    {"key": "B", "wait": 800, "shot": "19-demolish-mode.png"},
+    {"key": "B", "wait": 500}
+  ],
+  "20": [
+    {"category": "建筑", "select": "cottage", "place": [[720, 430], [660, 480]], "wait": 600, "shot": "20-undo-state.png"},
+    {"key": "Control+z", "wait": 800, "shot": "20-after-undo.png"}
+  ],
+  "21": [
+    {"click": "menu", "wait": 900, "shot": "21-slots-dialog.png"},
+    {"key": "Escape", "wait": 600},
+    {"key": "Control+s", "wait": 1200, "shot": "21-saved-state.png"}
+  ],
   "14": [
     {"shot": "14-game-start.png"},
     {"category": "建筑", "select": "barrel", "wait": 500, "shot": "14-barrel-selected.png"}
@@ -104,7 +118,7 @@
   ],
   "30": [
     {"shot": "30-desktop-view.png"},
-    {"key": "P", "wait": 1500, "shot": "30-photo-toast.png"}
+    {"key": "C", "wait": 1500, "shot": "30-photo-toast.png"}
   ],
   "31": [
     {"category": "建筑", "select": "barrel", "wait": 500, "shot": "31-barrel-in-dock.png"},

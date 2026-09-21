@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 4 · 第 19 章　放置规则：支撑、占位与世界边界 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</h1>
+  <div class="meta">卷 4 · 玩法系统 · 字符数 5175 · 生成于 2026-09-21 15:02</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a><a href="chapter-14.html">卷 3 · 第 14 章　bpy 脚本：米制、Z-up，只建几何</a><a href="chapter-15.html">卷 3 · 第 15 章　远程 Blender MCP：submit → observe → artifacts</a><a href="chapter-16.html">卷 3 · 第 16 章　asset_pipeline.py：一条命令，从脚本到可放置建材</a><a href="chapter-17.html">卷 3 · 第 17 章　9 件资产逐个拆解：面数、体积与"为什么长这样"</a><a href="chapter-18.html">卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-19.html" style="color:#2d514b;font-weight:700">卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令</a><a href="chapter-21.html">卷 4 · 第 21 章　存档槽与文档格式：坏存档不能毁掉当前作品</a><a href="chapter-29.html">卷 6 · 第 29 章　三层验收：91 项断言是怎么分层的</a><a href="chapter-30.html">卷 6 · 第 30 章　浏览器验收：Playwright 与 harborState</a><a href="chapter-31.html">卷 6 · 第 31 章　断言演变史：三条"写死数量"的断言是怎么救了项目的</a></nav>
+<main>
+<h1>卷 4 · 第 19 章　放置规则：支撑、占位与世界边界</h1>
+<blockquote><p><strong>本章目标</strong>：读懂 <code>can_place()</code> 的四道闸门，理解 <strong><code>cells</code> 与 <code>occupancy</code> 双字典</strong><br>如何解决"多格模型"的问题，以及为什么规则要放在模型层而不是渲染层。<br>对应任务：T16 / T17　|　对应文件：<code>project/scripts/world_model.gd</code></p></blockquote>
+<hr>
+<h2>19.1 两个字典：<code>cells</code> 与 <code>occupancy</code></h2>
+<pre><code>var cells: Dictionary = {}       # 原点格 → {kind, rot, natural}
+var occupancy: Dictionary = {}   # 每一格 → 它属于哪个原点格</code></pre>
+<p><code>beacon</code> 高 3 格，放在 <code>(0,0,0)</code>：</p>
+<pre><code>cells:     (0,0,0) → {kind:&quot;beacon&quot;, rot:0}
+occupancy: (0,0,0) → (0,0,0)
+           (0,1,0) → (0,0,0)      ← 上半截也指向同一原点
+           (0,2,0) → (0,0,0)</code></pre>
+<p>于是查询变成两步：</p>
+<pre><code>func has_cell(cell) -&gt; bool:        return occupancy.has(cell)      # 这一格有东西吗
+func owner_at(cell) -&gt; Vector3i:    return occupancy.get(cell, cell) # 它属于哪一件
+func get_cell(cell) -&gt; Dictionary:  return cells.get(owner_at(cell), {})</code></pre>
+<blockquote><p>📌 这就是第 06 章"点灯塔上半截会删掉整座"的<strong>数据结构基础</strong>（第 10 章是渲染侧落地）。</p></blockquote>
+<hr>
+<h2>19.2 <code>can_place()</code> 的四道闸门</h2>
+<pre><code>func can_place(cell, kind) -&gt; bool:
+	if not palette.has(kind) or cells.size() &gt;= MAX_CELLS:   return false   # ①
+	var height := item_height(kind)
+	if not in_bounds(cell, height):                          return false   # ②
+	for dy in range(height):
+		if occupancy.has(cell + Vector3i(0, dy, 0)):         return false   # ③
+	if cell.y &lt;= 0:                                          return true    # ④a
+	for direction in [UP, DOWN, LEFT, RIGHT, FORWARD, BACK]:
+		if occupancy.has(cell + direction):                  return true    # ④b
+	return false</code></pre>
+<table><thead><tr><th>闸门</th><th>规则</th><th>常量</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>① <strong>合法性 + 总量</strong></td><td>建材必须存在；总数 &lt; 12000</td><td><code>MAX_CELLS = 12000</code></td></tr><tr><td>② <strong>边界</strong></td><td>`</td><td>x</td><td>,</td><td>z</td><td>≤ 25<code>；</code>y ∈ [-4, 20)<code> 且 </code>y + height ≤ 20`</td><td><code>EDGE=25, MIN_Y=-4, MAX_Y=20</code></td></tr><tr><td>③ <strong>占位冲突</strong></td><td>每件占用 <code>height</code> 格，任一格已占就不行</td><td><code>item_height()</code></td></tr><tr><td>④ <strong>支撑</strong></td><td><code>y ≤ 0</code>（水面/地下）可直接打地基；否则<strong>六邻面必须有已占格</strong></td><td>—</td></tr></tbody></table>
+<p><strong>④ 的设计意图</strong>：水面上可以凭空起柱子（符合"打地基"直觉），<br>但<strong>空中不能悬空堆放</strong>——必须有相邻方块托着。这既防"空中楼阁"，又不限制 creativity。</p>
+<hr>
+<h2>19.3 为什么规则在模型层，不在渲染层</h2>
+<pre><code>UI 点击 → main.gd → world.pick() → model.can_place() → 合法才 place()
+                                        ↑
+                                   唯一的裁判</code></pre>
+<p>好处：</p>
+<ol><li><strong>测试不需要渲染</strong>：L1 的 56 项断言直接调 <code>model.place()</code>（第 29 章）</li><li><strong>规则与表现解耦</strong>：换渲染方式、做移动端、做服务端校验，规则都不变</li><li><strong>错误可见</strong>：<code>last_error</code> 记录原因，可直接断言（第 31 章提到）</li></ol>
+<blockquote><p>📌 反模式：把"能不能放"写在 <code>_process</code> 或渲染代码里 → 无法单测、容易与 UI 状态打架。</p></blockquote>
+<hr>
+<h2>19.4 <code>place()</code> 与 <code>erase()</code> 的对称</h2>
+<pre><code>func place(cell, kind, rotation=0) -&gt; bool:
+	if not can_place(cell, kind): return false
+	var value := {&quot;kind&quot;: kind, &quot;rot&quot;: posmod(rotation, 4), &quot;natural&quot;: false}
+	_record(cell, {}, value)                     # before={} → 撤销即删除
+	if value[&quot;rot&quot;] != 0: stats[&quot;rotated&quot;] += 1
+	return true
+
+func erase(cell) -&gt; bool:
+	var origin := owner_at(cell)                 # 先反查原点！
+	if not cells.has(origin): return false
+	_record(origin, cells[origin].duplicate(), {})   # after={} → 撤销即恢复
+	stats[&quot;removed&quot;] += 1
+	return true</code></pre>
+<p><strong>两个细节值得学</strong>：</p>
+<ul><li><code>erase</code> 第一行就 <code>owner_at(cell)</code>——<strong>删除永远针对整件，不是被点到的那一格</strong></li><li><code>posmod(rotation, 4)</code>——旋转值永远规范到 0–3，避免脏数据</li></ul>
+<hr>
+<h2>19.5 统计也是数据的一部分</h2>
+<pre><code>var stats := {&quot;rotated&quot;: 0, &quot;undone&quot;: 0, &quot;saved&quot;: 0, &quot;removed&quot;: 0}</code></pre>
+<p>成就系统直接消费它（<code>undone</code> ≥ 10 → "谨慎的手"；<code>saved</code> ≥ 5 → "档案管理员"）。<br><strong>把统计放进模型而非 UI</strong>，成就计算就有了单一来源（第 13 章）。</p>
+<p><img src="assets/diagrams/place-rules.svg" alt="放置判定的四道闸门"></p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>规则层</td><td>本地 GDScript</td><td><strong>完全相同</strong>（纯逻辑，与平台无关）</td></tr><tr><td>验证</td><td><code>dev.py test</code>（56 项）</td><td>云端 CI 跑同一套，<strong>最可靠的一层</strong></td></tr><tr><td>常量调整</td><td>改 <code>MAX_CELLS</code> 等</td><td>改完必须跑 L1——断言从常量推导，改了会立刻暴露不一致</td></tr><tr><td>建议</td><td>—</td><td>把四道闸门各写"正例 + 反例"两条断言，云端回归最有价值</td></tr></tbody></table>
+<blockquote><p>🌩 规则层是<strong>最容易在云端自动化验证</strong>的部分：不需要 GPU、不需要浏览器、秒级完成。</p></blockquote>
+<hr>
+<h2>19.6 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>点上半截只删上半截</td><td><code>erase</code> 没走 <code>owner_at</code></td><td>先反查原点</td></tr><tr><td>高模型放不下</td><td>② 用了 <code>y + height</code></td><td>边界检查要带高度</td></tr><tr><td>空中能凭空堆</td><td>④ 只在 <code>y ≤ 0</code> 放行</td><td>六邻面检查要覆盖空中</td></tr><tr><td>超出 12000 还能放</td><td>① 用 <code>&gt;</code> 而非 <code>&gt;=</code></td><td>边界条件是 <code>&gt;= MAX_CELLS</code></td></tr><tr><td>旋转值越来越大</td><td>没 <code>posmod</code></td><td><code>posmod(rotation, 4)</code></td></tr><tr><td>规则改了但 UI 没同步</td><td>规则写在 UI 里</td><td>收敛到模型层</td></tr></tbody></table>
+<hr>
+<h2>19.7 本章作业</h2>
+<ol><li>画出 <code>cells</code> / <code>occupancy</code> 在放置一个 3 格灯塔后的内容（照 19.1 的格式）</li><li>说出四道闸门各自的常量，指出"在 y=19 放 2 格灯塔"会被哪一道拦下</li><li>解释为什么"水面可打地基、空中必须相邻"是合理的设计取舍</li><li>给第 ② 道闸门补两条断言（一条边界内成功、一条越界失败），跑 <code>dev.py test</code> 验证</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>双字典 = 逻辑格 ↔ 物理格</strong>的映射，是多格模型的通用解法。</li><li><strong>课堂演示</strong>：放灯塔，用 print 打出两个字典，让学生看到"3 个 key 指向 1 个原点"。</li><li><strong>高频误解</strong>：学生以为 <code>cells</code> 一个字典就够。追问：那怎么知道 <code>(0,2,0)</code> 是灯塔的一部分？</li><li><strong>讨论题</strong>：如果要支持"悬空platform"，第 ④ 道闸门该怎么改？</li><li><strong>批改要点</strong>：作业 2 要答出第 ② 道（<code>19 + 3 &gt; 20</code>）。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/19/19-demolish-mode.png" alt="19-demolish-mode"><figcaption>19-demolish-mode.png</figcaption></figure><figure><img src="assets/shots/19/19-place-build.png" alt="19-place-build"><figcaption>19-place-build.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–02:00</td><td>双字典示意图（灯塔 3 格）</td><td>"逻辑格 vs 物理格。"</td></tr><tr><td>02:00–04:30</td><td>四道闸门逐行读</td><td>"四关，缺一不可。"</td></tr><tr><td>04:30–06:00</td><td>place / erase 的对称与 owner_at</td><td>"删除永远针对整件。"</td></tr><tr><td>06:00–07:00</td><td>stats 与成就的衔接</td><td></td></tr><tr><td>07:00–09:00</td><td>作业 + 预告（撤销栈）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/19/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>19-place-build.png</code></td><td>建造若干方块（规则生效的现场）</td><td><code>python tools/course_capture.py --chapter 19</code></td></tr><tr><td><code>19-demolish-mode.png</code></td><td>拆除模式（ghost 变红/整件高亮）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>开场</strong>："点灯塔上半截，会发生什么？"——投票后揭晓（删整座）</li><li><strong>演示</strong>：关掉 <code>owner_at</code> 看 bug 复现，再修好</li><li><strong>互动</strong>：让观众设计一个"悬空也能放"的规则变体</li><li><strong>收尾</strong>：预告撤销栈</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：为什么 <code>MAX_CELLS</code> 是 12000？</strong><br>A：来自 <code>requirements.md</code> 的性能预算：全量重建 + trimesh 碰撞下的安全上限。</p>
+<p><strong>Q：<code>natural</code> 字段是干什么的？</strong><br>A：标记"起始村庄/地形"等<strong>非玩家建造</strong>的格子，不计入玩家统计与成就（第 13、18 章）。</p>
+<p><strong>Q：能不能一次放多个（笔刷）？</strong><br>A：<code>main.gd</code> 的 <code>painting</code> 已支持拖动连续绘制（每 0.17s 一次），规则层无需改动。</p>
+<div class="pager"><a href="chapter-18.html">← 卷 3 · 第 18 章　风格统一：配色、比例与密度</a><a href="chapter-20.html">卷 4 · 第 20 章　撤销栈：一次点击，一个命令 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>
