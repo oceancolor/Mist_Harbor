@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="430" viewBox="0 0 880 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="880" height="430" fill="#f7f8ed"/>
+  <text x="440" y="34" text-anchor="middle" font-size="20" fill="#2d514b">仓库结构与入库边界</text>
+
+  <rect x="40" y="60" width="380" height="330" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="230" y="88" text-anchor="middle" font-size="15" fill="#2d514b">✅ 入库</text>
+  <text x="60" y="118" font-size="13" fill="#2d514b">project/</text>
+  <text x="80" y="140" font-size="11" fill="#789087">scripts/ 源码 · assets/ 资源 · data/ 数据</text>
+  <text x="80" y="158" font-size="11" fill="#789087">docs/ 教学文档 · tests/ 测试 · export_presets.cfg</text>
+  <text x="60" y="188" font-size="13" fill="#2d514b">tools/</text>
+  <text x="80" y="210" font-size="11" fill="#789087">dev.py · asset_pipeline.py · build_font_corpus.py</text>
+  <text x="80" y="228" font-size="11" fill="#789087">course_capture.py · tools.example.json / pilot.example.json</text>
+  <text x="60" y="258" font-size="13" fill="#2d514b">course/</text>
+  <text x="80" y="280" font-size="11" fill="#789087">README · syllabus · chapters/ · media/</text>
+  <text x="60" y="310" font-size="13" fill="#2d514b">tools/fonts/harbor-sc-base.ttf</text>
+  <text x="80" y="332" font-size="11" fill="#789087">字体子集基准（改文案要保持字形不变）</text>
+  <text x="60" y="362" font-size="12" fill="#497c6b">git 追踪 → 可回滚、可复现</text>
+
+  <rect x="460" y="60" width="380" height="330" rx="12" fill="#fdf6e3" stroke="#d9c89a"/>
+  <text x="650" y="88" text-anchor="middle" font-size="15" fill="#2d514b">❌ 不入库（.gitignore）</text>
+  <text x="480" y="118" font-size="13" fill="#2d514b">.codebuddy/</text>
+  <text x="500" y="140" font-size="11" fill="#789087">local/tools.json（引擎路径）</text>
+  <text x="500" y="158" font-size="11" fill="#789087">local/pilot.json（MCP 地址与令牌）</text>
+  <text x="500" y="176" font-size="11" fill="#789087">releases/ 打包产物 · 调试脚本</text>
+  <text x="480" y="206" font-size="13" fill="#2d514b">build/ · build-win/</text>
+  <text x="500" y="228" font-size="11" fill="#789087">导出产物（build/ 必须在工程之外）</text>
+  <text x="480" y="258" font-size="13" fill="#2d514b">logs/ · .venv-mcp/ · project/.godot/</text>
+  <text x="500" y="280" font-size="11" fill="#789087">日志、虚拟环境、编辑器缓存</text>
+  <text x="480" y="330" font-size="12" fill="#8a6d3b">规则：换机器要改的，都不入库</text>
+  <text x="480" y="352" font-size="12" fill="#8a6d3b">但仓库里必须留 .example 模板并写清改哪里</text>
+
+  <text x="440" y="412" text-anchor="middle" font-size="12" fill="#789087">自查命令：git status --short（应为空）· git log -p --all -S"Bearer "（令牌是否误入历史）</text>
+</svg>

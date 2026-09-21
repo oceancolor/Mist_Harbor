@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="400" viewBox="0 0 900 400" font-family="'Microsoft YaHei','PingFang SC','Noto Sans CJK SC',sans-serif">
+  <rect width="900" height="400" fill="#f7f8ed"/>
+  <text x="450" y="36" text-anchor="middle" font-size="20" fill="#2d514b">两台 MCP 的拓扑：为什么一个远程、一个本地</text>
+
+  <rect x="30" y="140" width="180" height="90" rx="12" fill="#497c6b"/>
+  <text x="120" y="175" text-anchor="middle" font-size="16" fill="#ffffff">CodeBuddy（Agent）</text>
+  <text x="120" y="200" text-anchor="middle" font-size="12" fill="#dceae0">G-V-C 循环驱动</text>
+
+  <rect x="300" y="50" width="250" height="110" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="425" y="80" text-anchor="middle" font-size="15" fill="#2d514b">web-cb-blender-pilot（远程）</text>
+  <text x="425" y="104" text-anchor="middle" font-size="12" fill="#789087">streamableHttp · 提交→轮询→取产物</text>
+  <text x="425" y="126" text-anchor="middle" font-size="12" fill="#789087">服务端 Blender 5.2.1 · cycles-cpu 预览</text>
+  <text x="425" y="148" text-anchor="middle" font-size="12" fill="#497c6b">产出：GLB + 预览 PNG + 回执</text>
+
+  <rect x="300" y="240" width="250" height="110" rx="12" fill="#ffffff" stroke="#789087"/>
+  <text x="425" y="270" text-anchor="middle" font-size="15" fill="#2d514b">godot（本地 stdio）</text>
+  <text x="425" y="294" text-anchor="middle" font-size="12" fill="#789087">npx @coding-solo/godot-mcp</text>
+  <text x="425" y="316" text-anchor="middle" font-size="12" fill="#789087">直接读写你磁盘上的工程</text>
+  <text x="425" y="338" text-anchor="middle" font-size="12" fill="#497c6b">驱动 Godot 4.7：导入 / 运行 / 取日志</text>
+
+  <rect x="640" y="50" width="230" height="110" rx="12" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="755" y="80" text-anchor="middle" font-size="14" fill="#2d514b">云端建模</text>
+  <text x="755" y="106" text-anchor="middle" font-size="12" fill="#789087">二进制能回来（下载产物）</text>
+  <text x="755" y="128" text-anchor="middle" font-size="12" fill="#789087">脚本必须单文件内联</text>
+
+  <rect x="640" y="240" width="230" height="110" rx="12" fill="#eef3ea" stroke="#b7cdb4"/>
+  <text x="755" y="270" text-anchor="middle" font-size="14" fill="#2d514b">本地工程</text>
+  <text x="755" y="296" text-anchor="middle" font-size="12" fill="#789087">9 个 GLB + 字体 + 图标（二进制）</text>
+  <text x="755" y="318" text-anchor="middle" font-size="12" fill="#789087">远程 pilot 传不了这些</text>
+
+  <line x1="210" y1="170" x2="296" y2="110" stroke="#497c6b" stroke-width="2"/>
+  <line x1="210" y1="195" x2="296" y2="290" stroke="#497c6b" stroke-width="2"/>
+  <line x1="552" y1="105" x2="636" y2="105" stroke="#789087" stroke-width="2"/>
+  <line x1="552" y1="295" x2="636" y2="295" stroke="#789087" stroke-width="2"/>
+</svg>
