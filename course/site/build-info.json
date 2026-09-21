@@ -1,0 +1,20 @@
+{
+  "built": "2026-09-21 12:09",
+  "chapters": [
+    {
+      "key": "01",
+      "title": "卷 0 · 第 01 章　先让它跑起来",
+      "volume": "卷 0 · 启程",
+      "characters": 5415,
+      "file": "chapter-01.html"
+    },
+    {
+      "key": "02",
+      "title": "卷 0 · 第 02 章　工具箱：四件武器与两条 MCP",
+      "volume": "卷 0 · 启程",
+      "characters": 6621,
+      "file": "chapter-02.html"
+    }
+  ],
+  "characters": 12036
+}

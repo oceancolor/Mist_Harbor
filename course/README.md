@@ -145,7 +145,31 @@ C（Change 改动）    →  让 Agent 改代码，小步提交，每步都跑�
 
 ---
 
-## 7. 怎么用这个仓库学
+## 7. 交付形态：Markdown 是设计稿，HTML 是成品
+
+| 形态 | 位置 | 用途 |
+|---|---|---|
+| **Markdown** | `course/chapters/*.md`、`syllabus.md` | 写作与评审的设计稿（方便 diff、评审、AI 生成） |
+| **HTML 站点** | `course/site/*.html` | **最终成品**：分章节、有导航与目录、图文内嵌、带视频位，可直接用于课堂与自学 |
+
+生成与预览：
+
+```powershell
+python tools/course_build.py               # 重新生成整个站点
+python tools/course_build.py --embed       # 图片/CSS 内嵌为 base64，单文件分发
+python tools/course_build.py --serve 8200  # 生成后本地预览 http://127.0.0.1:8200/index.html
+python tools/course_check.py               # 体检：配图引用、拍摄计划、字数统计
+```
+
+页面结构：顶部（卷/章/字数/生成时间）· 左侧章节导航 · 正文 · **本章图集（自动汇总截图）** ·
+**视频位（放入 `course/media/video/<章号>/` 即自动内嵌，未录制时显示分镜提示卡）** · 上下章翻页。
+
+**规则**：新增或修改任何一章，都必须重跑 `course_build.py` 并把 `course/site/` 一起提交——
+站点与 Markdown 不允许不同步。
+
+---
+
+## 8. 怎么用这个仓库学
 
 ```powershell
 # 1. 取代码
