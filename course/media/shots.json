@@ -61,5 +61,21 @@
     {"category": "自然", "select": "lamp", "wait": 500, "shot": "10-ghost-lamp.png"},
     {"key": "N", "wait": 1200, "shot": "10-night.png"},
     {"key": "N", "wait": 600}
+  ],
+  "11": [
+    {"shot": "11-hud-overview.png"},
+    {"category": "自然", "wait": 600, "shot": "11-category-dock.png"},
+    {"wheel": -600, "shot": "11-camera-zoom.png"}
+  ],
+  "12": [
+    {"shot": "12-day-minimap.png"},
+    {"category": "地形", "select": "stone", "place": [[700, 450], [730, 470], [670, 480]], "wait": 600, "shot": "12-minimap-built.png"},
+    {"key": "N", "wait": 1200, "shot": "12-night-minimap.png"},
+    {"key": "N", "wait": 600}
+  ],
+  "13": [
+    {"shot": "13-dock-icons.png"},
+    {"category": "建筑", "select": "barrel", "wait": 600, "shot": "13-barrel-icon.png"},
+    {"place": [[760, 470]], "wait": 700, "shot": "13-achievement-toast.png"}
   ]
 }

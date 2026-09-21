@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</h1>
+  <div class="meta">卷 2 · Godot 工程 · 字符数 4616 · 生成于 2026-09-21 13:13</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html" style="color:#2d514b;font-weight:700">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a></nav>
+<main>
+<h1>卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</h1>
+<blockquote><p><strong>本章目标</strong>：读懂两个看似小、实则精妙的机制——<br><strong>建材图标由 GLB 实时渲染生成</strong>（新增建材零代码），以及<br><strong>成就为什么不能自己写盘</strong>（Web 下会毁掉存档）。<br>对应任务：T18（缩略图）/ T30 / T46（成就）　|　对应文件：<code>model_thumbnail.gd</code> / <code>achievements.gd</code></p></blockquote>
+<hr>
+<h2>13.1 缩略图：图标不是画出来的，是渲染出来的</h2>
+<p><code>model_thumbnail.gd</code> 用<strong>离屏 SubViewport</strong> 把每个 GLB 渲染成一张图标：</p>
+<pre><code>const SIZE := 192
+_viewport = SubViewport.new()
+_viewport.transparent_bg = true
+_viewport.own_world_3d = true          # 独立世界，不污染主场景
+_viewport.msaa_3d = Viewport.MSAA_4X
+_root.add_child(instance)              # 实例化 GLB
+await RenderingServer.frame_post_draw  # 等两帧
+var image := _viewport.get_texture().get_image()
+_cache[kind] = ImageTexture.create_from_image(image)
+thumbnail_ready.emit(kind)</code></pre>
+<h3>三个关键设计</h3>
+<table><thead><tr><th>设计</th><th>为什么</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>灯光参数抄 <code>build_world.gd</code></strong></td><td><code>SUN_COLOR/ENERGY/ROTATION</code>、<code>AMBIENT_*</code> 与主场景一致 → <strong>图标看起来就是放进世界的样子</strong>，而不是棚拍过曝</td></tr><tr><td><strong>相机与游戏同角度</strong>（0.72/0.72 弧度）</td><td>等距视角统一</td></tr><tr><td><strong>bounds 来自 <code>manifest.json</code></strong></td><td>用 <code>godot_size</code> 自动构图：<code>camera.size = max(span, height) * 1.32</code> → 大小不同的模型都能填满画幅</td></tr></tbody></table>
+<h3>健壮性</h3>
+<ul><li><code>_has_content()</code> <strong>抽样检查 alpha</strong>：渲染出来是空白（headless / dummy driver）就不缓存 → 调用方保留手绘图标</li><li><code>ENABLED</code> 常量可一键回退到手绘图标</li><li>队列 <code>_queue</code> + <code>_busy</code>：一次只渲一个，避免卡顿</li></ul>
+<blockquote><p>📌 <strong>这就是第 08 章"四类建材零代码"的技术底气</strong>：图标也是渲染出来的，<br>所以"丢 GLB + 加一行 JSON"真的就够了。</p></blockquote>
+<hr>
+<h2>13.2 成就：为什么解锁后不能立刻写盘</h2>
+<pre><code># Web writes to user:// asynchronously (IndexedDB): writing this file AFTER a
+# world save loses the save. So unlocks are only flushed immediately BEFORE a
+# world save (main.gd calls flush()) or when the app closes, never on their own schedule.
+var _pending_flush := false</code></pre>
+<p><strong>这是本实训最"值钱"的一条注释。</strong> 背景：</p>
+<ol><li>Web 平台的 <code>user://</code> 写盘是<strong>异步</strong>的（IndexedDB）</li><li>如果在一次世界存档<strong>之后</strong>再写成就文件，会破坏/覆盖刚写的存档</li><li>所以成就解锁只标记 <code>_pending_flush = true</code>，<strong>只在下一次存档之前</strong>或<strong>应用关闭时</strong>才落盘</li></ol>
+<pre><code>解锁成就 → 只改内存 + 标记 pending
+     ↓
+玩家按 Ctrl+S → main.gd 先调 achievements.flush() → 再写世界存档
+     ↓
+（顺序反了就会丢档）</code></pre>
+<p><strong>其它设计点</strong>：</p>
+<ul><li>成就属于<strong>玩家</strong>不属于存档 → 状态存在 <code>user://achievements.json</code>，与槽位无关</li><li>定义来自 <code>data/achievements.json</code>（<code>kind</code> + <code>target</code>）</li><li><code>progress_value()</code> 支持的 kind：<code>total</code> / <code>variety</code> / <code>undone</code> / <code>saved</code> / <code>night_photo</code> / <code>kind:&lt;id&gt;</code></li><li><code>NOTIFICATION_WM_CLOSE_REQUEST</code> / <code>WM_GO_BACK_REQUEST</code> / <code>PREDELETE</code> 都会 <code>flush()</code>——覆盖关闭、移动端返回、进程销毁</li></ul>
+<hr>
+<h2>13.3 两个机制的共同点</h2>
+<table><thead><tr><th></th><th>缩略图</th><th>成就</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>数据来源</td><td>GLB + <code>manifest.json</code></td><td><code>data/achievements.json</code></td></tr><tr><td>状态存放</td><td>内存缓存</td><td><code>user://</code></td></tr><tr><td>失败策略</td><td>空白则不缓存，回退手绘</td><td>写盘失败下次再试</td></tr><tr><td>设计原则</td><td><strong>渲染而非手绘</strong>（可扩展）</td><td><strong>延后写盘</strong>（不破坏他人）</td></tr></tbody></table>
+<p>一句话：<strong>两者都把"什么时候做"当成设计的一部分</strong>——<br>缩略图等两帧再取图，成就等存档前再写盘。<strong>时机错了，功能就是错的。</strong></p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>缩略图渲染</td><td>依赖本地 GPU</td><td><strong>云端/无头环境可能渲染不出内容</strong> → 正是 <code>_has_content()</code> 的用武之地</td></tr><tr><td>成就写盘</td><td>本地文件系统，同步性可控</td><td>Web/IndexedDB 异步，<strong>本实训的坑在云端同样存在</strong></td></tr><tr><td>验证</td><td>本机跑</td><td><strong>建议云端专门验一次"解锁成就→立即存档→重新载入"</strong></td></tr><tr><td>建议</td><td>—</td><td>把"成就+存档"的组合做成回归用例，因为它只在特定顺序下才暴露</td></tr></tbody></table>
+<blockquote><p>🌩 这类 bug 的可怕之处：本地文件同步写，永远不复现；一到 Web 就偶发丢档。</p></blockquote>
+<hr>
+<h2>13.4 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>图标全空白</td><td>无头环境渲不出 / GLB 路径错</td><td>检查 <code>_has_content</code>，回退手绘</td></tr><tr><td>图标过曝或太暗</td><td>灯光参数与场景不一致</td><td>抄 <code>build_world.gd</code> 的灯光常量</td></tr><tr><td>大小模型构图不一致</td><td>没用 bounds</td><td>从 <code>manifest.json</code> 读 <code>godot_size</code></td></tr><tr><td>解锁成就后存档丢失</td><td>写盘顺序反了</td><td>存档前先 <code>flush()</code></td></tr><tr><td>换存档槽成就丢了</td><td>槽位相关</td><td>成就应存 <code>user://</code> 与槽位无关</td></tr><tr><td>关窗口后成就没保存</td><td>没处理 <code>WM_CLOSE_REQUEST</code></td><td><code>flush()</code> 挂到通知上</td></tr></tbody></table>
+<hr>
+<h2>13.5 本章作业</h2>
+<ol><li>说出缩略图为什么要 <code>await RenderingServer.frame_post_draw</code> <strong>两次</strong></li><li>复述成就"必须延后写盘"的完整理由（至少两句，含 Web/IndexedDB）</li><li>新增一个成就：在 <code>data/achievements.json</code> 里加一条 <code>kind: "kind:cottage"</code>、<code>target: 3</code>，验证解锁</li><li>思考：如果缩略图渲染很慢，你会怎么改（至少两个方向）</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>时机即正确性</strong>。功能对不对，不只看"做了什么"，还看"什么时候做"。</li><li><strong>课堂演示</strong>：现场演示"先存档后解锁"与"先解锁后存档"的差异（Web 构建下）。</li><li><strong>高频误解</strong>：学生认为"解锁了就该立刻持久化"。引出<strong>写入顺序</strong>与<strong>平台异步</strong>。</li><li><strong>讨论题</strong>：你的项目里有没有"顺序敏感"的写操作？怎么防止它被改坏？（答：注释 + 单一入口）</li><li><strong>批改要点</strong>：作业 2 必须提到 Web 异步写 + 覆盖存档。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/13/13-achievement-toast.png" alt="13-achievement-toast"><figcaption>13-achievement-toast.png</figcaption></figure><figure><img src="assets/shots/13/13-barrel-icon.png" alt="13-barrel-icon"><figcaption>13-barrel-icon.png</figcaption></figure><figure><img src="assets/shots/13/13-dock-icons.png" alt="13-dock-icons"><figcaption>13-dock-icons.png</figcaption></figure></div><h2>📹 录屏分镜（9 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–02:00</td><td>建材栏图标（都是渲染出来的）+ 代码</td><td>"图标不是画的，是渲的。"</td></tr><tr><td>02:00–03:40</td><td>灯光/相机常量抄主场景 + bounds 构图</td><td>"图标要长得像放进世界的样子。"</td></tr><tr><td>03:40–05:00</td><td><code>_has_content</code> 回退策略</td><td>"渲不出来就别缓存。"</td></tr><tr><td>05:00–07:30</td><td>成就写盘顺序图（重点！）</td><td>"先 flush 再存档，反了就丢档。"</td></tr><tr><td>07:30–09:00</td><td>作业 + 卷 2 小结</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/13/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>13-dock-icons.png</code></td><td>建材栏：全部图标由 GLB 渲染</td><td><code>python tools/course_capture.py --chapter 13</code></td></tr><tr><td><code>13-barrel-icon.png</code></td><td>木桶图标（GLB 实时渲染生成，非手绘）</td><td>同上</td></tr><tr><td><code>13-achievement-toast.png</code></td><td>解锁成就的提示</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，12 分钟）</h2>
+<ul><li><strong>开场故事</strong>："我们的存档在 Web 上神秘消失过一次"——讲述排查过程</li><li><strong>演示</strong>：改代码让 flush 顺序反过来，在浏览器里复现丢档</li><li><strong>互动</strong>：让观众检查自己项目里有没有"顺序敏感"的写入</li><li><strong>收尾</strong>：卷 2 总结 + 预告卷 3（测试体系）</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：缩略图能不能在构建时预生成？</strong><br>A：可以（离线渲染成 PNG 存进工程），但那样新增建材就要多一步；运行时渲染换来了"零代码扩展"。</p>
+<p><strong>Q：成就能不能存进存档文件？</strong><br>A：不建议。成就属于玩家而非某个岛，换槽位不该丢失——这也是它独立存放的理由。</p>
+<p><strong>Q：<code>user://</code> 在各平台在哪？</strong><br>A：Web 是 IndexedDB，桌面是 <code>%APPDATA%/Godot/app_userdata/&lt;项目名&gt;/</code>，移动是沙盒目录。</p>
+<div class="pager"><a href="chapter-12.html">← 卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><span></span></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</h1>
+  <div class="meta">卷 2 · Godot 工程 · 字符数 5385 · 生成于 2026-09-21 13:13</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html" style="color:#2d514b;font-weight:700">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a></nav>
+<main>
+<h1>卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</h1>
+<blockquote><p><strong>本章目标</strong>：读通 <code>main.gd</code> 的"三大循环"——相机、输入、UI；<br>理解 <strong>QA 快照机制</strong>（本实训自动化测试的基石），以及代码建 UI 的取舍。<br>对应任务：T20（任务导出）/ T41（自动化 QA）　|　对应文件：<code>project/scripts/main.gd</code>（约 800 行）</p></blockquote>
+<hr>
+<h2>11.1 相机：不是"设置"，是"目标值 + 插值"</h2>
+<pre><code>var focus := Vector3(0, 1, 1)
+var target_focus := Vector3(0, 1, 1)     # 目标
+var yaw / target_yaw / pitch / target_pitch / zoom / target_zoom
+
+func _update_camera(delta):
+    var weight := minf(1.0, delta * 12.0)
+    focus = focus.lerp(target_focus, weight)     # 阻尼跟随
+    ...
+    camera.position = focus + Vector3(sin(yaw)*cos(pitch), sin(pitch), cos(yaw)*cos(pitch)) * 48.0
+    camera.look_at(focus, Vector3.UP)</code></pre>
+<table><thead><tr><th>设计要点</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>双份状态</strong></td><td>每帧从"当前值"追向"目标值"，输入只改目标 → 手感平滑</td></tr><tr><td><strong>正交相机</strong></td><td><code>camera.size = zoom</code>，等距视角（<code>0.72 / 0.72</code> 弧度），与缩略图相机同参数</td></tr><tr><td><strong>摇杆式平移</strong></td><td>WASD/方向键沿 <code>right</code> / <code>forward</code> 移动，速度与 <code>zoom</code> 成正比（拉远走得快）</td></tr><tr><td><strong>边界钳制</strong></td><td><code>clampf(target_focus.x, -23, 23)</code>，比世界边界 ±25 小 2 格，防止飞出去</td></tr></tbody></table>
+<blockquote><p>📌 <strong>注意 <code>KEY_S</code> + <code>KEY_CTRL</code></strong>：<code>Ctrl+S</code> 是保存快捷键，所以按下 Ctrl 时 <code>S</code> 不再触发后退——<br>这类"快捷键冲突的手动消歧"在小工程里很常见，值得记住。</p></blockquote>
+<hr>
+<h2>11.2 输入：两个入口，一条总线</h2>
+<pre><code>func _input(event)              # 鼠标按键的按下/松开（拖拽状态机）
+func _unhandled_input(event)    # 键盘快捷键、滚轮（UI 没吃掉才走到这里）</code></pre>
+<table><thead><tr><th>输入</th><th>行为</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td>左键点击</td><td><code>_act_on_world(true)</code>：放置 / 拆除</td></tr><tr><td>左键按住拖动</td><td>连续绘制（<code>painting</code>，每 0.17s 一次，位移 &gt; 8px 才触发）</td></tr><tr><td>右键拖动</td><td>旋转视角（<code>orbiting</code>）</td></tr><tr><td>中键拖动</td><td>平移（<code>panning</code>）</td></tr><tr><td>滚轮</td><td>缩放 <code>target_zoom</code>（钳 14–64）</td></tr><tr><td>Q / E</td><td>左右转</td></tr><tr><td>R</td><td>旋转待放置道具</td></tr><tr><td>X</td><td>切换拆除模式</td></tr><tr><td>Z / Y</td><td>撤销 / 重做</td></tr><tr><td>N</td><td>昼夜</td></tr><tr><td>空格 / F</td><td>居中相机</td></tr><tr><td>P</td><td>拍照</td></tr><tr><td>H / F1</td><td>帮助</td></tr></tbody></table>
+<p><strong><code>_unhandled_input</code> 的意义</strong>：Godot 的输入顺序是<br><code>_input</code> → GUI → <code>_unhandled_input</code>。把快捷键放后者，UI 按钮就不会"顺带"触发快捷键。</p>
+<hr>
+<h2>11.3 UI：全部由代码 new 出来</h2>
+<p><code>main.tscn</code> 里没有 HUD——<code>_build_ui()</code> 用一堆小工具函数拼出全部界面：</p>
+<pre><code>func _panel(parent) -&gt; PanelContainer       # 带 StyleBoxFlat 的面板
+func _vbox / _hbox(parent, separation)      # 容器
+func _label(parent, text, size, color)      # 文本
+func _button(parent, title, action, key)    # 按钮（可注册进 action_buttons）</code></pre>
+<p><strong>结构</strong>：</p>
+<pre><code>HUD (Control)
+├─ topbar          标题 / 章节 / 模式提示
+├─ objective_panel 任务目标 + 进度条
+├─ map_panel       小地图（见第 12 章）
+├─ dock            建材栏（分类按钮 + 道具按钮）
+└─ help_strip / footer / toast / status</code></pre>
+<p><strong>为什么代码建 UI？</strong></p>
+<ul><li>优点：UI 结构随数据变化（建材栏按 <code>palette.json</code> 生成，第 08 章）</li><li>代价：布局靠 <code>_layout()</code> 手写锚点，改起来不如编辑器直观</li></ul>
+<hr>
+<h2>11.4 QA 快照机制（本实训自动化测试的基石）</h2>
+<pre><code>var qa_enabled: bool = false
+func _process(delta):
+    if qa_enabled:
+        qa_time += delta
+        if qa_time &gt; 0.25:
+            qa_time = 0.0
+            JavaScriptBridge.get_interface(&quot;window&quot;).harborState = JSON.stringify(qa_snapshot())</code></pre>
+<p><code>qa_snapshot()</code> 导出<strong>一整包内部状态</strong>：</p>
+<table><thead><tr><th>字段</th><th>用途</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><code>selected / category / rotation / demolish / night</code></td><td>当前编辑状态</td></tr><tr><td><code>placed / counts / cells / faces / assets</code></td><td>世界统计（<strong>测试断言靠它们</strong>）</td></tr><tr><td><code>undo / redo / dirty / revision</code></td><td>历史与版本号（<strong>验证撤销/重做真的生效</strong>）</td></tr><tr><td><code>last_error</code></td><td>最近一次错误（<strong>验证非法操作被拒绝</strong>）</td></tr><tr><td><code>buttons</code></td><td><strong>所有按钮的屏幕矩形</strong> → 测试可以精确点击</td></tr><tr><td><code>viewport</code></td><td>视口尺寸</td></tr><tr><td><code>pick</code></td><td>当前拾取结果</td></tr></tbody></table>
+<p><strong>为什么这样设计？</strong></p>
+<ul><li>黑盒测试只能截图对比，很脆弱；白盒快照让测试<strong>断言语义</strong>（"放了 3 个"而不是"画面变了"）</li><li>按钮矩形导出后，测试不需要猜坐标 → 分辨率变化也不会失效</li><li><strong>只在 <code>qa_enabled</code> 时执行</strong>：正式发布零开销（<code>qa_enabled</code> 默认 false，由测试注入开启）</li></ul>
+<blockquote><p>📌 这是本实训最重要的工程决策之一：<strong>为可测试性付出一点点代码</strong>，<br>换来 21 项浏览器验收 + 32 项 QA 冒烟的稳定回归。</p></blockquote>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>QA 快照</td><td>Playwright 读 <code>window.harborState</code></td><td>平台内置预览同样可注入/读取（取决于平台是否暴露 JS 桥）</td></tr><tr><td>视觉验收</td><td>本地 Chromium</td><td>云端 WebGL 预览（更接近真实学员环境）</td></tr><tr><td>输入模拟</td><td>Playwright <code>mouse.click</code></td><td>平台能力；<strong>逻辑层仍可用 <code>dev.py test</code> 覆盖</strong></td></tr><tr><td>建议</td><td>三层都跑</td><td><strong>至少保证 <code>dev.py test</code> + 浏览器冒烟</strong>，因为它就是 WebGL 环境</td></tr></tbody></table>
+<blockquote><p>🌩 云端最省心的组合：<strong>快照断言（不依赖画面）+ 少量视觉冒烟（验证没黑屏）</strong>。</p></blockquote>
+<hr>
+<h2>11.5 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>快捷键打字时也触发</td><td>放错了输入回调</td><td>用 <code>_unhandled_input</code></td></tr><tr><td><code>Ctrl+S</code> 同时后退</td><td>快捷键冲突</td><td>判 <code>KEY_CTRL</code> 手动消歧（本工程已做）</td></tr><tr><td>相机抖动/漂移</td><td>直接改当前值而非目标值</td><td>保持双份状态 + <code>lerp</code></td></tr><tr><td>相机飞出世界</td><td>没钳制 focus</td><td><code>clampf(±23)</code></td></tr><tr><td>测试点不中按钮</td><td>坐标写死</td><td>读快照的 <code>buttons</code> 矩形</td></tr><tr><td>拖动绘制太密</td><td>没有节流</td><td>0.17s + 8px 位移阈值</td></tr></tbody></table>
+<hr>
+<h2>11.6 本章作业</h2>
+<ol><li>说出相机为什么用"目标值 + 插值"而不是直接赋值，写一句伪代码说明</li><li>列举 <code>_input</code> 与 <code>_unhandled_input</code> 各自适合放什么，各举一例</li><li>读 <code>qa_snapshot()</code>，指出测试用来判断"撤销成功"的<strong>两个</strong>字段，并说明为什么需要两个</li><li>在 <code>qa_snapshot()</code> 里加一个字段（例如 <code>selected_name</code>），跑一次 <code>browser_smoke.py</code> 确认不破坏既有断言</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>为可测试性而设计</strong>。QA 快照不是"给测试开后门"，是把内部状态<strong>显式化</strong>。</li><li><strong>课堂演示</strong>：打开浏览器控制台输入 <code>harborState</code>，现场看这包 JSON。</li><li><strong>高频误解</strong>：学生觉得"写测试代码污染产品代码"。讨论：快照只在开关打开时才跑，发布零开销。</li><li><strong>讨论题</strong>：快照该导出哪些字段？导太多会不会变成"实现细节泄漏"？</li><li><strong>批改要点</strong>：作业 3 要答出"状态字段 + 版本号/撤销栈"，只答一个不给满分。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/11/11-camera-zoom.png" alt="11-camera-zoom"><figcaption>11-camera-zoom.png</figcaption></figure><figure><img src="assets/shots/11/11-category-dock.png" alt="11-category-dock"><figcaption>11-category-dock.png</figcaption></figure><figure><img src="assets/shots/11/11-hud-overview.png" alt="11-hud-overview"><figcaption>11-hud-overview.png</figcaption></figure></div><h2>📹 录屏分镜（10 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:40</td><td>相机代码：目标值 + lerp</td><td>"输入只改目标，画面自己追。"</td></tr><tr><td>01:40–03:00</td><td>输入表 + _unhandled_input 顺序</td><td>"UI 先吃，剩下的才是我。"</td></tr><tr><td>03:00–04:20</td><td>代码建 UI 的取舍</td><td>"建材栏是数据生成的。"</td></tr><tr><td>04:20–07:00</td><td>控制台跑 harborState，逐字段讲</td><td>"测试断言的是语义，不是像素。"</td></tr><tr><td>07:00–09:00</td><td>按钮矩形导出 → 测试精确点击</td><td></td></tr><tr><td>09:00–10:00</td><td>作业 + 预告（昼夜与小地图）</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/11/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>11-hud-overview.png</code></td><td>完整 HUD（顶栏/任务/小地图/建材栏）</td><td><code>python tools/course_capture.py --chapter 11</code></td></tr><tr><td><code>11-category-dock.png</code></td><td>切换到"自然"分类后的建材栏</td><td>同上</td></tr><tr><td><code>11-camera-zoom.png</code></td><td>缩放后的视角（看正交相机效果）</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，12 分钟）</h2>
+<ul><li><strong>开场</strong>："自动化测试最怕什么？"——画面变了但不知道是 bug 还是预期</li><li><strong>演示</strong>：<code>harborState</code> 现场改一个值（把 night 改 true）看 UI 反应</li><li><strong>互动</strong>：让大家说出自己项目里"最难测的一块"，讨论能不能用快照解决</li><li><strong>收尾</strong>：预告小地图</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：QA 快照会不会泄露给玩家？</strong><br>A：它写进 <code>window.harborState</code>，但只在 QA 开关打开时才更新；正式构建该变量不存在。</p>
+<p><strong>Q：为什么是 0.25 秒一次而不是每帧？</strong><br>A：测试读取频率远低于帧率，每帧序列化纯属浪费；0.25s 足够覆盖操作后的稳定态。</p>
+<p><strong>Q：代码建 UI 是不是反模式？</strong><br>A：不是。UI 结构由数据驱动时（建材来自 JSON），代码建反而更合适；固定布局才该用编辑器。</p>
+<div class="pager"><a href="chapter-10.html">← 卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-12.html">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>

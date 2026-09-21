@@ -1,5 +1,5 @@
 {
-  "built": "2026-09-21 13:04",
+  "built": "2026-09-21 13:13",
   "chapters": [
     {
       "key": "01",
@@ -70,7 +70,28 @@
       "volume": "卷 2 · Godot 工程",
       "characters": 5238,
       "file": "chapter-10.html"
+    },
+    {
+      "key": "11",
+      "title": "卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架",
+      "volume": "卷 2 · Godot 工程",
+      "characters": 5385,
+      "file": "chapter-11.html"
+    },
+    {
+      "key": "12",
+      "title": "卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图",
+      "volume": "卷 2 · Godot 工程",
+      "characters": 4091,
+      "file": "chapter-12.html"
+    },
+    {
+      "key": "13",
+      "title": "卷 2 · 第 13 章　缩略图与成就：两个\"运行时机制\"的设计",
+      "volume": "卷 2 · Godot 工程",
+      "characters": 4616,
+      "file": "chapter-13.html"
     }
   ],
-  "characters": 50264
+  "characters": 64356
 }

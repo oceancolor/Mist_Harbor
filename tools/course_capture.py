@@ -16,6 +16,7 @@ Steps understood in shots.json:
   {"category": "自然"}                switch build category
   {"select": "barrel"}               select a material
   {"place": [[720, 420], [660, 480]]} click canvas points (places pieces)
+  {"wheel": -600}                    scroll the canvas (zoom the camera)
   {"shot": "01-game-first-run.png"}  write the screenshot
   {"manual": true, "shot": "..."}    cannot be automated (terminal etc.), reported only
 """
@@ -94,6 +95,10 @@ def capture(plan: dict, only: str | None, url: str) -> None:
                         x, y, w, h = snap["buttons"][key]
                         _click_ui(page, snap, x, y, w, h)
                         page.wait_for_timeout(600)
+                if "wheel" in step:
+                    page.mouse.move(720, 450)
+                    page.mouse.wheel(0, int(step["wheel"]))
+                    page.wait_for_timeout(800)
                 if "place" in step:
                     box = page.locator("canvas").bounding_box()
                     for point in step["place"]:

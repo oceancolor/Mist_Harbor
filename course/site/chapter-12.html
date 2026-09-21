@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图 · 雾港造物记教程</title>
+<link rel="stylesheet" href="assets/style.css"></head><body>
+<header class="top"><div class="inner">
+  <h1>卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</h1>
+  <div class="meta">卷 2 · Godot 工程 · 字符数 4091 · 生成于 2026-09-21 13:13</div>
+</div></header>
+<div class="wrap">
+<nav class="toc"><a class="home" href="index.html">课程首页</a><a href="syllabus.html">任务清单 T01–T48</a><a href="chapter-01.html">卷 0 · 第 01 章　先让它跑起来</a><a href="chapter-02.html">卷 0 · 第 02 章　工具箱：四件武器与两条 MCP</a><a href="chapter-03.html">卷 0 · 第 03 章　让 Agent 成为搭档：G-V-C 协作协议</a><a href="chapter-04.html">卷 0 · 第 04 章　工程骨架：什么东西住在哪里</a><a href="chapter-05.html">卷 1 · 第 05 章　设计先行：约束比功能更重要</a><a href="chapter-06.html">卷 1 · 第 06 章　世界模型：格子、高度、占位与撤销</a><a href="chapter-07.html">卷 1 · 第 07 章　数据驱动：三张 JSON 表撑起全部内容</a><a href="chapter-08.html">卷 1 · 第 08 章　观感设计："高级感"从哪来，又怎么丢的</a><a href="chapter-09.html">卷 2 · 第 09 章　导入管线：GLB 怎么变成 Godot 能用的资源</a><a href="chapter-10.html">卷 2 · 第 10 章　build_world：一格数据怎么变成一座岛</a><a href="chapter-11.html">卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-12.html" style="color:#2d514b;font-weight:700">卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计</a></nav>
+<main>
+<h1>卷 2 · 第 12 章　昼夜与小地图：一次状态切换与一张俯视图</h1>
+<blockquote><p><strong>本章目标</strong>：读懂"一个布尔值如何驱动整套视觉切换"，以及<br><strong>60 行的小地图如何把 3D 世界压成 2D 俯视图</strong>（含"取最高点"的关键技巧）。<br>对应任务：T39（昼夜）/ T18（小地图）　|　对应文件：<code>build_world.gd</code> / <code>minimap.gd</code></p></blockquote>
+<hr>
+<h2>12.1 昼夜：一个布尔值，一次整树重建</h2>
+<pre><code>func set_night(value: bool) -&gt; void:
+    night = value
+    # 1. 改环境：背景色 / 环境光 / 雾
+    # 2. 改太阳：夜色更冷更弱
+    # 3. 改海面 shader 参数
+    # 4. needs_rebuild = true → 下一次 rebuild 时给 lamp/beacon 挂 OmniLight3D</code></pre>
+<table><thead><tr><th>元素</th><th>白天</th><th>夜晚</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>环境光/背景</td><td>明亮暖白</td><td>深蓝低亮</td></tr><tr><td><code>sun</code></td><td><code>#ffe6bd</code>，强</td><td>冷色，弱</td></tr><tr><td>海面 shader</td><td>浅水/深水高饱和</td><td>暗色、低对比</td></tr><tr><td>灯光道具</td><td>无额外光源</td><td><code>lamp</code> / <code>beacon</code> 挂 <code>OmniLight3D</code>（暖橙 <code>#ffbd70</code>）</td></tr><tr><td>小地图底图</td><td><code>#d0e1d7</code></td><td>不变（保持可读）</td></tr></tbody></table>
+<p><strong>关键设计：为什么改灯要"整树重建"？</strong><br>因为灯光是<strong>挂在道具节点上</strong>的，而道具树在 <code>rebuild()</code> 时全量重建。<br>与其写一套"遍历加灯/去灯"的逻辑，不如让重建时读 <code>night</code> 决定要不要挂——<br><strong>状态单一来源，不会出现"漏关的灯"</strong>。</p>
+<blockquote><p>📌 这正是第 10 章"全量重建"的红利：复杂状态切换变得极其简单、不会有残留。</p></blockquote>
+<hr>
+<h2>12.2 小地图：3D → 2D 的降维</h2>
+<p><code>minimap.gd</code> 只有 37 行，核心在 <code>_draw()</code>：</p>
+<pre><code>var tops: Dictionary = {}
+for cell in model.cells:
+    var key := Vector2i(cell.x, cell.z)
+    if not tops.has(key) or cell.y &gt; tops[key].y:
+        tops[key] = cell          # ← 同一 (x,z) 只保留最高的那一格
+for cell in tops.values():
+    var point := center + Vector2(cell.x, cell.z) * scale_value
+    var color := Color(&quot;87a78c&quot;) if item.get(&quot;natural&quot;) else Color(&quot;bd7e64&quot;)
+    draw_rect(Rect2(point, Vector2.ONE * scale_value), color)</code></pre>
+<table><thead><tr><th>技巧</th><th>说明</th></tr></thead><tbody><tr><td>---</td><td>---</td></tr><tr><td><strong>取最高点</strong></td><td>俯视图只需"这一列最上面是什么"，<code>(x,z)</code> 作 key 保留最大 <code>y</code></td></tr><tr><td><strong>两色区分</strong></td><td>自然（草/木/花）用绿 <code>#87a78c</code>，人工建造用砖红 <code>#bd7e64</code></td></tr><tr><td><strong>固定比例</strong></td><td><code>scale_value = 2.15</code>，把 ±25 的世界压进 158×124 的面板</td></tr><tr><td><strong>焦点指示</strong></td><td>白色圆环 + 深色圆点标出相机 focus，并画一条指北线</td></tr><tr><td><strong><code>MOUSE_FILTER_IGNORE</code></strong></td><td>小地图不拦截鼠标 → 不会挡住下方世界的点击</td></tr></tbody></table>
+<p><strong>刷新时机</strong>：不是每帧重画，而是相机移动超过阈值时：</p>
+<pre><code>if minimap.focus_position.distance_squared_to(focus) &gt; 0.02:
+    minimap.focus_position = focus
+    minimap.queue_redraw()</code></pre>
+<p>世界改动时也会重画（<code>_refresh_ui</code> 里）。</p>
+<hr>
+<h2>12.3 两个"看不见的"性能细节</h2>
+<ol><li><strong><code>queue_redraw()</code> 而非每帧 draw</strong>：Control 的 <code>_draw</code> 只在需要时调用，重画是显式的</li><li><strong>距离平方比较</strong>：<code>distance_squared_to</code> 避免开方，是 Godot 里常见的优化习惯</li></ol>
+<p>这两点加起来，让一个每帧都在移动的相机，不会让小地图成为瓶颈。</p>
+<hr>
+<h3>🌩 在云端 agent（web-cb）里是什么样</h3>
+<table><thead><tr><th></th><th>🖥 本地路线</th><th>🌩 云端 agent（web-cb）</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>昼夜验收</td><td>截图对比</td><td>同；但更推荐用<strong>快照字段 <code>night</code></strong> 断言 + 一张截图</td></tr><tr><td>小地图</td><td>本地 GPU 绘制</td><td>WebGL 下 <code>draw_rect</code> 走 2D 批次，同样轻量</td></tr><tr><td>注意</td><td>老显卡可能慢</td><td><strong>CanvasItem 绘制在云端几乎无差异</strong></td></tr><tr><td>排错</td><td>看画面</td><td>若小地图空白：先查 <code>model</code> 是否为 null（代码里 <code>if model == null: return</code>）</td></tr></tbody></table>
+<blockquote><p>🌩 云端验收小贴士：小地图这类"确定性绘制"最适合做<strong>像素级回归</strong>——<br>它不依赖 3D 渲染管线，不同机器的结果应当一致。</p></blockquote>
+<hr>
+<h2>12.4 常见坑速查（本章）</h2>
+<table><thead><tr><th>现象</th><th>原因</th><th>处理</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>切到夜晚但灯没亮</td><td>灯只在重建时挂</td><td>确认 <code>needs_rebuild</code> 被置位并真的 rebuild 了</td></tr><tr><td>夜晚有残留亮光</td><td>手动改过某处而没走 <code>set_night</code></td><td>所有昼夜相关改动收敛到 <code>set_night</code></td></tr><tr><td>小地图空白</td><td><code>model</code> 为 null</td><td>检查 <code>setup()</code> 是否赋值</td></tr><tr><td>小地图挡住点击</td><td>忘了 <code>MOUSE_FILTER_IGNORE</code></td><td>加上</td></tr><tr><td>小地图不刷新</td><td>没调 <code>queue_redraw()</code></td><td>世界改动与相机移动都要触发</td></tr><tr><td>高层方块被低层覆盖</td><td>没取最高点</td><td>必须按 <code>(x,z)</code> 保留最大 <code>y</code></td></tr></tbody></table>
+<hr>
+<h2>12.5 本章作业</h2>
+<ol><li>说明为什么"取最高点"要用 <code>(x, cell.z)</code> 作 key 而不是完整 <code>Vector3i</code></li><li>解释 <code>set_night()</code> 为什么选择"整树重建"而不是遍历加灯，列出至少两个好处</li><li>把 <code>scale_value</code> 从 <code>2.15</code> 改成 <code>3.0</code>，观察小地图溢出情况（然后改回）</li><li>给小地图加第三种颜色（例如水域用蓝），说明你会改哪几行</li></ol>
+<hr>
+<h2>🎓 教学提示（给教师 / 直播主）</h2>
+<ul><li><strong>概念锚点</strong>：<strong>降维</strong>——把三维数据压成二维可视化，关键是先决定"丢掉哪个维度"。</li><li><strong>课堂演示</strong>：造一根 5 格高的柱子，看小地图只显示一个点（取最高点的直观证明）。</li><li><strong>高频误解</strong>：学生以为小地图是"第二个摄像机渲染"。强调它是 <strong><code>_draw()</code> 画的 2D 矩形</strong>。</li><li><strong>讨论题</strong>：如果要显示"地下/洞穴"，取最高点的策略该怎么改？</li><li><strong>批改要点</strong>：作业 2 要答出"状态单一来源 / 不会有残留"。</li></ul>
+<hr>
+<h2>🖼 本章图集</h2><div class="gallery"><figure><img src="assets/shots/12/12-day-minimap.png" alt="12-day-minimap"><figcaption>12-day-minimap.png</figcaption></figure><figure><img src="assets/shots/12/12-minimap-built.png" alt="12-minimap-built"><figcaption>12-minimap-built.png</figcaption></figure><figure><img src="assets/shots/12/12-night-minimap.png" alt="12-night-minimap"><figcaption>12-night-minimap.png</figcaption></figure></div><h2>📹 录屏分镜（8 分钟）</h2>
+<table><thead><tr><th>时间</th><th>画面</th><th>解说词要点</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td>00:00–01:30</td><td>按 N 切昼夜，对比环境/太阳/海面</td><td>"一个布尔值，整棵树重来。"</td></tr><tr><td>01:30–03:00</td><td>夜间灯光道具亮起</td><td>"灯是重建时挂的，不是遍历加的。"</td></tr><tr><td>03:00–05:00</td><td>小地图代码逐行讲（取最高点是高潮）</td><td>"同一列只留最上面那个。"</td></tr><tr><td>05:00–06:30</td><td>造高柱看小地图只显示一点</td><td></td></tr><tr><td>06:30–08:00</td><td>刷新时机与两个性能细节</td><td></td></tr></tbody></table>
+<div class="card"><h4>🎬 视频位（待录制）</h4>把录好的视频放到 <code>course/media/video/12/</code>（mp4 / webm / mov），重新执行 <code>python tools/course_build.py</code> 即会自动内嵌；首帧默认用本章第一张截图作为封面。分镜脚本见上一节。</div><h2>🖼 配图清单</h2>
+<table><thead><tr><th>文件名</th><th>内容</th><th>生成方式</th></tr></thead><tbody><tr><td>---</td><td>---</td><td>---</td></tr><tr><td><code>12-day-minimap.png</code></td><td>白天 + 小地图（含焦点环）</td><td><code>python tools/course_capture.py --chapter 12</code></td></tr><tr><td><code>12-night-minimap.png</code></td><td>夜晚 + 灯光 + 小地图两色分区</td><td>同上</td></tr><tr><td><code>12-minimap-built.png</code></td><td>放置若干地形格后小地图同步变化</td><td>同上</td></tr></tbody></table>
+<h2>🎥 直播脚本（L3 片段，10 分钟）</h2>
+<ul><li><strong>挑战</strong>："小地图只有 37 行，但它有一个 bug 隐患——猜是什么？"（答：没取最高点时高柱会闪）</li><li><strong>演示</strong>：临时去掉取最高点逻辑，造柱子看异常</li><li><strong>互动</strong>：让观众设计一个"显示楼层数"的小地图方案</li><li><strong>收尾</strong>：预告缩略图与成就</li></ul>
+<h2>❓ 本章 FAQ</h2>
+<p><strong>Q：小地图能点击跳转吗？</strong><br>A：当前版本是只读的（<code>MOUSE_FILTER_IGNORE</code>）。要加跳转只需改成接收点击并反算世界坐标。</p>
+<p><strong>Q：为什么夜间不改小地图底色？</strong><br>A：小地图是<strong>信息图</strong>不是"画面"，始终用高对比底色保证可读性——这是 HUD 设计的常识。</p>
+<p><strong>Q：昼夜会影响存档吗？</strong><br>A：<code>night</code> 是世界状态的一部分，会随存档保存/恢复。</p>
+<div class="pager"><a href="chapter-11.html">← 卷 2 · 第 11 章　main.gd：相机、输入与 UI 骨架</a><a href="chapter-13.html">卷 2 · 第 13 章　缩略图与成就：两个"运行时机制"的设计 →</a></div>
+</main></div>
+<footer class="foot">由 <code>tools/course_build.py</code> 从 Markdown 生成 · Markdown 是设计稿，本站是成品</footer>
+</body></html>
