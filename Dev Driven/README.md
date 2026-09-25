@@ -40,9 +40,37 @@
 | 文档 | 排除原因 |
 |---|---|
 | `strategy/reskin-matrix-assessment.md` v2.0 | **发行策略评估**（产品形态/定价/DLC/NO-GO 门控），属发布域不属开发驱动；其 §8 的 A-10 决策项已结案迁移至 location-gameplay-design §1.6；命名空间前缀规则（T0–T4 / MH-ENG / T1–T2）已在 lgd §4.3.1 被依赖方引用 |
-| `strategy/concept-art/`（PNG） | 视觉参考素材非文档；生成模型资产时参考，路径不变 |
 | `marketing/`、`mist_harbor_home.html` | 运营/营销域 |
 | `_probe/` | demo 逆向工程的分析脚本与产物（历史调查工具，不进开发输入） |
+
+> 📌 概念图**已收录**（2026-09-25 Benja 拍板）：见下「🎨 视觉锚点索引」——`concept-art/` 全量 12 张 PNG 已随本目录进仓库，正源仍在 `../strategy/concept-art/`。
+
+## 🎨 视觉锚点索引（`concept-art/`，2026-09-25 收录 · 逐张登记）
+
+> 用途：跑 3D 管线（`../3D tools config/`）做 image-to-3D / 配色对图时按此索引取图；风格统一口径见 `prompt-library.md` §2.2。
+
+### A. v2-locations 批次（**现行** · 8 张 · `concept-art/v2-locations/`）
+
+| 文件名 | 地点 | 内容 / 用途锚点 |
+|---|---|---|
+| `Isometric_orthographic_view__a_2026-09-24T22-40-59.png` | **圣托里尼** | 日落 · 白墙蓝顶悬崖聚落 + 风车 + 海面金光（天际线 / 默认形制锚点） |
+| `Isometric_orthographic_view__a_2026-09-24T22-41-04.png` | **泉州** | 昼（雾）· 红砖古厝环岛聚落 + 石拱桥 + 燕尾脊 + 渔船（聚落形制锚点） |
+| `Isometric_orthographic_view__a_2026-09-24T22-41-39.png` | **泉州** | 夜 · 聚落灯火（暖光灯 / 窗灯分布锚点，对应 A-1 材质族光斑） |
+| `Isometric_orthographic_view__a_2026-09-24T22-41-40.png` | **泉州** | 日落 · 三角梅 / 凤凰木花木 + 石拱桥 + 远山（植被锚点） |
+| `Isometric_orthographic_view__a_2026-09-25T03-46-37.png` | **Cape Cod** | 雾夜 · 灯塔光束（灯塔光效硬结论 `cape-cod-spec §2.4` 的视觉锚） |
+| `Isometric_orthographic_view__a_2026-09-25T03-46-42.png` | **Cape Cod** | 晨 · 沙丘渔村（晨态锚点） |
+| `Isometric_orthographic_view__a_2026-09-25T03-47-06.png` | **塞舌尔** | 花岗岩巨砾滩 + 海椰子剪影（巨石 / 海椰子锚点） |
+| `Isometric_orthographic_view_fr_2026-09-25T03-47-08.png` | **塞舌尔** | 双层海水俯视构图（M1 辨识物锚点）；⚠ 环礁式构图与 LGD 岛形文字有偏差——SY-D-10 已裁定**以 LGD 文字为准**，本图仅作俯视机位参考 |
+
+### B. 早期批次（09-23 · 4 张 · `concept-art/` 根目录 · 沿革保留）
+
+| 文件名 | 内容 | 状态 |
+|---|---|---|
+| `Voxel_style_3D_isometric_minia_2026-09-23T03-29-53.png` | 体素（voxel）风探索 · 圣托里尼 | ⚠ 风格与现行 low-poly 口径不符；**未正式裁定作废**，登记沿革参考 |
+| `Voxel_style_3D_isometric_minia_2026-09-23T03-30-15.png` | 体素（voxel）风探索 | 同上 |
+| `Screenshot_of_an_indie_low_pol_2026-09-23T03-40-55.png` | 低多边形风格确认样板（通用海岛 + 灯塔，非地点专属） | 风格已由 v2 批次承载，作风格沿革 |
+| `Screenshot_of_an_indie_low_pol_2026-09-23T03-41-14.png` | 同上 | 同上 |
+
 
 ## ⚠️ 开发启动前的已知缺口（2026-09-25 第三刷更新：原 1–4 项已全部闭环）
 
@@ -65,4 +93,4 @@
 
 `water-lighting-params v4.3` ｜ `location-gameplay-design v2.6` ｜ `quanzhou-spec v1.8` ｜ `cape-cod-spec v1.4` ｜ `santorini-spec v1.4` ｜ `seychelles-spec v1.0` ｜ `acceptance-checklist v1.3` ｜ `quanzhou-seychelles-art v1.4` ｜ `tech-feasibility v1.3` ｜ `engineering-eval-st-d2-fog v1.0` ｜ 其余为现行线版本
 
-> 本目录副本随正源 `../strategy/` 升级同步刷新（第一刷 11:49，第二刷补 quanzou-spec v1.8 / art doc v1.3，第三刷 = SY-D/ST-D/D-CC-2 裁定全量回写 + 塞舌尔 spec 与工程评估收录，**第四刷 = ST-D-6 面数定标（santorini-spec v1.4）+ prompt-library v1.2（SC-11/12 楔石/象龟）**）。配套资产管线见 `../3D tools config/`（prompt-library **v1.2** + tool-connections）。
+> 本目录副本随正源 `../strategy/` 升级同步刷新（第一刷 11:49，第二刷补 quanzou-spec v1.8 / art doc v1.3，第三刷 = SY-D/ST-D/D-CC-2 裁定全量回写 + 塞舌尔 spec 与工程评估收录，第四刷 = ST-D-6 面数定标（santorini-spec v1.4）+ prompt-library v1.2（SC-11/12 楔石/象龟），**同日追加 concept-art 全量 12 张收录 + 视觉锚点索引**）。配套资产管线见 `../3D tools config/`（prompt-library **v1.2** + tool-connections）。
