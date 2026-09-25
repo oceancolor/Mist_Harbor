@@ -14,7 +14,7 @@
 | 5 | `godot-web-perf.md` | v1.1 线 | Web 端性能预算与三级降级：Compatibility 能力边界、`max_lights_per_object` 8 盏共享、包体优化 | 涉及渲染/性能决策时 |
 | 6 | `quanzhou-spec.md` | v1.8 | **第一地点完整规格**（地基款）：建材 §3（含三角梅/凤凰木 v1.8 增补、名额口径 §3.5/D-4）、玩法链 §6、环境态全回源 | 做泉州前通读 |
 | 7 | `cape-cod-spec.md` | v1.4 | 第三地点规格：建材 §2（含灯塔光效硬结论 §2.4）、同心圆玩法链 §3、雾天档回源 v4.3 | 做 Cape Cod 前 |
-| 8 | `santorini-spec.md` | v1.3 | 验证款规格（**已增厚**：玩法链 §6 扩写、§6.5 摆放槽位、四态环境参数表、落成高光=金色日落悬挑白蓝镇全景、垂直范围批准 -4~32） | 做圣托里尼前 |
+| 8 | `santorini-spec.md` | v1.4 | 验证款规格（**已增厚+面数定标**：玩法链 §6 扩写、§6.5 摆放槽位、四态环境参数表、落成高光=金色日落悬挑白蓝镇全景、垂直范围批准 -4~32、**§3.2 逐件面数预算表 10 件**，v1.0 必做 ≤1,250 面） | 做圣托里尼前 |
 | 9 | `seychelles-spec.md` | v1.0 | **第四地点完整规格（新增）**：堆叠平衡玩法链、建材合并清单（19/20 名额）、三段水/双层海、SY-D 11/11 闭合 | 做塞舌尔前 |
 | 10 | `quanzhou-seychelles-art.md` | v1.4 | **塞舌尔唯一美术规格**（第二部分 §6 起）+ 泉州美术细节；v1.4：SY-D 裁定落档 + 楔石 <250 / 象龟 <300 面数补报 + 合并清单 | 做塞舌尔 / 泉州美术资产前 |
 | 11 | `acceptance-checklist.md` | v1.3 | **验收判据**：34 条（阻断 22 / 记录 12）+ A-11 天空盒通道 + B-11 背光面冷色相 + **B-12/13/14 塞舌尔专属验收** | 每个里程碑自验；判阻断前**必须回源** |
@@ -52,15 +52,17 @@
 ~~4. D-CC-2 无值~~ → **已拍板**（ρ=0.0075，回退线 0.0065 写死；覆盖式语义工程已确认 OK）
 
 当前开放项（不阻塞四地 v1.0 开工）：
-1. **代码库**：后续开发在 CodeBuddy 进行，需提供 Godot 工程目录 / GitHub 地址后工程侧才能出 patch（demo 仅供参照，不受其实现限制——Benja 2026-09-25 原话见 cape-cod-spec 头部声明）
-2. **ST-D-6 圣托里尼逐件面数**：待美术侧定标（建模开工前）；santorini-spec §3.1 通用规则表可直接作派单底稿
+1. **代码库**：在 CodeBuddy 工作区进行（Benja 2026-09-25 定），本目录只做开发前规划设计；工程侧出 patch 需 Godot 工程目录就位
+2. ~~ST-D-6 圣托里尼逐件面数~~ → **已定标**（santorini-spec v1.4 §3.2，10 件，v1.0 必做 ≤1,250 面）
 3. **ST-D-5 白墙屋/蓝顶格数档位**：与 M0 多格构件抽象一并定（工程侧 M0 落地时闭合）
 4. **象龟首版色值**（甲壳 #7A6254 / 头足 #C8B49A，美术自设）：待 Benja 过目
 5. **雾天 × 夜态交互口径**：工程建议雾天档只覆盖昼系三态、夜态仍走夜档——待 Benja 确认
-6. **楔石 / 象龟 prompt**：合并清单新增两件尚未入 `../3D tools config/prompt-library.md`（下轮美术侧补）
+6. ~~楔石/象龟 prompt~~ → **已补录**（`../3D tools config/prompt-library.md` v1.2：SC-11/SC-12，37 条 prompt）
+7. **无花果树排期归属**（<400 面，替换表口径 vs §4.7.2 清单未列）：待 Benja 确认（不做则总面数 −400）
+8. **红砂 hex 缺位**：santorini-spec §2 只给描述性「赭红」，美术侧出图前需补进唯一源
 
-## 版本快照（2026-09-25，第三刷）
+## 版本快照（2026-09-25，第四刷）
 
-`water-lighting-params v4.3` ｜ `location-gameplay-design v2.6` ｜ `quanzhou-spec v1.8` ｜ `cape-cod-spec v1.4` ｜ `santorini-spec v1.3` ｜ **`seychelles-spec v1.0`（新增）** ｜ `acceptance-checklist v1.3` ｜ `quanzhou-seychelles-art v1.4` ｜ `tech-feasibility v1.3` ｜ **`engineering-eval-st-d2-fog v1.0`（新增）** ｜ 其余为现行线版本
+`water-lighting-params v4.3` ｜ `location-gameplay-design v2.6` ｜ `quanzhou-spec v1.8` ｜ `cape-cod-spec v1.4` ｜ `santorini-spec v1.4` ｜ `seychelles-spec v1.0` ｜ `acceptance-checklist v1.3` ｜ `quanzhou-seychelles-art v1.4` ｜ `tech-feasibility v1.3` ｜ `engineering-eval-st-d2-fog v1.0` ｜ 其余为现行线版本
 
-> 本目录副本随正源 `../strategy/` 升级同步刷新（第一刷 11:49，第二刷补 quanzou-spec v1.8 / art doc v1.3，**第三刷 = SY-D/ST-D/D-CC-2 裁定全量回写 + 塞舌尔 spec 与工程评估收录**）。配套资产管线见 `../3D tools config/`（prompt-library v1.1 + tool-connections；楔石/象龟 prompt 下轮补）。
+> 本目录副本随正源 `../strategy/` 升级同步刷新（第一刷 11:49，第二刷补 quanzou-spec v1.8 / art doc v1.3，第三刷 = SY-D/ST-D/D-CC-2 裁定全量回写 + 塞舌尔 spec 与工程评估收录，**第四刷 = ST-D-6 面数定标（santorini-spec v1.4）+ prompt-library v1.2（SC-11/12 楔石/象龟）**）。配套资产管线见 `../3D tools config/`（prompt-library **v1.2** + tool-connections）。

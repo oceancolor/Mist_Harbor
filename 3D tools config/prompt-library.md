@@ -1,7 +1,8 @@
 # 雾港 · 文生 3D 提示词库（Prompt Library）
 
-> 版本 **v1.1** ｜ 日期 2026-09-25 ｜ 状态：**管线配置 · 美术侧提示词库** ｜ 作者：林绘澄（art-director）
-> 📌 **变更记录（保留，勿删）**：v1.0（2026-09-25 · 初版）→ ⭐ **v1.1（2026-09-25 同日 · Benja 三项拍板同步 · 现行）**——① §7.4 三处色值冲突 ✅ **已裁定（2026-09-25，Benja）：建材色值唯一源 = quanzou-spec §3**，本库取值与原暂取值一致（quanzou-spec），prompt 与验收表无需改值；② 三角梅 / 凤凰木 **已纳入泉州建材名额**（Benja 2026-09-25），回源 quanzou-spec §3（v1.8 增补）；③ 海椰子 **面数已破例 <600**（Benja 2026-09-25）。
+> 版本 **v1.2** ｜ 日期 2026-09-25 ｜ 状态：**管线配置 · 美术侧提示词库** ｜ 作者：林绘澄（art-director）
+> 📌 **变更记录（保留，勿删）**：v1.0（2026-09-25 · 初版）→ v1.1（2026-09-25 同日 · Benja 三项拍板同步）→ ⭐ **v1.2（2026-09-25 同日 · 塞舌尔合并清单两件补录 · 现行）**——① SC-11 楔石 / SC-12 象龟入册（**SY-D-3 裁定必留件** · Benja 2026-09-25；面数已由 art doc v1.4 补报（SY-D-9）：楔石 **< 250** / 象龟 **< 300**）；② §7.2 验收表同步 +2 行；③ §7.3 汇总口径 32 → 34 条 / prompt 35 → 37 条
+> 📌 **v1.1 变更摘要**：① §7.4 三处色值冲突 ✅ **已裁定（2026-09-25，Benja）：建材色值唯一源 = quanzou-spec §3**，本库取值与原暂取值一致（quanzou-spec），prompt 与验收表无需改值；② 三角梅 / 凤凰木 **已纳入泉州建材名额**（Benja 2026-09-25），回源 quanzou-spec §3（v1.8 增补）；③ 海椰子 **面数已破例 <600**（Benja 2026-09-25）。
 > 用途：Tripo / Hyper3D（腾讯混元 3D）/ Meshy 等**文生 3D AI 工具**批量生成低多边形建材与植物资产 → 导入 Godot 4.4（Compatibility 渲染器 · Web 端）。
 > ⚠ **AI 产出只是起点不是终点**：面数拓扑不可控，生成后必须**减面 + 手工校色到 spec 色值**。色值 / 造型 / 面数预算一律以 spec 为准，**不以 AI 输出为准**。
 
@@ -10,7 +11,7 @@
 1. **先读源 spec**（本库不自创任何数值，全部回源）：
    - 泉州组 ← `strategy/quanzhou-spec.md` **§3 建材清单**（**v1.8 增补** · 三角梅 / 凤凰木已纳入建材名额，Benja 2026-09-25）
    - Cape Cod 组 ← `strategy/cape-cod-spec.md` **§2 建材清单**（v1.3）
-   - 塞舌尔组 ← `strategy/quanzhou-seychelles-art.md` **§7–§9**（v1.3，林绘澄）；泉州面数预算 / 植物造型细则亦回源其 §3 / §4.3 / §11.3
+   - 塞舌尔组 ← `strategy/quanzhou-seychelles-art.md` **§7–§9**（**v1.4**，林绘澄；楔石 / 象龟规格见 §9.3 #7 / #8，SY-D-3 必留 · SY-D-9 面数补报）；泉州面数预算 / 植物造型细则亦回源其 §3 / §4.3 / §11.3
 2. 每条 prompt = **统一风格前缀 + 主体描述 + 视角**，整段复制粘贴即可，不再需要拼装。
 3. 负面提示词**全库统一一条**（见 §2.3），每条生成均填同一段。
 4. **逐资产字段**：规格（格数）｜面数预算（生成后减面验收用）｜排期归属｜回源｜特殊约束（MultiMesh 密铺 / 贴片光斑 / 拆分）。
@@ -370,6 +371,24 @@ Low-poly 3D game asset, flat matte shading, clean faceted geometry, no textures,
 Low-poly 3D game asset, flat matte shading, clean faceted geometry, no textures, solid flat colors, chunky simplified stylized shapes, miniature diorama style, single object centered, neutral light grey background, three-quarter view, soft even studio lighting: a Creole coral stone cottage, two units tall, pale coral limestone block walls #E0D4C0, dark timber posts and lintels #BB946C, steep thatched grass roof, wide open veranda with simple wooden lattice railing, no light effects
 ```
 
+### SC-11 · 楔石（Calage / Wedge Stone）
+
+- 规格：1×1×1 ｜ 面数预算 **< 250** ｜ 排期：**必做**（⭐ 动词「垫」的第二主力，M3 与巨石并列；SY-D-3 裁定必留件 · Benja 2026-09-25）｜ 回源：art doc §9.3 #7（v1.4 · SY-D-9 面数补报）
+- 特殊约束：**扁平不规则垫石**——不规则六面坯 + 不平整顶面 + 边缘倒角，四向旋转放置时轮廓各不同（每块 +1 格接触面，回源 LGD §2.4）；花岗岩灰粉系 `#B8A092` / 暗面 `#8A7A70` / 受光 `#D8C4B4`——**与花岗岩巨石（SC-07）共用一套材质族观感**（SY-D-1 裁定口径下花岗岩色系唯一源 = art doc；LGD 旧值 `#A89889` 不另立、随裁定作废）
+
+```
+Low-poly 3D game asset, flat matte shading, clean faceted geometry, no textures, solid flat colors, chunky simplified stylized shapes, miniature diorama style, single object centered, neutral light grey background, three-quarter view, soft even studio lighting: a flat irregular wedge stone block, one grid unit cube, rough irregular hexahedral block with an uneven slightly tilted top surface and chamfered rounded edges, pinkish-grey granite body #B8A092 with darker shadow side #8A7A70 and lighter sun-lit top #D8C4B4, same granite material family as weathered boulders, low chunky leveling-stone profile
+```
+
+### SC-12 · 象龟（Giant Tortoise / Aldabra）
+
+- 规格：1 格 ｜ 面数预算 **< 300** ｜ 排期：**可延期（必留名额）**（SY-D-3 裁定必留；先做静态装饰、不做 AI 路径——首发债务件，⚠ 可延期 ≠ 可砍）｜ 回源：art doc §9.3 #8（v1.4 · SY-D-9 面数补报）
+- 特殊约束：**静态生物装饰件，无动画无骨骼**——「稳」的石堆旁解锁的生命信标；低分段球冠甲壳（约 12 段 × 6 环，接住顶光读出圆润感——art doc §8.1 原则 3 同款诉求）+ 块状头颈四足；甲壳 `#7A6254`（深灰褐风化龟甲）/ 头足 `#C8B49A`（浅暖灰，与甲壳拉开明暗——与石堆同画面时靠明度差与轮廓区分）；若后续启用 0.2 格/秒移动（回源 LGD §2.4），走 Transform / 骨骼、不增面数
+
+```
+Low-poly 3D game asset, flat matte shading, clean faceted geometry, no textures, solid flat colors, chunky simplified stylized shapes, miniature diorama style, single object centered, neutral light grey background, three-quarter view, soft even studio lighting: a giant Aldabra tortoise, one grid unit, high domed carapace as a low-segment spherical cap in weathered dark grey-brown #7A6254, massive blocky scaled legs and thick stubby head and neck in pale warm grey #C8B49A, calm slow posture standing on flat ground, static decorative creature prop, no animation extremes
+```
+
 ---
 
 ## 6. 通用环境件（四地共用 · 只生成一次 · 勿重复生成）
@@ -453,17 +472,19 @@ Low-poly 3D game asset, flat matte shading, clean faceted geometry, no textures,
 | SC-08 | 白沙滩块 | art doc §9.3 #2 | `#F0E4CC` | 平坦略起伏、无装饰 | < 200 | — |
 | SC-09 | 茅草顶 | art doc §9.3 #5 | `#C8A46A` | 编织纹法线 fake 不加几何 | < 250 | — |
 | SC-10 | 珊瑚石屋 | art doc §9.3 #6 | `#E0D4C0` + `#BB946C` | 陡坡茅草顶 + 宽廊 + 木格栅 | < 500 | 本体无光效 |
+| SC-11 | 楔石 | art doc §9.3 #7 | `#B8A092`/`#8A7A70`/`#D8C4B4`（与巨石共用材质族；LGD 旧值 `#A89889` 作废） | 六面坯 + 不平顶 + 倒角、四向旋转轮廓各不同 | < 250 | 必做（SY-D-3 必留；SY-D-9 面数补报） |
+| SC-12 | 象龟 | art doc §9.3 #8 | 甲壳 `#7A6254` / 头足 `#C8B49A` | 低分段球冠甲壳 + 块状四肢、静态 | < 300 | 可延期（必留名额，SY-D-3）；无动画无骨骼；移动走 Transform 不增面 |
 | CM-01 | 暖光灯 | qz §3.1 / cc §2.2 / art §4.1 | 灯体 `#EAC989`；光斑 `#FFBD70` 运行时 | 圆灯笼 + 灯柱 | ≤ 600 | ⭐ 四地共用；光效运行时贴片 |
 | CM-02 | 木栈道 | qz §3.4 / cc §2.2 / art §9.1 | `#BB946C`；Cape Cod 运行时改银灰 | 板面 + 短桩 | ≤ 600 | ⭐ 四地共用生成 1 次 |
 
 ### 7.3 汇总口径（给主理人汇报用）
 
-- **资产条目总数：32 条**（泉州 10 · Cape Cod 10 · 塞舌尔 10 · 四地共用 2）
-- **prompt 总数：35 条**（高地灯塔拆塔身 / 灯室 2 条；花岗岩巨石 3 规格 3 条；其余一资产一条）
+- **资产条目总数：34 条**（泉州 10 · Cape Cod 10 · 塞舌尔 12 · 四地共用 2）
+- **prompt 总数：37 条**（高地灯塔拆塔身 / 灯室 2 条；花岗岩巨石 3 规格 3 条；其余一资产一条）
 - **MultiMesh 密铺标注：4 件**（蕨类 SC-06 / 海滩草 CC-05 / 盐沼草 CC-10 / 素馨 QZ-07；全部植物另按 art doc §11.3 走 MultiMesh 渲染）
 - **贴片光斑标注（本体不含光效）：7 件**（暖光灯 CM-01 / 高地灯塔 CC-01a·b / 小灯塔 CC-02 / 姑嫂塔 QZ-06 / 灰木瓦小屋 CC-04 / 珊瑚石屋 SC-10 / 红砖古厝 QZ-02）
 - **拆分生成：1 件**（高地灯塔 = 塔身 + 灯室）
-- **可延期 / 可选 / 待拍板排期归属**：可延期 3（雾号站 / 浮标 / 蔓越莓，均在首发债务内）＋可选 3（素馨 / 红树林 / 盐沼草）＋观景台本体可延期＋待拍板 1（姑嫂塔 D-1 形制，其**色值已裁定**）＋三角梅 / 凤凰木**已纳入泉州建材名额**（Benja 2026-09-25，不再是待排期项）
+- **可延期 / 可选 / 待拍板排期归属**：可延期 4（雾号站 / 浮标 / 蔓越莓 / **象龟 SC-12**，均在首发债务内）＋可选 3（素馨 / 红树林 / 盐沼草）＋观景台本体可延期＋待拍板 1（姑嫂塔 D-1 形制，其**色值已裁定**）＋三角梅 / 凤凰木**已纳入泉州建材名额**（Benja 2026-09-25，不再是待排期项）；🆕 v1.2 新增的楔石 SC-11 为**必做**（SY-D-3 必留），不属可延期档
 
 ### 7.4 色值冲突清单（✅ 已全部裁定 · 2026-09-25，Benja）
 
@@ -481,4 +502,4 @@ Low-poly 3D game asset, flat matte shading, clean faceted geometry, no textures,
 
 ---
 
-> 本库所有色值 / 造型 / 面数 / 排期口径回源自：`quanzhou-spec.md` v1.8 §3 / §10、`cape-cod-spec.md` v1.3 §2、`quanzhou-seychelles-art.md` v1.3 §3 / §4.3 / §7–§9 / §11.3。环境态参数（水 / 光 / 雾 / 天空）不在本库范围，唯一源为 `water-lighting-params.md` v4.2。冲突以源 spec 为准（2026-09-25 Benja 裁定建材色值唯一源 = quanzou-spec §3）；本库与之冲突时，本库随之作废。
+> 本库所有色值 / 造型 / 面数 / 排期口径回源自：`quanzhou-spec.md` v1.8 §3 / §10、`cape-cod-spec.md` v1.3 §2、`quanzhou-seychelles-art.md` v1.4 §3 / §4.3 / §7–§9 / §11.3。环境态参数（水 / 光 / 雾 / 天空）不在本库范围，唯一源为 `water-lighting-params.md` v4.2。冲突以源 spec 为准（2026-09-25 Benja 裁定建材色值唯一源 = quanzou-spec §3）；本库与之冲突时，本库随之作废。
