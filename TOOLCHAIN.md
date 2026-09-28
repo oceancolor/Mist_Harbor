@@ -72,6 +72,10 @@ python project/tests/browser_smoke.py --base http://127.0.0.1:8184/index.html   
 python tools/asset_pipeline.py list                       # 资产清单 + 是否已注册
 python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑 \
        --color b07d4f --tip "码头边的橡木桶，可以一只只堆起来。"
+python tools/asset_pipeline.py generate --id sand --provider tripo \
+       --prompt-file prompts/sand.txt
+python tools/asset_pipeline.py generate --id white_house --provider hunyuan \
+       --prompt-file prompts/white-house-zh.txt
 ```
 
 流程：`tools/art/<id>.py`（受版本控制的 bpy 脚本）→ 远程 `web-cb-blender-pilot` → 产物落盘
@@ -84,6 +88,20 @@ python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑
 任务 id = `mist-harbor-<id>-v<n>-<script sha256 前 8 位>`（远端拒绝重复 id）。
 凭据在 `.codebuddy/local/pilot.json`（不入库），模板 `tools/pilot.example.json`。
 两个数量断言（材质数、GLB 数）已改为从 `palette.json` 推导，新增资产无需改测试。
+
+`generate` 子命令将在线生成与下游验收解耦：Tripo 读取
+`TRIPO_API_SECRET`，混元薄桥读取 `HUNYUAN_3D_BRIDGE_URL` 和
+`HUNYUAN_3D_API_KEY`。原始 GLB 先落到 `project/art/incoming/`，再由
+`tools/blender_qa.py` 按 `project/data/asset_budgets.json` 执行减面、法线、
+底面中心原点、尺寸与 Y-up 检查；只有通过的文件才覆盖运行时 GLB。
+密钥和桥接地址不得写入仓库。
+
+四地点的确定性原创基线资产可离线重建：
+
+```powershell
+& D:\Blender\blender-4.2.0-windows-x64\blender.exe --background --factory-startup --python tools/generate_location_assets.py
+& D:\Blender\blender-4.2.0-windows-x64\blender.exe --background --factory-startup --python tools/inspect_location_assets.py
+```
 
 ## 给同事 pilot 的反馈（2026-09-15）
 

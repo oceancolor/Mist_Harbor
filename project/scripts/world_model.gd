@@ -2,8 +2,9 @@ class_name HarborWorldModel
 extends RefCounted
 
 signal changed
+signal cells_changed(dirty_cells: Array[Vector3i], full_rebuild: bool)
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 const SAVE_PATH := "user://mist_harbor_world_v1.json"
 const SLOT_COUNT := 3
 const MAX_CELLS := 12000
@@ -11,8 +12,13 @@ const MIN_Y := -4
 const MAX_Y := 20
 const EDGE := 25
 const MAX_HISTORY := 160
+const LocationProfile = preload("res://scripts/location_profile.gd")
+const ExpansionRules = preload("res://scripts/expansion_rules.gd")
 
 var palette: Dictionary = {}
+var locations: Dictionary = {}
+var location_id: String = "quanzhou"
+var location: HarborLocationProfile
 var cells: Dictionary = {}
 var occupancy: Dictionary = {}
 var undo_stack: Array[Dictionary] = []
@@ -29,15 +35,51 @@ func _init() -> void:
 	if parsed is Dictionary:
 		for item in parsed.get("items", []):
 			palette[str(item["id"])] = item
+	locations = LocationProfile.load_all()
+	location_id = LocationProfile.default_id()
+	location = locations.get(location_id, HarborLocationProfile.new())
+
+func set_location(value: String, reset_world: bool = true) -> bool:
+	if not locations.has(value):
+		last_error = "未知地点：%s" % [value]
+		return false
+	location_id = value
+	location = locations[value]
+	if reset_world:
+		reset(location.seed, true)
+	return true
+
+func location_ids() -> Array:
+	return locations.keys()
+
+func build_edge() -> int:
+	return location.edge if location != null else EDGE
+
+func build_min_y() -> int:
+	return location.min_y if location != null else MIN_Y
+
+func build_max_y() -> int:
+	return location.max_y if location != null else MAX_Y
 
 func definition(kind: String) -> Dictionary:
 	return palette.get(kind, {})
+
+func available_items(category: String = "") -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for entry: Dictionary in palette.values():
+		var allowed: Array = entry.get("locations", [])
+		if not allowed.is_empty() and location_id not in allowed:
+			continue
+		if not category.is_empty() and str(entry.get("category", "")) != category:
+			continue
+		result.append(entry)
+	return result
 
 func item_height(kind: String) -> int:
 	return int(definition(kind).get("height", 1))
 
 func in_bounds(cell: Vector3i, height: int = 1) -> bool:
-	return abs(cell.x) <= EDGE and abs(cell.z) <= EDGE and cell.y >= MIN_Y and cell.y + height <= MAX_Y
+	return abs(cell.x) <= build_edge() and abs(cell.z) <= build_edge() and cell.y >= build_min_y() and cell.y + height <= build_max_y()
 
 func owner_at(cell: Vector3i) -> Vector3i:
 	return occupancy.get(cell, cell)
@@ -49,13 +91,16 @@ func get_cell(cell: Vector3i) -> Dictionary:
 	return cells.get(owner_at(cell), {})
 
 func top_y(x: int, z: int) -> int:
-	for y in range(MAX_Y - 1, MIN_Y - 1, -1):
+	for y in range(build_max_y() - 1, build_min_y() - 1, -1):
 		if occupancy.has(Vector3i(x, y, z)):
 			return y + 1
 	return 0
 
 func can_place(cell: Vector3i, kind: String) -> bool:
 	if not palette.has(kind) or cells.size() >= MAX_CELLS:
+		return false
+	var allowed: Array = definition(kind).get("locations", [])
+	if not allowed.is_empty() and location_id not in allowed:
 		return false
 	var height := item_height(kind)
 	if not in_bounds(cell, height):
@@ -68,6 +113,8 @@ func can_place(cell: Vector3i, kind: String) -> bool:
 		return true
 	for direction in [Vector3i.UP, Vector3i.DOWN, Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
 		if occupancy.has(cell + direction):
+			if location_id == "seychelles" and kind == "granite" and cell.y > 1:
+				return occupancy.has(cell + Vector3i.DOWN)
 			return true
 	return false
 
@@ -89,12 +136,13 @@ func erase(cell: Vector3i) -> bool:
 	return true
 
 func _record(cell: Vector3i, before: Dictionary, after: Dictionary) -> void:
+	var dirty_cells := ExpansionRules.dirty_neighborhood(cell, maxi(item_height(str(before.get("kind", ""))), item_height(str(after.get("kind", "")))))
 	_set_raw(cell, after)
 	undo_stack.append({"cell": cell, "before": before, "after": after.duplicate()})
 	if undo_stack.size() > MAX_HISTORY:
 		undo_stack.pop_front()
 	redo_stack.clear()
-	_touch()
+	_touch(dirty_cells, false)
 
 func _set_raw(cell: Vector3i, value: Dictionary) -> void:
 	if cells.has(cell):
@@ -107,10 +155,11 @@ func _set_raw(cell: Vector3i, value: Dictionary) -> void:
 		for dy in range(item_height(str(value["kind"]))):
 			occupancy[cell + Vector3i(0, dy, 0)] = cell
 
-func _touch() -> void:
+func _touch(dirty_cells: Array[Vector3i] = [], full_rebuild: bool = true) -> void:
 	revision += 1
 	dirty = true
 	changed.emit()
+	cells_changed.emit(dirty_cells, full_rebuild)
 
 func undo() -> bool:
 	if undo_stack.is_empty():
@@ -119,7 +168,7 @@ func undo() -> bool:
 	_set_raw(command["cell"], command["before"])
 	redo_stack.append(command)
 	stats["undone"] += 1
-	_touch()
+	_touch(ExpansionRules.dirty_neighborhood(command["cell"], maxi(item_height(str(command["before"].get("kind", ""))), item_height(str(command["after"].get("kind", ""))))), false)
 	return true
 
 func redo() -> bool:
@@ -128,8 +177,71 @@ func redo() -> bool:
 	var command: Dictionary = redo_stack.pop_back()
 	_set_raw(command["cell"], command["after"])
 	undo_stack.append(command)
-	_touch()
+	_touch(ExpansionRules.dirty_neighborhood(command["cell"], maxi(item_height(str(command["before"].get("kind", ""))), item_height(str(command["after"].get("kind", ""))))), false)
 	return true
+
+func connection_mask(cell: Vector3i) -> int:
+	return ExpansionRules.mask_for(self, owner_at(cell))
+
+func connection_variant(cell: Vector3i) -> String:
+	return ExpansionRules.variant_for_mask(connection_mask(cell))
+
+func connection_snapshot(cell: Vector3i) -> Dictionary:
+	var origin := owner_at(cell)
+	var item := get_cell(origin)
+	if item.is_empty():
+		return {}
+	return {
+		"cell": origin,
+		"kind": str(item.get("kind", "")),
+		"mask": connection_mask(origin),
+		"variant": connection_variant(origin),
+	}
+
+func mechanic_progress() -> Dictionary:
+	match location.mechanic if location != null else "":
+		"connectivity":
+			return _connectivity_progress()
+		"cantilever":
+			var cantilevers := 0
+			for cell: Vector3i in cells:
+				if not bool(cells[cell].get("natural", false)) and cell.y > 0 and not occupancy.has(cell + Vector3i.DOWN):
+					cantilevers += 1
+			return {"kind": "cantilever", "value": cantilevers, "target": 6}
+		"stability":
+			var stable_stacks := 0
+			for cell: Vector3i in cells:
+				if str(cells[cell].get("kind", "")) == "granite" and occupancy.has(cell + Vector3i.DOWN):
+					stable_stacks += 1
+			return {"kind": "stability", "value": stable_stacks, "target": 8}
+		"light_network":
+			var linked_lights := 0
+			for cell: Vector3i in cells:
+				if str(definition(str(cells[cell].get("kind", ""))).get("expansion", {}).get("family", "")) == "light_network" and connection_mask(cell) != 0:
+					linked_lights += 1
+			return {"kind": "light_network", "value": linked_lights, "target": 6}
+	return {"kind": "free_build", "value": placed_count(), "target": 12}
+
+func _connectivity_progress() -> Dictionary:
+	var candidates: Dictionary = {}
+	for cell: Vector3i in cells:
+		var family := str(definition(str(cells[cell].get("kind", ""))).get("expansion", {}).get("family", ""))
+		if family in ["path", "bridge", "house"] and not bool(cells[cell].get("natural", false)):
+			candidates[cell] = true
+	if candidates.is_empty():
+		return {"kind": "connectivity", "value": 0, "target": 8}
+	var frontier: Array[Vector3i] = [candidates.keys()[0]]
+	var visited: Dictionary = {}
+	while not frontier.is_empty():
+		var current: Vector3i = frontier.pop_back()
+		if visited.has(current):
+			continue
+		visited[current] = true
+		for direction: Vector3i in ExpansionRules.DIRECTIONS:
+			var next_cell: Vector3i = current + direction
+			if candidates.has(next_cell) and not visited.has(next_cell):
+				frontier.append(next_cell)
+	return {"kind": "connectivity", "value": visited.size(), "target": 8}
 
 func player_counts() -> Dictionary:
 	var result: Dictionary = {}
@@ -160,6 +272,18 @@ func reset(seed_value: int = 240910, with_village: bool = true) -> void:
 			var a := Vector2((x + 4.0) / 11.0, (z + 1.0) / 9.0).length()
 			var b := Vector2((x - 12.0) / 5.0, (z - 7.0) / 5.6).length()
 			var c := Vector2((x + 12.0) / 4.0, (z + 14.0) / 3.3).length()
+			if location_id == "santorini":
+				a = Vector2((x + 8.0) / 8.0, z / 14.0).length()
+				b = Vector2((x - 3.0) / 5.0, (z - 8.0) / 6.0).length()
+				c = 9.0
+			elif location_id == "seychelles":
+				a = Vector2((x + 7.0) / 7.0, (z + 2.0) / 6.0).length()
+				b = Vector2((x - 9.0) / 5.0, (z - 8.0) / 4.0).length()
+				c = Vector2((x - 11.0) / 3.5, (z + 10.0) / 3.0).length()
+			elif location_id == "cape_cod":
+				a = Vector2((x + 2.0) / 17.0, (z + 1.0) / 5.5).length()
+				b = Vector2((x - 13.0) / 5.0, (z - 7.0) / 7.0).length()
+				c = 9.0
 			var distance := minf(a, minf(b, c))
 			var n := noise.get_noise_2d(float(x), float(z))
 			if distance > 0.95 + n * 0.18:
@@ -169,17 +293,44 @@ func reset(seed_value: int = 240910, with_village: bool = true) -> void:
 				height = 1
 			if a < 0.29:
 				height = 2
-			for y in range(-3, height + 1):
+			if location_id == "santorini":
+				height = maxi(0, int((1.0 - a) * 7.0))
+			elif location_id in ["seychelles", "cape_cod"]:
+				height = 0 if distance > 0.42 else 1
+			# Two foundation layers keep silhouettes solid while avoiding thousands
+			# of permanently hidden cells on WebGL builds.
+			for y in range(-1, height + 1):
 				var kind := "stone"
 				if y == height:
-					kind = "grass" if distance < 0.85 else "wood"
+					if location_id == "santorini":
+						kind = "cliff"
+					elif location_id == "seychelles":
+						kind = "granite" if distance < 0.55 else "sand"
+					elif location_id == "cape_cod":
+						kind = "grass" if distance < 0.55 else "sand"
+					else:
+						kind = "grass" if distance < 0.85 else "wood"
 				_set_raw(Vector3i(x, y, z), {"kind": kind, "rot": 0, "natural": true})
 	if with_village:
 		_seed_village()
-	_touch()
+	_touch([], true)
 	dirty = false
 
 func _seed_village() -> void:
+	if location_id == "santorini":
+		for p in [Vector2i(-8,0), Vector2i(-6,1), Vector2i(-4,2), Vector2i(-2,3), Vector2i(0,4)]:
+			_seed_item(p, "white_house", posmod(p.x, 4))
+			_seed_at(Vector3i(p.x, top_y(p.x, p.y), p.y), "blue_dome", 0)
+		return
+	if location_id == "seychelles":
+		for p in [Vector2i(-7,-2), Vector2i(-4,1), Vector2i(7,8), Vector2i(10,-9)]:
+			_seed_item(p, "palm_cluster", 0)
+		return
+	if location_id == "cape_cod":
+		_seed_item(Vector2i(13, 6), "lighthouse", 0)
+		for p in [Vector2i(-8,0), Vector2i(-2,0), Vector2i(4,1), Vector2i(9,3)]:
+			_seed_item(p, "light_marker", 0)
+		return
 	for x in range(-10, 4):
 		var floor_cell := Vector3i(x, top_y(x, 0) - 1, 0)
 		if cells.has(floor_cell):
@@ -217,7 +368,7 @@ func to_document() -> Dictionary:
 	for cell: Vector3i in sorted_cells:
 		var value: Dictionary = cells[cell]
 		entries.append({"position": [cell.x, cell.y, cell.z], "kind": value["kind"], "rotation": value["rot"], "natural": value.get("natural", false)})
-	return {"schema_version": SAVE_VERSION, "game": "mist-harbor", "seed": world_seed, "cells": entries, "stats": stats.duplicate()}
+	return {"schema_version": SAVE_VERSION, "game": "mist-harbor", "location_id": location_id, "seed": world_seed, "cells": entries, "stats": stats.duplicate()}
 
 func _integer(value: Variant, low: int, high: int) -> bool:
 	if typeof(value) not in [TYPE_INT, TYPE_FLOAT]:
@@ -226,9 +377,14 @@ func _integer(value: Variant, low: int, high: int) -> bool:
 
 func load_document(document: Variant) -> bool:
 	last_error = ""
-	if not document is Dictionary or document.get("game") != "mist-harbor" or document.get("schema_version") != SAVE_VERSION:
-		last_error = "不是受支持的雾港存档（需要版本 1）。"
+	if not document is Dictionary or document.get("game") != "mist-harbor" or int(document.get("schema_version", 0)) not in [1, SAVE_VERSION]:
+		last_error = "不是受支持的雾港存档（需要版本 1 或 2）。"
 		return false
+	var next_location_id := str(document.get("location_id", "quanzhou"))
+	if not locations.has(next_location_id):
+		last_error = "存档地点无效。"
+		return false
+	var next_location: HarborLocationProfile = locations[next_location_id]
 	var entries: Variant = document.get("cells")
 	if not entries is Array or entries.size() > MAX_CELLS:
 		last_error = "存档格子数量超过安全上限。"
@@ -248,14 +404,14 @@ func load_document(document: Variant) -> bool:
 		if not position is Array or position.size() != 3 or not palette.has(kind):
 			last_error = "坐标或建材类型无效。"
 			return false
-		if not _integer(position[0], -EDGE, EDGE) or not _integer(position[1], MIN_Y, MAX_Y) or not _integer(position[2], -EDGE, EDGE):
+		if not _integer(position[0], -next_location.edge, next_location.edge) or not _integer(position[1], next_location.min_y, next_location.max_y) or not _integer(position[2], -next_location.edge, next_location.edge):
 			last_error = "坐标超出建造范围。"
 			return false
 		if not _integer(entry.get("rotation", 0), 0, 3) or typeof(entry.get("natural", false)) != TYPE_BOOL:
 			last_error = "旋转或地形标记无效。"
 			return false
 		var cell := Vector3i(int(position[0]), int(position[1]), int(position[2]))
-		if not in_bounds(cell, item_height(kind)):
+		if abs(cell.x) > next_location.edge or abs(cell.z) > next_location.edge or cell.y < next_location.min_y or cell.y + item_height(kind) > next_location.max_y:
 			last_error = "模型高度超出建造范围。"
 			return false
 		for dy in range(item_height(kind)):
@@ -277,11 +433,13 @@ func load_document(document: Variant) -> bool:
 		next_stats[key] = int(saved_stats.get(key, 0))
 	cells = next_cells
 	occupancy = next_occupancy
+	location_id = next_location_id
+	location = next_location
 	stats = next_stats
 	world_seed = int(document["seed"])
 	undo_stack.clear()
 	redo_stack.clear()
-	_touch()
+	_touch([], true)
 	dirty = false
 	return true
 
@@ -295,11 +453,12 @@ func import_json(text: String) -> bool:
 		return false
 	return load_document(parser.data)
 
-static func slot_path(index: int) -> String:
-	return "user://slot_%d.json" % [clampi(index, 1, SLOT_COUNT)]
+static func slot_path(index: int, for_location: String = "quanzhou") -> String:
+	var safe_location := for_location.validate_filename().to_snake_case()
+	return "user://%s_slot_%d.json" % [safe_location, clampi(index, 1, SLOT_COUNT)]
 
 func slot_info(index: int) -> Dictionary:
-	var path := slot_path(index)
+	var path := slot_path(index, location_id)
 	var info := {"slot": index, "exists": false, "cells": 0, "seed": 0, "saved_at": ""}
 	if not FileAccess.file_exists(path):
 		return info
@@ -314,7 +473,7 @@ func slot_info(index: int) -> Dictionary:
 
 func save_slot(index: int) -> bool:
 	stats["saved"] += 1
-	var path := slot_path(index)
+	var path := slot_path(index, location_id)
 	var output := FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if output == null:
 		stats["saved"] -= 1
@@ -333,7 +492,7 @@ func save_slot(index: int) -> bool:
 	return true
 
 func load_slot(index: int) -> bool:
-	var path := slot_path(index)
+	var path := slot_path(index, location_id)
 	if not FileAccess.file_exists(path):
 		last_error = "存档槽 %d 还是空的。" % [index]
 		return false
@@ -343,7 +502,7 @@ func load_slot(index: int) -> bool:
 	return true
 
 func delete_slot(index: int) -> bool:
-	var path := slot_path(index)
+	var path := slot_path(index, location_id)
 	if not FileAccess.file_exists(path):
 		return true
 	if DirAccess.remove_absolute(path) != OK:
@@ -352,10 +511,18 @@ func delete_slot(index: int) -> bool:
 	return true
 
 func migrate_legacy_save() -> bool:
-	"""First run after the slot upgrade: keep the old single save as slot 1."""
-	if not FileAccess.file_exists(SAVE_PATH) or FileAccess.file_exists(slot_path(1)):
+	"""Keep both historical single-save and pre-location slot files in Quanzhou."""
+	if location_id != "quanzhou":
 		return false
-	return DirAccess.copy_absolute(SAVE_PATH, slot_path(1)) == OK
+	var migrated := false
+	for index in range(1, SLOT_COUNT + 1):
+		var old_slot := "user://slot_%d.json" % [index]
+		var new_slot := slot_path(index, location_id)
+		if FileAccess.file_exists(old_slot) and not FileAccess.file_exists(new_slot):
+			migrated = DirAccess.copy_absolute(old_slot, new_slot) == OK or migrated
+	if FileAccess.file_exists(SAVE_PATH) and not FileAccess.file_exists(slot_path(1, location_id)):
+		migrated = DirAccess.copy_absolute(SAVE_PATH, slot_path(1, location_id)) == OK or migrated
+	return migrated
 
 func save_local() -> bool:
 	return save_slot(current_slot)

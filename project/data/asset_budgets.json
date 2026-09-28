@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "assets": {
+    "arch": {"triangles": 600, "max_size": 3.2},
+    "barrel": {"triangles": 600, "max_size": 1.2},
+    "beacon": {"triangles": 900, "max_size": 4.5},
+    "cottage": {"triangles": 900, "max_size": 2.4},
+    "flower": {"triangles": 200, "max_size": 1.2},
+    "lamp": {"triangles": 400, "max_size": 2.4},
+    "roof": {"triangles": 500, "max_size": 2.0},
+    "tree": {"triangles": 600, "max_size": 3.0},
+    "windmill": {"triangles": 1000, "max_size": 4.5},
+    "sand": {"triangles": 120, "max_size": 1.5},
+    "white_house": {"triangles": 600, "max_size": 2.4},
+    "blue_dome": {"triangles": 500, "max_size": 1.8},
+    "cliff": {"triangles": 600, "max_size": 2.0},
+    "granite": {"triangles": 500, "max_size": 1.8},
+    "palm_cluster": {"triangles": 600, "max_size": 3.2},
+    "lighthouse": {"triangles": 1000, "max_size": 5.0},
+    "light_marker": {"triangles": 400, "max_size": 2.8}
+  }
+}

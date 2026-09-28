@@ -25,6 +25,7 @@ import json
 import math
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -41,6 +42,9 @@ PALETTE = PROJECT / "data" / "palette.json"
 ART = PROJECT / "art"
 PREVIEWS = ART / "previews"
 PROVENANCE = ART / "provenance"
+INCOMING = ART / "incoming"
+QA_RECEIPTS = ART / "qa"
+BUDGETS = PROJECT / "data" / "asset_budgets.json"
 PILOT_CONFIG = ROOT / ".codebuddy" / "local" / "pilot.json"
 TERMINAL_STATES = {"succeeded", "failed", "cancelled", "timed_out"}
 
@@ -234,6 +238,69 @@ def godot_import() -> None:
         fail(f"Godot import failed; see logs/asset-import.log (exit={result.returncode})")
 
 
+def blender_binary(explicit: str | None = None) -> str:
+    config_path = ROOT / ".codebuddy" / "local" / "tools.json"
+    config = read_json(config_path) if config_path.is_file() else {}
+    value = (explicit or os.environ.get("MIST_HARBOR_BLENDER") or config.get("blender")
+             or shutil.which("blender")
+             or r"D:\Blender\blender-4.2.0-windows-x64\blender.exe")
+    if not Path(value).is_file():
+        fail("Blender 4.2 not found; set MIST_HARBOR_BLENDER or tools.json blender")
+    return str(value)
+
+
+def run_blender_qa(asset_id: str, source: Path, output: Path, explicit_blender: str | None = None) -> dict:
+    receipt = QA_RECEIPTS / f"{asset_id}.json"
+    command = [
+        blender_binary(explicit_blender), "--background", "--factory-startup",
+        "--python", str(ROOT / "tools" / "blender_qa.py"), "--",
+        "--input", str(source), "--output", str(output), "--asset-id", asset_id,
+        "--budget", str(BUDGETS), "--receipt", str(receipt),
+    ]
+    result = subprocess.run(command, capture_output=True, timeout=900)
+    if result.returncode:
+        text = (result.stdout + result.stderr).decode("utf-8", errors="replace")
+        fail(f"Blender QA rejected {asset_id}: {text[-2000:]}")
+    return read_json(receipt)
+
+
+def generate(args: argparse.Namespace) -> None:
+    from asset_providers import GenerationRequest, ProviderError, provider_for
+
+    budgets = read_json(BUDGETS).get("assets", {})
+    if args.id not in budgets:
+        fail(f"no triangle budget for {args.id}")
+    face_limit = args.face_limit or int(budgets[args.id]["triangles"])
+    prompt = args.prompt
+    if args.prompt_file:
+        prompt = Path(args.prompt_file).read_text(encoding="utf-8").strip()
+    if not prompt:
+        fail("--prompt or --prompt-file is required")
+    INCOMING.mkdir(parents=True, exist_ok=True)
+    raw_path = INCOMING / f"{args.id}-{args.provider}-raw.glb"
+    accepted_path = MODELS / f"{args.id}.glb"
+    try:
+        provider = provider_for(args.provider)
+        provider_receipt = provider.generate(
+            GenerationRequest(args.id, prompt, face_limit, raw_path), timeout=args.timeout
+        )
+    except ProviderError as exc:
+        fail(str(exc))
+    qa_receipt = run_blender_qa(args.id, raw_path, accepted_path, args.blender)
+    payload = {
+        "id": args.id,
+        "provider": provider_receipt,
+        "qa": qa_receipt,
+        "prompt_sha256": sha256(prompt.encode("utf-8")).hexdigest(),
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    PROVENANCE.mkdir(parents=True, exist_ok=True)
+    write_json(PROVENANCE / f"{args.id}-generated.json", payload)
+    if not args.no_import:
+        godot_import()
+    print(f"accepted {args.id}: {accepted_path} ({qa_receipt['triangles_after']} triangles)")
+
+
 def register_palette(asset_id: str, name: str | None, category: str | None, color: str | None,
                      height: int | None, tip: str | None, default_height: int | None = None) -> None:
     """Register or refresh a palette entry.
@@ -407,6 +474,19 @@ def main() -> None:
     build_parser.add_argument("--no-import", action="store_true", help="do not run Godot import")
     build_parser.add_argument("--timeout", type=int, default=300)
     build_parser.set_defaults(func=build)
+
+    generate_parser = subparsers.add_parser(
+        "generate", help="generate with Tripo/Hunyuan, run Blender QA, and import"
+    )
+    generate_parser.add_argument("--id", required=True)
+    generate_parser.add_argument("--provider", required=True, choices=["tripo", "hunyuan"])
+    generate_parser.add_argument("--prompt")
+    generate_parser.add_argument("--prompt-file")
+    generate_parser.add_argument("--face-limit", type=int)
+    generate_parser.add_argument("--blender")
+    generate_parser.add_argument("--timeout", type=int, default=1200)
+    generate_parser.add_argument("--no-import", action="store_true")
+    generate_parser.set_defaults(func=generate)
 
     args = parser.parse_args()
     args.func(args)

@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "locations": {
+    "quanzhou": [
+      {"id": "qz_m1", "title": "落下第一块新构件", "kind": "total", "target": 1},
+      {"id": "qz_m2", "title": "连成八格生活线", "kind": "mechanic", "target": 8},
+      {"id": "qz_m3", "title": "架起四段桥拱", "kind": "arch", "target": 4},
+      {"id": "qz_m4", "title": "组成四间临水厝", "kind": "cottage", "target": 4},
+      {"id": "qz_m5", "title": "留下一张夜景照片", "kind": "night_photo", "target": 1},
+      {"id": "qz_m6", "title": "分享落成时刻", "kind": "share", "target": 1}
+    ],
+    "santorini": [
+      {"id": "st_m1", "title": "落下第一块白墙", "kind": "white_house", "target": 1},
+      {"id": "st_m2", "title": "完成六处悬挑", "kind": "mechanic", "target": 6},
+      {"id": "st_m3", "title": "组成六间崖壁屋", "kind": "white_house", "target": 6},
+      {"id": "st_m4", "title": "点亮三枚蓝顶", "kind": "blue_dome", "target": 3},
+      {"id": "st_m5", "title": "为崖城拍照", "kind": "photo", "target": 1},
+      {"id": "st_m6", "title": "分享落成时刻", "kind": "share", "target": 1}
+    ],
+    "seychelles": [
+      {"id": "sy_m1", "title": "放下第一块花岗岩", "kind": "granite", "target": 1},
+      {"id": "sy_m2", "title": "完成八层稳定叠石", "kind": "mechanic", "target": 8},
+      {"id": "sy_m3", "title": "塑造十二块巨石群", "kind": "granite", "target": 12},
+      {"id": "sy_m4", "title": "种下四片海椰子丛", "kind": "palm_cluster", "target": 4},
+      {"id": "sy_m5", "title": "为浅海花园拍照", "kind": "photo", "target": 1},
+      {"id": "sy_m6", "title": "分享落成时刻", "kind": "share", "target": 1}
+    ],
+    "cape_cod": [
+      {"id": "cc_m1", "title": "立起第一枚航标", "kind": "light_marker", "target": 1},
+      {"id": "cc_m2", "title": "接通六点光网", "kind": "mechanic", "target": 6},
+      {"id": "cc_m3", "title": "布置一座海岸灯塔", "kind": "lighthouse", "target": 1},
+      {"id": "cc_m4", "title": "组成六枚航标", "kind": "light_marker", "target": 6},
+      {"id": "cc_m5", "title": "留下一张雾夜照片", "kind": "night_photo", "target": 1},
+      {"id": "cc_m6", "title": "分享落成时刻", "kind": "share", "target": 1}
+    ]
+  }
+}

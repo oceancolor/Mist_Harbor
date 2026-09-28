@@ -50,7 +50,7 @@ var mission_bars: Array[ProgressBar] = []
 var objectives: Array = []
 var chapters: Array = []
 var achievements: Achievements
-var photo_stats: Dictionary = {"photos": 0, "night_photos": 0}
+var photo_stats: Dictionary = {"photos": 0, "night_photos": 0, "share_attempts": 0}
 var chapter_title: Label
 var minimap: Control
 var modal: ColorRect
@@ -60,6 +60,7 @@ var toast_time: float = 0.0
 var qa_time: float = 0.0
 var qa_enabled: bool = false
 var import_callback: Variant
+var location_callback: Variant
 var dialog: FileDialog
 var last_painted := Vector3i(999,999,999)
 var painting: bool = false
@@ -70,7 +71,7 @@ func _ready() -> void:
 	model = Model.new()
 	model.reset()
 	model.migrate_legacy_save()
-	if FileAccess.file_exists(Model.slot_path(model.current_slot)):
+	if FileAccess.file_exists(Model.slot_path(model.current_slot, model.location_id)):
 		model.load_local()
 	if ModelThumbnails.ENABLED:
 		thumbs = ModelThumbnails.new()
@@ -90,9 +91,7 @@ func _ready() -> void:
 	_update_camera(1.0)
 	add_child(sound)
 	sound.volume_db = -20.0
-	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/objectives.json"))
-	objectives = data.get("objectives", []) if data is Dictionary else []
-	chapters = data.get("chapters", []) if data is Dictionary else []
+	_load_location_objectives()
 	_build_ui()
 	if thumbs != null:
 		thumbs.request(model.palette.keys())
@@ -101,7 +100,7 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 	_setup_browser()
-	_toast("欢迎来到雾港。选一块建材，把你的想法放在岛上。", 6.0)
+	_toast("欢迎来到%s。用“%s”的方式，让景观从一个单元生长起来。" % [model.location.display_name, model.location.verb], 6.0)
 
 func _process(delta: float) -> void:
 	_update_camera(delta)
@@ -210,6 +209,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_B: _toggle_demolition()
 		elif event.keycode == KEY_R: _rotate_piece()
 		elif event.keycode == KEY_N: _toggle_night()
+		elif event.keycode == KEY_G: _toggle_weather_fog()
 		elif event.keycode == KEY_F: _center_camera()
 		elif event.keycode == KEY_H: _show_help()
 		elif event.keycode == KEY_P: hud.visible = not hud.visible
@@ -324,6 +324,7 @@ func _build_ui() -> void:
 	_label(brand, "雾港造物记  /  给灵感一座岛", 11, MUTED)
 	_spacer(header)
 	_label(header, "创造模式 · 无限建材", 12, MUTED)
+	_button(header, "地点", _show_locations, "location")
 	_button(header, "日景  N", _toggle_night, "night")
 	_button(header, "保存作品", _save, "save")
 	_button(header, "作品管理", _show_menu, "menu")
@@ -394,11 +395,7 @@ func _build_ui() -> void:
 	toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 func _category_items() -> Array[Dictionary]:
-	var items: Array[Dictionary] = []
-	for item: Dictionary in model.palette.values():
-		if item["category"] == category:
-			items.append(item)
-	return items
+	return model.available_items(category)
 
 func _build_palette() -> void:
 	for child in dock_items.get_children():
@@ -466,6 +463,12 @@ func _update_chapter_title() -> void:
 
 func _objective_amount(goal: Dictionary, counts: Dictionary) -> int:
 	var key := str(goal["kind"])
+	if key == "mechanic":
+		return int(model.mechanic_progress().get("value", 0))
+	if key == "photo":
+		return int(photo_stats.get("photos", 0))
+	if key == "share":
+		return int(photo_stats.get("share_attempts", 0))
 	if key == "garden":
 		return mini(3, int(counts.get("tree", 0))) + mini(3, int(counts.get("flower", 0)))
 	if key == "journal":
@@ -542,8 +545,12 @@ func _capture_photo() -> void:
 	if world.night:
 		photo_stats["night_photos"] = int(photo_stats.get("night_photos", 0)) + 1
 	if OS.has_feature("web"):
-		JavaScriptBridge.download_buffer(image.save_png_to_buffer(), file_name, "image/png")
-		_toast("照片已保存并开始下载。")
+		var png := image.save_png_to_buffer()
+		var encoded := Marshalls.raw_to_base64(png)
+		var script := """(async()=>{const b=Uint8Array.from(atob('%s'),c=>c.charCodeAt(0));const f=new File([b],'%s',{type:'image/png'});try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({title:'Mist Harbor',text:'我在雾港完成了一处景观。',files:[f]});return 'shared';}}catch(e){}const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);return 'downloaded';})()""" % [encoded, file_name]
+		JavaScriptBridge.eval(script)
+		photo_stats["share_attempts"] = int(photo_stats.get("share_attempts", 0)) + 1
+		_toast("已打开系统分享；不可用时会自动下载照片。")
 	else:
 		_toast("照片已保存：%s" % [ProjectSettings.globalize_path("user://photos/" + file_name)], 5.0)
 	_refresh_ui()
@@ -567,7 +574,8 @@ func _refresh_ui() -> void:
 	if count_label == null:
 		return
 	var counts := model.player_counts()
-	count_label.text = "已新建 %d 件  ·  SEED %d" % [model.placed_count(), model.world_seed]
+	var mechanic := model.mechanic_progress()
+	count_label.text = "%s · %s %d/%d  ·  已新建 %d 件" % [model.location.display_name, model.location.verb, int(mechanic.get("value", 0)), int(mechanic.get("target", 0)), model.placed_count()]
 	var rows := _chapter_objectives(int(_current_chapter().get("id", 1)))
 	for i in range(mission_labels.size()):
 		if i >= rows.size():
@@ -590,7 +598,7 @@ func _refresh_ui() -> void:
 		action_buttons["undo"].disabled = model.undo_stack.is_empty()
 		action_buttons["redo"].disabled = model.redo_stack.is_empty()
 		action_buttons["save"].text = "保存作品 *" if model.dirty else "保存作品"
-		action_buttons["night"].text = "夜景  N" if world.night else "日景  N"
+		action_buttons["night"].text = "%s  N" % [{"dawn":"清晨","day":"白昼","sunset":"日落","night":"夜晚"}.get(world.phase, "环境")]
 	_check_achievements()
 	_update_chapter_title()
 	if selected_label != null:
@@ -624,6 +632,8 @@ func _layout() -> void:
 func _set_category(value: String) -> void:
 	category = value
 	var items := _category_items()
+	if items.is_empty():
+		return
 	selected = str(items[0]["id"])
 	demolishing = false
 	_build_palette()
@@ -650,9 +660,15 @@ func _redo() -> void:
 	if model.redo(): _toast("已重做。", 1.5)
 
 func _toggle_night() -> void:
-	world.set_night(not world.night)
+	var next := world.next_phase()
 	_refresh_ui()
-	_toast("夜色降临，看看灯塔与路灯。" if world.night else "晨光回到海湾。", 2.0)
+	_toast({"dawn":"清晨的雾正从水面散开。","day":"白昼让构筑接缝清晰可见。","sunset":"日落高光已经就位。","night":"夜色降临，灯火与光网开始显现。"}.get(next, "环境已切换。"), 2.0)
+
+func _toggle_weather_fog() -> void:
+	if not world.set_weather_fog(not world.weather_fog):
+		_toast("浓雾天气是 Cape Cod 的专属体验。")
+		return
+	_toast("大西洋浓雾已经压上海岸。" if world.weather_fog else "浓雾散去，恢复当前时段能见度。")
 
 func _center_camera() -> void:
 	target_focus = Vector3(0,1,1)
@@ -673,18 +689,65 @@ func _toast(message: String, seconds: float = 3.5) -> void:
 	toast_time = seconds
 
 func _show_help() -> void:
-	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海湾。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：环绕视角    中键拖动 / WASD：平移\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转下一件建材    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：切换昼夜    P：隐藏界面拍照    C：保存截图    Esc：返回\n\n水面可以直接搭地基，空中格子须与既有建材相接。\n高模型占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，双指拖动旋转，使用界面按钮。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
+	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海湾。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：环绕视角    中键拖动 / WASD：平移\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转下一件建材    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：清晨/白昼/日落/夜晚    G：Cape Cod 浓雾\nP：隐藏界面    C：拍照并分享    Esc：返回\n\n六方向兼容接口会自动吸附并重算端点、直段、转角、三通和交叉形态。\n高模型占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，双指拖动旋转，使用界面按钮。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
 
 func _show_menu() -> void:
-	_show_dialog("作品管理", "存档仅保存在当前浏览器或设备。清理浏览器数据可能丢失作品，\n建议定期导出 JSON。导入时会校验版本、坐标、重叠与体积。\n\n加载或开始新岛会替换当前场景；请先保存或导出。\n样板预置建筑不计入小挑战，只有亲手新增的建材才计数。", [
+	var options: Array = [
 		{"text":"保存当前作品", "action":_save},
 		{"text":"存档槽…", "action":_show_slots},
+		{"text":"切换地点…", "action":_show_locations},
 		{"text":"导出 JSON", "action":_export_world},
 		{"text":"导入 JSON", "action":_import_world},
 		{"text":"空白群岛", "action":func() -> void: _confirm_reset(false)},
 		{"text":"恢复灵感海湾", "action":func() -> void: _confirm_reset(true)},
 		{"text":"音效：" + ("开" if sound_enabled else "关"), "action":func() -> void: sound_enabled = not sound_enabled}
-	])
+	]
+	if model.location_id == "cape_cod":
+		options.insert(3, {"text":"海岸浓雾：" + ("开" if world.weather_fog else "关"), "action":_toggle_weather_fog})
+	_show_dialog("作品管理", "存档仅保存在当前浏览器或设备。清理浏览器数据可能丢失作品，\n建议定期导出 JSON。导入时会校验版本、坐标、重叠与体积。\n\n加载或开始新岛会替换当前场景；请先保存或导出。\n样板预置建筑不计入小挑战，只有亲手新增的建材才计数。", options)
+
+func _show_locations() -> void:
+	var options: Array = []
+	for id_value in model.location_ids():
+		options.append(_location_option(str(id_value)))
+	_show_dialog("选择地点", "四个地点共享建造底座，但拥有不同的地形、环境和构筑动词。切换前请保存当前地点。", options)
+
+func _location_option(id_value: String) -> Dictionary:
+	var profile: HarborLocationProfile = model.locations[id_value]
+	var mark := "（当前）" if profile.id == model.location_id else ""
+	return {"text":"%s%s · %s" % [profile.display_name, mark, profile.verb], "action":func() -> void: _confirm_location(id_value)}
+
+func _confirm_location(id_value: String) -> void:
+	if id_value == model.location_id:
+		return
+	var profile: HarborLocationProfile = model.locations[id_value]
+	_show_dialog("前往%s？" % [profile.display_name], "当前未保存的更改不会自动写入；新地点使用独立存档槽。", [{"text":"确认前往", "action":func() -> void: _switch_location(id_value)}])
+
+func _switch_location(id_value: String) -> void:
+	if not model.set_location(id_value, true):
+		_toast(model.last_error, 4.0)
+		return
+	if FileAccess.file_exists(Model.slot_path(model.current_slot, model.location_id)):
+		model.load_local()
+	_load_location_objectives()
+	world.weather_fog = false
+	world.set_phase("day", false)
+	var available := model.available_items(category)
+	if available.is_empty():
+		category = "地形"
+		available = model.available_items(category)
+	selected = str(available[0]["id"])
+	_build_palette()
+	_center_camera()
+	_toast("已抵达%s · 构筑动词“%s”" % [model.location.display_name, model.location.verb], 4.0)
+
+func _load_location_objectives() -> void:
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/location_objectives.json"))
+	if data is Dictionary:
+		objectives = ((data.get("locations", {}) as Dictionary).get(model.location_id, []) as Array).duplicate(true)
+	else:
+		objectives = []
+	chapters = [{"id": 1, "title": "%s · M1—M6" % [model.location.display_name], "hint": model.location.description}]
 
 func _show_dialog(title: String, text_value: String, options: Array) -> void:
 	_close_modal()
@@ -791,6 +854,9 @@ func _setup_browser() -> void:
 	qa_enabled = bool(JavaScriptBridge.eval("new URLSearchParams(location.search).has('qa')"))
 	import_callback = JavaScriptBridge.create_callback(_import_callback)
 	JavaScriptBridge.get_interface("window").mistHarborImport = import_callback
+	if qa_enabled:
+		location_callback = JavaScriptBridge.create_callback(_location_callback)
+		JavaScriptBridge.get_interface("window").mistHarborQaSetLocation = location_callback
 	JavaScriptBridge.eval("document.addEventListener('contextmenu', function(e){e.preventDefault();}); document.addEventListener('keydown', function(e){if(e.ctrlKey && ['s','z','y'].includes(e.key.toLowerCase())) e.preventDefault();});")
 
 func _import_world() -> void:
@@ -810,6 +876,10 @@ func _import_world() -> void:
 func _import_callback(arguments: Array) -> void:
 	if arguments.size() == 1:
 		_accept_import(str(arguments[0]))
+
+func _location_callback(arguments: Array) -> void:
+	if arguments.size() == 1:
+		_switch_location(str(arguments[0]))
 
 func _accept_import(text_value: String) -> void:
 	_show_dialog("导入作品？", "导入将替换当前未保存场景。请确认已保存当前作品。", [{"text":"确认导入", "action":func() -> void:
@@ -842,4 +912,4 @@ func qa_snapshot() -> Dictionary:
 	for key in item_buttons:
 		var rect: Rect2 = item_buttons[key].get_global_rect()
 		controls["item-" + key] = [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
-	return {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,"slot":model.current_slot,"save_exists":FileAccess.file_exists(Model.slot_path(model.current_slot)),"last_error":model.last_error,"photos":photo_stats,"placed":model.placed_count(),"counts":model.player_counts(),"cells":model.cells.size(),"undo":model.undo_stack.size(),"redo":model.redo_stack.size(),"dirty":model.dirty,"stats":model.stats,"faces":world.visible_faces,"assets":world.scenes.keys(),"modal":modal!=null,"buttons":controls,"viewport":[get_viewport().get_visible_rect().size.x,get_viewport().get_visible_rect().size.y],"pick":str(pick_result),"camera":[target_yaw,target_pitch,target_zoom],"revision":model.revision}
+	return {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,"phase":world.phase,"weather_fog":world.weather_fog,"fog_density":world.environment.fog_density,"location":model.location_id,"mechanic":model.mechanic_progress(),"slot":model.current_slot,"save_exists":FileAccess.file_exists(Model.slot_path(model.current_slot, model.location_id)),"last_error":model.last_error,"photos":photo_stats,"placed":model.placed_count(),"counts":model.player_counts(),"cells":model.cells.size(),"undo":model.undo_stack.size(),"redo":model.redo_stack.size(),"dirty":model.dirty,"stats":model.stats,"faces":world.visible_faces,"assets":world.scenes.keys(),"modal":modal!=null,"buttons":controls,"viewport":[get_viewport().get_visible_rect().size.x,get_viewport().get_visible_rect().size.y],"pick":str(pick_result),"camera":[target_yaw,target_pitch,target_zoom],"revision":model.revision}

@@ -31,12 +31,21 @@
       "bytes": 22008,
       "generator": "Khronos glTF Blender I/O v5.2.40",
       "source": "tools/art/arch.py",
-      "task_id": "mist-harbor-arch-v2-c31bcd14"
+      "task_id": "mist-harbor-arch-v2-c31bcd14",
+      "expansion": {
+        "family": "bridge",
+        "connectors": {
+          "east": "path",
+          "west": "path",
+          "north": "path",
+          "south": "path"
+        }
+      }
     },
     {
       "id": "barrel",
       "file": "barrel.glb",
-      "triangles": 632,
+      "triangles": 574,
       "bounds": {
         "blender_min": [
           -0.30699998140335083,
@@ -46,7 +55,7 @@
         "blender_max": [
           0.30699998140335083,
           0.30699998140335083,
-          0.7199999783188105
+          0.7199999690055847
         ],
         "godot_size": [
           0.614,
@@ -54,7 +63,7 @@
           0.614
         ]
       },
-      "bytes": 44580,
+      "bytes": 42492,
       "generator": "Khronos glTF Blender I/O v5.2.40",
       "source": "tools/art/barrel.py",
       "task_id": "mist-harbor-barrel-v2-a52aa92e"
@@ -86,6 +95,79 @@
       "task_id": "mist-harbor-beacon-v1-d0bd5a8d"
     },
     {
+      "id": "blue_dome",
+      "file": "blue_dome.glb",
+      "triangles": 164,
+      "bounds": {
+        "blender_min": [
+          -0.41999998688697815,
+          -0.41999998688697815,
+          0.0
+        ],
+        "blender_max": [
+          0.41999998688697815,
+          0.41999998688697815,
+          0.6800000071525574
+        ],
+        "godot_size": [
+          0.84,
+          0.68,
+          0.84
+        ]
+      },
+      "bytes": 14044,
+      "generator": "Blender 4.2 deterministic location asset generator",
+      "source": "tools/generate_location_assets.py",
+      "task_id": "local-blue_dome-v1",
+      "expansion": {
+        "family": "dome",
+        "connectors": {
+          "east": "roof",
+          "west": "roof",
+          "north": "roof",
+          "south": "roof",
+          "down": "building_stack"
+        }
+      }
+    },
+    {
+      "id": "cliff",
+      "file": "cliff.glb",
+      "triangles": 88,
+      "bounds": {
+        "blender_min": [
+          -0.49000000953674316,
+          -0.49000000953674316,
+          0.0
+        ],
+        "blender_max": [
+          0.49000000953674316,
+          0.49000000953674316,
+          0.9599999785423279
+        ],
+        "godot_size": [
+          0.98,
+          0.96,
+          0.98
+        ]
+      },
+      "bytes": 8440,
+      "generator": "Blender 4.2 deterministic location asset generator",
+      "source": "tools/generate_location_assets.py",
+      "task_id": "local-cliff-v1",
+      "expansion": {
+        "family": "cliff",
+        "connectors": {
+          "east": "rock",
+          "west": "rock",
+          "north": "rock",
+          "south": "rock",
+          "up": "terrain_stack",
+          "down": "terrain_stack"
+        }
+      }
+    },
+    {
       "id": "cottage",
       "file": "cottage.glb",
       "triangles": 272,
@@ -109,12 +191,23 @@
       "bytes": 31464,
       "generator": "Khronos glTF Blender I/O v5.2.40",
       "source": "tools/art/cottage.py",
-      "task_id": "mist-harbor-cottage-v1-e8652c02"
+      "task_id": "mist-harbor-cottage-v1-e8652c02",
+      "expansion": {
+        "family": "house",
+        "connectors": {
+          "east": "house",
+          "west": "house",
+          "north": "house",
+          "south": "house",
+          "up": "building_stack",
+          "down": "building_stack"
+        }
+      }
     },
     {
       "id": "flower",
       "file": "flower.glb",
-      "triangles": 560,
+      "triangles": 172,
       "bounds": {
         "blender_min": [
           -0.42500001192092896,
@@ -132,10 +225,56 @@
           0.85
         ]
       },
-      "bytes": 71836,
+      "bytes": 39388,
       "generator": "Khronos glTF Blender I/O v5.2.40",
       "source": "tools/art/flower.py",
-      "task_id": "mist-harbor-flower-v1-63fe23e8"
+      "task_id": "mist-harbor-flower-v1-63fe23e8",
+      "expansion": {
+        "family": "plant_cluster",
+        "connectors": {
+          "east": "plant",
+          "west": "plant",
+          "north": "plant",
+          "south": "plant"
+        }
+      }
+    },
+    {
+      "id": "granite",
+      "file": "granite.glb",
+      "triangles": 20,
+      "bounds": {
+        "blender_min": [
+          -0.5256813168525696,
+          -0.5094941258430481,
+          -0.06209721788764
+        ],
+        "blender_max": [
+          0.5256813168525696,
+          0.5094941258430481,
+          1.1420972347259521
+        ],
+        "godot_size": [
+          1.0514,
+          1.2042,
+          1.019
+        ]
+      },
+      "bytes": 3484,
+      "generator": "Blender 4.2 deterministic location asset generator",
+      "source": "tools/generate_location_assets.py",
+      "task_id": "local-granite-v1",
+      "expansion": {
+        "family": "granite",
+        "connectors": {
+          "east": "rock",
+          "west": "rock",
+          "north": "rock",
+          "south": "rock",
+          "up": "terrain_stack",
+          "down": "terrain_stack"
+        }
+      }
     },
     {
       "id": "lamp",
@@ -161,7 +300,121 @@
       "bytes": 16376,
       "generator": "Khronos glTF Blender I/O v5.2.40",
       "source": "tools/art/lamp.py",
-      "task_id": "mist-harbor-lamp-v2-65a7138e"
+      "task_id": "mist-harbor-lamp-v2-65a7138e",
+      "expansion": {
+        "family": "light_network",
+        "connectors": {
+          "east": "light",
+          "west": "light",
+          "north": "light",
+          "south": "light"
+        }
+      }
+    },
+    {
+      "id": "light_marker",
+      "file": "light_marker.glb",
+      "triangles": 70,
+      "bounds": {
+        "blender_min": [
+          -0.25,
+          -0.25,
+          0.0
+        ],
+        "blender_max": [
+          0.25,
+          0.25,
+          1.8700000047683716
+        ],
+        "godot_size": [
+          0.5,
+          1.87,
+          0.5
+        ]
+      },
+      "bytes": 7272,
+      "generator": "Blender 4.2 deterministic location asset generator",
+      "source": "tools/generate_location_assets.py",
+      "task_id": "local-light_marker-v1",
+      "expansion": {
+        "family": "light_network",
+        "connectors": {
+          "east": "light",
+          "west": "light",
+          "north": "light",
+          "south": "light"
+        }
+      }
+    },
+    {
+      "id": "lighthouse",
+      "file": "lighthouse.glb",
+      "triangles": 142,
+      "bounds": {
+        "blender_min": [
+          -0.36000001430511475,
+          -0.36000001430511475,
+          0.0
+        ],
+        "blender_max": [
+          0.36000001430511475,
+          0.36000001430511475,
+          2.679999828338623
+        ],
+        "godot_size": [
+          0.72,
+          2.68,
+          0.72
+        ]
+      },
+      "bytes": 12388,
+      "generator": "Blender 4.2 deterministic location asset generator",
+      "source": "tools/generate_location_assets.py",
+      "task_id": "local-lighthouse-v1",
+      "expansion": {
+        "family": "light_network",
+        "connectors": {
+          "east": "light",
+          "west": "light",
+          "north": "light",
+          "south": "light"
+        }
+      }
+    },
+    {
+      "id": "palm_cluster",
+      "file": "palm_cluster.glb",
+      "triangles": 576,
+      "bounds": {
+        "blender_min": [
+          -0.6100000143051147,
+          -0.5173909068107605,
+          -0.001205354928970337
+        ],
+        "blender_max": [
+          0.6499999761581421,
+          0.4773908853530884,
+          1.46750009059906
+        ],
+        "godot_size": [
+          1.26,
+          1.4687,
+          0.9948
+        ]
+      },
+      "bytes": 51900,
+      "generator": "Blender 4.2 deterministic location asset generator",
+      "source": "tools/generate_location_assets.py",
+      "task_id": "local-palm_cluster-v1",
+      "expansion": {
+        "family": "tropical_grove",
+        "connectors": {
+          "east": "plant",
+          "west": "plant",
+          "north": "plant",
+          "south": "plant"
+        }
+      }
     },
     {
       "id": "roof",
@@ -187,7 +440,52 @@
       "bytes": 6568,
       "generator": "Khronos glTF Blender I/O v5.2.40",
       "source": "tools/art/roof.py",
-      "task_id": "mist-harbor-roof-v1-c67e3341"
+      "task_id": "mist-harbor-roof-v1-c67e3341",
+      "expansion": {
+        "family": "roof",
+        "connectors": {
+          "east": "roof",
+          "west": "roof",
+          "north": "roof",
+          "south": "roof"
+        }
+      }
+    },
+    {
+      "id": "sand",
+      "file": "sand.glb",
+      "triangles": 44,
+      "bounds": {
+        "blender_min": [
+          -0.49000000953674316,
+          -0.49000000953674316,
+          0.0
+        ],
+        "blender_max": [
+          0.49000000953674316,
+          0.49000000953674316,
+          0.36000001430511475
+        ],
+        "godot_size": [
+          0.98,
+          0.36,
+          0.98
+        ]
+      },
+      "bytes": 4620,
+      "generator": "Blender 4.2 deterministic location asset generator",
+      "source": "tools/generate_location_assets.py",
+      "task_id": "local-sand-v1",
+      "expansion": {
+        "family": "beach",
+        "connectors": {
+          "east": "ground",
+          "west": "ground",
+          "north": "ground",
+          "south": "ground",
+          "down": "terrain_stack"
+        }
+      }
     },
     {
       "id": "tree",
@@ -213,7 +511,53 @@
       "bytes": 9060,
       "generator": "Khronos glTF Blender I/O v5.2.40",
       "source": "tools/art/tree.py",
-      "task_id": "mist-harbor-tree-v1-c9874641"
+      "task_id": "mist-harbor-tree-v1-c9874641",
+      "expansion": {
+        "family": "grove",
+        "connectors": {
+          "east": "grove",
+          "west": "grove",
+          "north": "grove",
+          "south": "grove"
+        }
+      }
+    },
+    {
+      "id": "white_house",
+      "file": "white_house.glb",
+      "triangles": 88,
+      "bounds": {
+        "blender_min": [
+          -0.46000000834465027,
+          -0.4529999792575836,
+          0.0
+        ],
+        "blender_max": [
+          0.46000000834465027,
+          0.4300000071525574,
+          0.8600000143051147
+        ],
+        "godot_size": [
+          0.92,
+          0.86,
+          0.883
+        ]
+      },
+      "bytes": 8604,
+      "generator": "Blender 4.2 deterministic location asset generator",
+      "source": "tools/generate_location_assets.py",
+      "task_id": "local-white_house-v1",
+      "expansion": {
+        "family": "cycladic_house",
+        "connectors": {
+          "east": "house",
+          "west": "house",
+          "north": "house",
+          "south": "house",
+          "up": "building_stack",
+          "down": "building_stack"
+        }
+      }
     },
     {
       "id": "windmill",

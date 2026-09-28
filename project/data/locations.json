@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "default": "quanzhou",
+  "locations": [
+    {
+      "id": "quanzhou",
+      "name": "雾港·泉州",
+      "verb": "连",
+      "seed": 240910,
+      "edge": 25,
+      "min_y": -4,
+      "max_y": 20,
+      "mechanic": "connectivity",
+      "description": "用桥、骑楼与灯火把湾、屿和滩涂连成一条生活线。",
+      "fog_density_day": 0.0040,
+      "fog_density_night": 0.0050,
+      "fog_color_day": "DCDAD0",
+      "fog_color_night": "6A7078",
+      "water": {"deep_color": "35685C", "shallow_color": "74A98D", "lagoon_color": "74A98D", "lagoon_radius": 18, "shallow_radius": 18, "deep_radius": 32, "wave_scale": 0.75, "wave_speed": 0.50},
+      "environment": {
+        "dawn": {"background": "DED8CC", "sky_top": "C4C6C4", "ambient": "DED8CC", "ambient_energy": 0.42, "sun": "E8DCC4", "sun_energy": 0.70, "sun_rotation_x": -8},
+        "day": {"background": "E0E0D8", "sky_top": "9CB4BE", "ambient": "DCDAD0", "ambient_energy": 0.48, "sun": "F4F0E2", "sun_energy": 0.95, "sun_rotation_x": -65},
+        "sunset": {"background": "F69B5A", "sky_top": "6A6A6E", "ambient": "D8A07A", "ambient_energy": 0.40, "sun": "F78C45", "sun_energy": 0.70, "sun_rotation_x": -8},
+        "night": {"background": "2A3444", "sky_top": "1E2634", "ambient": "6A7078", "ambient_energy": 0.22, "sun": "93A4B8", "sun_energy": 0.12, "sun_rotation_x": -35}
+      }
+    },
+    {
+      "id": "santorini",
+      "name": "雾港·圣托里尼",
+      "verb": "悬",
+      "seed": 240911,
+      "edge": 25,
+      "min_y": -4,
+      "max_y": 32,
+      "mechanic": "cantilever",
+      "description": "沿火山崖壁向上生长，让白墙与蓝顶在悬挑中找到平衡。",
+      "fog_density_day": 0.0015,
+      "fog_density_night": 0.0026,
+      "fog_color_day": "CFE0EC",
+      "fog_color_night": "5A6A84",
+      "water": {"deep_color": "0A2A4A", "shallow_color": "1B6CA8", "lagoon_color": "1B6CA8", "lagoon_radius": 14, "shallow_radius": 14, "deep_radius": 30, "wave_scale": 0.60, "wave_speed": 0.40},
+      "environment": {
+        "dawn": {"background": "F5E8CE", "sky_top": "5E9BD6", "ambient": "F5E8CE", "ambient_energy": 0.28, "sun": "FFE9C6", "sun_energy": 0.90, "sun_rotation_x": -8},
+        "day": {"background": "E8F0F6", "sky_top": "4A8FD4", "ambient": "DCE8F0", "ambient_energy": 0.35, "sun": "FFF4E0", "sun_energy": 1.30, "sun_rotation_x": -54},
+        "sunset": {"background": "FF7738", "sky_top": "2A3A6A", "ambient": "D08362", "ambient_energy": 0.28, "sun": "FF7F35", "sun_energy": 1.10, "sun_rotation_x": -8},
+        "night": {"background": "223052", "sky_top": "101A32", "ambient": "5A6A84", "ambient_energy": 0.18, "sun": "96A8CC", "sun_energy": 0.12, "sun_rotation_x": -35}
+      }
+    },
+    {
+      "id": "seychelles",
+      "name": "雾港·塞舌尔",
+      "verb": "叠",
+      "seed": 240912,
+      "edge": 25,
+      "min_y": -4,
+      "max_y": 20,
+      "mechanic": "stability",
+      "description": "在双层浅海间叠放花岗巨石，让热带植物顺着稳定结构生长。",
+      "fog_density_day": 0.0010,
+      "fog_density_night": 0.0018,
+      "fog_color_day": "E4F0EC",
+      "fog_color_night": "5E7A82",
+      "water": {"deep_color": "0B4A7A", "shallow_color": "2FA8C0", "lagoon_color": "4FD8C0", "lagoon_radius": 10, "shallow_radius": 18, "deep_radius": 24, "wave_scale": 0.45, "wave_speed": 0.30},
+      "environment": {
+        "dawn": {"background": "F0EEDF", "sky_top": "4E9AD4", "ambient": "F0EEDF", "ambient_energy": 0.32, "sun": "FFF0D0", "sun_energy": 1.00, "sun_rotation_x": -8},
+        "day": {"background": "CFEBF2", "sky_top": "2E86C8", "ambient": "E8F0E8", "ambient_energy": 0.40, "sun": "FFFBF0", "sun_energy": 1.45, "sun_rotation_x": -82},
+        "sunset": {"background": "FF5F33", "sky_top": "1E3A78", "ambient": "C87862", "ambient_energy": 0.26, "sun": "FF673D", "sun_energy": 0.85, "sun_rotation_x": -8},
+        "night": {"background": "223452", "sky_top": "16283E", "ambient": "5E7A82", "ambient_energy": 0.20, "sun": "9CB0C8", "sun_energy": 0.12, "sun_rotation_x": -35}
+      }
+    },
+    {
+      "id": "cape_cod",
+      "name": "雾港·Cape Cod",
+      "verb": "照",
+      "seed": 240913,
+      "edge": 25,
+      "min_y": -4,
+      "max_y": 20,
+      "mechanic": "light_network",
+      "description": "布置灯塔与航标，用相连的光网穿过海岸雾气。",
+      "fog_density_day": 0.0036,
+      "fog_density_night": 0.0058,
+      "fog_density_weather": 0.0075,
+      "fog_color_day": "B4C0C8",
+      "fog_color_night": "4E5A66",
+      "water": {"deep_color": "2C4858", "shallow_color": "7899AC", "lagoon_color": "7899AC", "lagoon_radius": 15, "shallow_radius": 15, "deep_radius": 30, "wave_scale": 1.60, "wave_speed": 0.90},
+      "environment": {
+        "dawn": {"background": "E2D8C8", "sky_top": "8FA0B4", "ambient": "E2D8C8", "ambient_energy": 0.40, "sun": "F2E6D2", "sun_energy": 0.75, "sun_rotation_x": -8},
+        "day": {"background": "D0D8E0", "sky_top": "7E8FA3", "ambient": "CCD4DA", "ambient_energy": 0.45, "sun": "EDF0F4", "sun_energy": 0.95, "sun_rotation_x": -48},
+        "sunset": {"background": "E78155", "sky_top": "4A4A5E", "ambient": "B47E70", "ambient_energy": 0.34, "sun": "EB7847", "sun_energy": 0.75, "sun_rotation_x": -8},
+        "night": {"background": "1E2836", "sky_top": "121826", "ambient": "4E5A66", "ambient_energy": 0.16, "sun": "8A96AC", "sun_energy": 0.12, "sun_rotation_x": -35}
+      }
+    }
+  ]
+}

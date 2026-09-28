@@ -1,0 +1,107 @@
+{
+  "generated_at": "2026-09-28T05:22:14.204173+00:00",
+  "source": "Dev Driven/acceptance-checklist.md v1.3",
+  "machine_checks": [
+    {
+      "name": "four_location_profiles",
+      "status": "pass",
+      "evidence": "cape_cod,quanzhou,santorini,seychelles"
+    },
+    {
+      "name": "location_verbs",
+      "status": "pass",
+      "evidence": "泉州=连, 圣托里尼=悬, 塞舌尔=叠, Cape Cod=照"
+    },
+    {
+      "name": "fog_density_unique_source",
+      "status": "pass",
+      "evidence": "{'quanzhou': (0.004, 0.005), 'santorini': (0.0015, 0.0026), 'cape_cod': (0.0036, 0.0058), 'seychelles': (0.001, 0.0018)}"
+    },
+    {
+      "name": "cape_cod_weather_fog",
+      "status": "pass",
+      "evidence": "fog_density_weather=0.0075"
+    },
+    {
+      "name": "seychelles_three_band_water",
+      "status": "pass",
+      "evidence": "lagoon=10, shallow=18, deep=24"
+    },
+    {
+      "name": "four_phase_channels",
+      "status": "pass",
+      "evidence": "all profiles contain four named phases"
+    },
+    {
+      "name": "six_direction_rule_engine",
+      "status": "pass",
+      "evidence": "expansion_rules.gd"
+    },
+    {
+      "name": "expandable_units",
+      "status": "pass",
+      "evidence": "18 palette units"
+    },
+    {
+      "name": "no_runtime_point_lights",
+      "status": "pass",
+      "evidence": "no point/spot light constructors"
+    },
+    {
+      "name": "fog_interference_disabled",
+      "status": "pass",
+      "evidence": "build_world.gd"
+    },
+    {
+      "name": "m1_m6_per_location",
+      "status": "pass",
+      "evidence": "6 objectives per location"
+    },
+    {
+      "name": "location_save_isolation",
+      "status": "pass",
+      "evidence": "world_model.gd location-prefixed slot path"
+    },
+    {
+      "name": "manifest_files_exist",
+      "status": "pass",
+      "evidence": "17 GLB files"
+    },
+    {
+      "name": "triangle_budgets",
+      "status": "pass",
+      "evidence": "manifest triangles <= configured budgets"
+    },
+    {
+      "name": "web_share_fallback",
+      "status": "pass",
+      "evidence": "Web Share API with download fallback"
+    },
+    {
+      "name": "legacy_save_migration",
+      "status": "pass",
+      "evidence": "schema v1 accepted, schema v2 emitted"
+    }
+  ],
+  "machine_summary": {
+    "passed": 16,
+    "failed": 0
+  },
+  "manual_signoff": {
+    "status": "pending_benja",
+    "items": [
+      "A-4 fog_disabled visual control comparison",
+      "B-5 four-location fog and sky personality",
+      "B-7 night visibility and light-to-wall contrast",
+      "B-8 Quanzhou dawn/day A-B",
+      "B-9 sunset white-wall warmth for four locations",
+      "B-10 Santorini sea-sky warm band",
+      "B-11 Santorini/Seychelles cool back-face hue",
+      "B-12 Seychelles water boundary sharpness",
+      "B-13 Seychelles fill-light volume and hard shadows",
+      "M2 construction verb feel",
+      "M4 screenshot quality"
+    ]
+  },
+  "note": "Manual visual items are deliberately not auto-approved."
+}

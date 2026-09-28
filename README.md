@@ -1,15 +1,15 @@
 # 雾港造物记 · Mist Harbor
 
-原创的单人 3D 海岛自由建造样板，用 Godot 4.7 与 Blender 4.2 制作。借鉴体素拼搭与微缩聚落的玩法类型，不使用或复制商业游戏资产。目标是可玩、可拆解、可验证的课程样板，而非完整沙盒大作。
+原创的单人 3D 海岛自由建造游戏，用 Godot 4.7 与 Blender 4.2 制作。四个地点共享建造 Core：泉州“连”、圣托里尼“悬”、塞舌尔“叠”、Cape Cod“照”。借鉴体素拼搭与微缩聚落的玩法类型，不使用或复制商业游戏资产。
 
 ## 交付结构
 
 - `project/`：完整 Godot 工程，打开 `project.godot` 即可编辑运行。
 - `project/art/mist-harbor-kit.blend`：可编辑的 Blender 模块资产工作室。
 - `project/art/generate_harbor.py`：确定性建模与 glTF 导出脚本。
-- `project/assets/models/`：八种 GLB 和真实生成清单 `manifest.json`。
-- `project/scripts/`：世界模型、网格/拾取、界面/输入、建材图标、微缩地图。
-- `project/data/`：13 种建材与六个自练目标。
+- `project/assets/models/`：17 种原创 GLB 和真实生成清单 `manifest.json`。
+- `project/scripts/`：世界模型、六方向吸附规则、地点配置、网格/拾取、界面/输入、建材图标、微缩地图。
+- `project/data/`：22 种建材、四地点配置与各地点 M1—M6。
 - `project/tests/`：Godot 模型行为测试与场景冒烟。
 - `project/docs/`：需求与逐课指南。
 - `tutorial.yaml`：14 步 Tutorial Runtime 任务图。
@@ -21,9 +21,9 @@
 
 ## 玩法与操作
 
-左键点击/拖动建造，B 拆除，R 旋转建材，1—9 切换当前分类材料；右键拖动环绕，WASD/中键平移，滚轮缩放，F 回中心；Ctrl+Z/Y 撤销重做；Ctrl+S 保存；N 昼夜；P 拍照；Esc 返回。
+左键点击/拖动建造，B 拆除，R 旋转建材，1—9 切换当前分类材料；右键拖动环绕，WASD/中键平移，滚轮缩放，F 回中心；Ctrl+Z/Y 撤销重做；Ctrl+S 保存；N 依次切换清晨/白昼/日落/夜晚；P 隐藏界面；C 拍照并分享；顶部“地点”切换四地。
 
-完整功能：堆叠、挖取地形、三格灯塔占位、支持判定、160 次撤销历史、确定性海岛、存档校验、JSON 导入导出、昼夜灯光、地图与六个本地自练挑战。预置建筑不计入学习者新增成果。
+完整功能：六方向规则化吸附、自动端点/直段/转角/三通/交叉换形、堆叠、悬挑、连通链、稳定度、光网、160 次撤销历史、四地点隔离存档、JSON 导入导出、四态环境、无真实点光源夜景、地图与每地点六个目标。预置建筑不计入学习者新增成果。
 
 主要适配桌面浏览器和横屏平板。没有联机、战斗、资源采集、无限地形流送或第一人称角色控制。游戏内挑战不是教师评分器。
 
@@ -33,13 +33,14 @@
 2. Godot 导入 `project/project.godot`，等待 GLB/字体导入后运行。
 3. 修改模型时，使用 Blender 4.2+ 打开 `.blend` 副本；运行游戏本身不需要 Blender。
 
-重建资产（已有资产可以直接运行，不必重建）：
+重建确定性地点资产（已有资产可以直接运行，不必重建）：
 
 ```sh
-blender --background --factory-startup --python project/art/generate_harbor.py -- --output project/assets/models --source project/art/mist-harbor-kit.blend
+blender --background --factory-startup --python tools/generate_location_assets.py
+blender --background --factory-startup --python tools/inspect_location_assets.py
 ```
 
-脚本不下载素材，不访问服务，不读取密钥；它重建八种模块并覆盖明确指定的输出文件。要保护手工修改，先复制源文件或换输出目录。
+脚本不下载素材、不访问服务、不读取密钥；AI 候选资产可通过 `tools/asset_pipeline.py generate` 使用 Tripo 或混元，再统一经过 Blender QA。密钥只从本地环境读取，不进入仓库。
 
 详细测试、导出与学习步骤见 `project/docs/learning-guide.md`。远程 Web 试玩必须使用 **HTTPS**；仅 `localhost`/回环地址可用 HTTP。不能使用 `file://`。
 
@@ -106,9 +107,19 @@ Fork/Remix：优先复制到新工程和新存档；平台的跨用户样板领�
 
 ## 许可证与素材来源
 
-八种模块、建模脚本产出的几何和项目图标均为本任务原创；模型以 CC0-1.0 提供。Godot 游戏脚本作为当前仓库样板源代码交付。中文字体为 Noto Sans SC 的子集，采用 SIL Open Font License，完整声明见 `project/assets/fonts-OFL.txt`。未使用外部 CDN、商业游戏贴图或网络模型链接。
+17 种模块、建模脚本产出的几何和项目图标均为本任务原创；模型以 CC0-1.0 提供。在线生成候选只有在来源与授权写入 provenance 后才可替换基线资产。Godot 游戏脚本作为当前仓库样板源代码交付。中文字体为 Noto Sans SC 的子集，采用 SIL Open Font License，完整声明见 `project/assets/fonts-OFL.txt`。未使用外部 CDN、商业游戏贴图或网络模型链接。
 
-## 本次样板验收（2026-09-10）
+## 验收记录
+
+### cursor_work 四地点实现（2026-09-28）
+
+- Godot 模型检查 **87/87**、真实场景检查 **29/29**；离线 provider 合约 **3/3**。
+- 资产机器验收 **16/16**：17 个 GLB 均存在，Blender QA 后全部落在三角面预算内；运行时无 `OmniLight3D` / `SpotLight3D`。
+- Playwright 真实 Web 交互 **33/33**，覆盖四地点切换、四态环境、放置/撤销/重做、存档刷新和错误日志。
+- Web、Windows 自包含版本及 source/seed/web 三个 ZIP 均已实际生成；哈希记录在本机构建输出。
+- `project/docs/acceptance-machine-report.json` 明确列出仍需 Benja 人工签字的观感项；机器测试不冒充审美验收。
+
+### 样板验收（2026-09-10）
 
 - 试玩：`https://benjamin-any5.devcloud.woa.com:8090/preview/mist-harbor-3d/build/index.html`。
 - 教学源码包：同一目录下的 `mist-harbor-source.zip`，含 Godot、Blender 源文件和课程。

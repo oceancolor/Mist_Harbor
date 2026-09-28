@@ -34,8 +34,11 @@ func _run() -> void:
 	check(scene.model.has_cell(Vector3i(24,0,24)), "UI redo restores command")
 	scene._toggle_night()
 	await process_frame
-	check(scene.world.night, "day-night state toggles")
+	check(scene.world.phase == "sunset", "environment advances from day to sunset")
 	scene._toggle_night()
+	check(scene.world.night and scene.world.phase == "night", "four-state cycle reaches night")
+	var real_lights: Array[Node] = scene.world.find_children("*", "OmniLight3D", true, false)
+	check(real_lights.is_empty(), "night rendering uses no OmniLight3D")
 	scene._set_category("自然")
 	var selected_entry: Dictionary = scene.model.definition(scene.selected)
 	check(str(selected_entry.get("category", "")) == "自然", "category selects valid material")
@@ -45,6 +48,24 @@ func _run() -> void:
 	check(scene.modal != null, "help overlay available")
 	scene._close_modal()
 	check(scene.modal == null, "help returns to game")
+	scene._switch_location("santorini")
+	await process_frame
+	check(scene.model.location_id == "santorini", "location switch replaces the active profile")
+	check(scene.model.build_max_y() == 32, "scene uses location-specific vertical bounds")
+	check(scene.selected in scene.model.palette, "location switch keeps a valid selected material")
+	check(scene.objectives.size() == 6, "active location exposes M1-M6 objectives")
+	for location_id in ["quanzhou", "seychelles", "cape_cod"]:
+		scene._switch_location(location_id)
+		await process_frame
+		check(scene.model.location_id == location_id, "%s location is playable" % [location_id])
+		check(scene.model.cells.size() > 0, "%s location has generated terrain" % [location_id])
+	check(scene.world.set_weather_fog(true), "Cape Cod weather fog can be enabled")
+	scene.world._apply_environment_blend(1.0)
+	check(is_equal_approx(scene.world.environment.fog_density, 0.0075), "Cape Cod weather fog uses the approved density")
+	check(scene.world.set_weather_fog(false), "Cape Cod weather fog can be disabled")
+	scene.world._apply_environment_blend(1.0)
+	check(is_equal_approx(scene.world.environment.fog_density, 0.0036), "weather fog restores the active daytime density")
+	check(is_equal_approx(scene.world.environment.fog_height_density, 0.0), "height fog stays disabled")
 	print("SCENE_SMOKE_RESULT failed=", failures)
 	scene.queue_free()
 	await process_frame

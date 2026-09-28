@@ -8,7 +8,9 @@
       "color": "8ab18c",
       "height": 1,
       "mesh": "cube",
-      "tip": "铺一块绿地，让岛屿自由生长。"
+      "tip": "铺一块绿地，让岛屿自由生长。",
+      "locations": ["quanzhou", "santorini", "seychelles", "cape_cod"],
+      "expansion": {"family": "ground", "connectors": {"east": "ground", "west": "ground", "north": "ground", "south": "ground", "up": "terrain_stack", "down": "terrain_stack"}}
     },
     {
       "id": "stone",
@@ -17,7 +19,9 @@
       "color": "b9bcad",
       "height": 1,
       "mesh": "cube",
-      "tip": "堆叠石块，塑造山丘与地基。"
+      "tip": "堆叠石块，塑造山丘与地基。",
+      "locations": ["quanzhou", "santorini", "seychelles", "cape_cod"],
+      "expansion": {"family": "bedrock", "connectors": {"east": "rock", "west": "rock", "north": "rock", "south": "rock", "up": "terrain_stack", "down": "terrain_stack"}}
     },
     {
       "id": "wood",
@@ -26,7 +30,9 @@
       "color": "bb946c",
       "height": 1,
       "mesh": "cube",
-      "tip": "从海岸延伸栈道，连接散落的岛屿。"
+      "tip": "从海岸延伸栈道，连接散落的岛屿。",
+      "locations": ["quanzhou", "cape_cod"],
+      "expansion": {"family": "path", "connectors": {"east": "path", "west": "path", "north": "path", "south": "path"}}
     },
     {
       "id": "brick",
@@ -35,7 +41,9 @@
       "color": "c8856b",
       "height": 1,
       "mesh": "cube",
-      "tip": "用陶土色砌起属于你的高塔。"
+      "tip": "用陶土色砌起属于你的高塔。",
+      "locations": ["quanzhou"],
+      "expansion": {"family": "masonry", "connectors": {"east": "wall", "west": "wall", "north": "wall", "south": "wall", "up": "building_stack", "down": "building_stack"}}
     },
     {
       "id": "cottage",
@@ -44,7 +52,9 @@
       "color": "d1826b",
       "height": 1,
       "mesh": "cottage",
-      "tip": "小屋可以堆叠；R 旋转入口朝向。"
+      "tip": "小屋可以堆叠；R 旋转入口朝向。",
+      "locations": ["quanzhou", "cape_cod"],
+      "expansion": {"family": "house", "connectors": {"east": "house", "west": "house", "north": "house", "south": "house", "up": "building_stack", "down": "building_stack"}}
     },
     {
       "id": "roof",
@@ -53,7 +63,9 @@
       "color": "c67360",
       "height": 1,
       "mesh": "roof",
-      "tip": "为石块、木块加上一片红屋顶。"
+      "tip": "为石块、木块加上一片红屋顶。",
+      "locations": ["quanzhou", "santorini", "cape_cod"],
+      "expansion": {"family": "roof", "connectors": {"east": "roof", "west": "roof", "north": "roof", "south": "roof"}}
     },
     {
       "id": "arch",
@@ -62,7 +74,9 @@
       "color": "d4cfb8",
       "height": 1,
       "mesh": "arch",
-      "tip": "沿水面拼接桥拱，营造连绵的长桥。"
+      "tip": "沿水面拼接桥拱，营造连绵的长桥。",
+      "locations": ["quanzhou"],
+      "expansion": {"family": "bridge", "connectors": {"east": "path", "west": "path", "north": "path", "south": "path"}}
     },
     {
       "id": "glass",
@@ -107,7 +121,9 @@
       "color": "73a38b",
       "height": 2,
       "mesh": "tree",
-      "tip": "用树丛划分步道、花园与生活空间。"
+      "tip": "用树丛划分步道、花园与生活空间。",
+      "locations": ["quanzhou", "seychelles", "cape_cod"],
+      "expansion": {"family": "grove", "connectors": {"east": "grove", "west": "grove", "north": "grove", "south": "grove"}}
     },
     {
       "id": "lamp",
@@ -116,7 +132,9 @@
       "color": "eac989",
       "height": 2,
       "mesh": "lamp",
-      "tip": "切换夜色，看看温暖的岛屿灯火。"
+      "tip": "切换夜色，看看温暖的岛屿灯火。",
+      "locations": ["quanzhou", "cape_cod"],
+      "expansion": {"family": "light_network", "connectors": {"east": "light", "west": "light", "north": "light", "south": "light"}}
     },
     {
       "id": "flower",
@@ -125,7 +143,97 @@
       "color": "d9aeae",
       "height": 1,
       "mesh": "flower",
-      "tip": "给石头与木头之间，留一点柔软。"
+      "tip": "给石头与木头之间，留一点柔软。",
+      "locations": ["quanzhou", "santorini", "seychelles", "cape_cod"],
+      "expansion": {"family": "plant_cluster", "connectors": {"east": "plant", "west": "plant", "north": "plant", "south": "plant"}}
+    },
+    {
+      "id": "sand",
+      "name": "沙滩",
+      "category": "地形",
+      "color": "d9c89f",
+      "height": 1,
+      "mesh": "sand",
+      "tip": "沿海面吸附铺展，边缘会自然收口。",
+      "locations": ["quanzhou", "seychelles", "cape_cod"],
+      "expansion": {"family": "beach", "connectors": {"east": "ground", "west": "ground", "north": "ground", "south": "ground", "down": "terrain_stack"}}
+    },
+    {
+      "id": "white_house",
+      "name": "白墙单体",
+      "category": "建筑",
+      "color": "eee9da",
+      "height": 1,
+      "mesh": "white_house",
+      "tip": "沿崖壁横向吸附，也可在有支撑时向上叠建。",
+      "locations": ["santorini"],
+      "expansion": {"family": "cycladic_house", "connectors": {"east": "house", "west": "house", "north": "house", "south": "house", "up": "building_stack", "down": "building_stack"}}
+    },
+    {
+      "id": "blue_dome",
+      "name": "蓝顶",
+      "category": "建筑",
+      "color": "3d82b8",
+      "height": 1,
+      "mesh": "blue_dome",
+      "tip": "吸附在白墙单体上方，形成圣托里尼天际线。",
+      "locations": ["santorini"],
+      "expansion": {"family": "dome", "connectors": {"east": "roof", "west": "roof", "north": "roof", "south": "roof", "down": "building_stack"}}
+    },
+    {
+      "id": "cliff",
+      "name": "火山崖",
+      "category": "地形",
+      "color": "8b776e",
+      "height": 1,
+      "mesh": "cliff",
+      "tip": "六方向组合的崖体基岩，为悬挑建筑提供锚点。",
+      "locations": ["santorini"],
+      "expansion": {"family": "cliff", "connectors": {"east": "rock", "west": "rock", "north": "rock", "south": "rock", "up": "terrain_stack", "down": "terrain_stack"}}
+    },
+    {
+      "id": "granite",
+      "name": "花岗巨石",
+      "category": "地形",
+      "color": "aaa59a",
+      "height": 1,
+      "mesh": "granite",
+      "tip": "按稳定度规则上下叠放，形成塞舌尔巨石群。",
+      "locations": ["seychelles"],
+      "expansion": {"family": "granite", "connectors": {"east": "rock", "west": "rock", "north": "rock", "south": "rock", "up": "terrain_stack", "down": "terrain_stack"}}
+    },
+    {
+      "id": "palm_cluster",
+      "name": "海椰子丛",
+      "category": "自然",
+      "color": "4f946d",
+      "height": 2,
+      "mesh": "palm_cluster",
+      "tip": "与相邻植物丛自动衔接成疏密有序的热带群落。",
+      "locations": ["seychelles"],
+      "expansion": {"family": "tropical_grove", "connectors": {"east": "plant", "west": "plant", "north": "plant", "south": "plant"}}
+    },
+    {
+      "id": "lighthouse",
+      "name": "海岸灯塔",
+      "category": "建筑",
+      "color": "e7e1d3",
+      "height": 3,
+      "mesh": "lighthouse",
+      "tip": "光网核心，夜间以无真实点光源的光锥指引航线。",
+      "locations": ["cape_cod"],
+      "expansion": {"family": "light_network", "connectors": {"east": "light", "west": "light", "north": "light", "south": "light"}}
+    },
+    {
+      "id": "light_marker",
+      "name": "航标",
+      "category": "建筑",
+      "color": "d69a68",
+      "height": 2,
+      "mesh": "light_marker",
+      "tip": "与灯塔和相邻航标吸附，扩展海岸光网。",
+      "locations": ["cape_cod"],
+      "expansion": {"family": "light_network", "connectors": {"east": "light", "west": "light", "north": "light", "south": "light"}}
     }
   ]
 }
