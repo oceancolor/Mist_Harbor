@@ -8,6 +8,11 @@ const INK := Color("2d514b")
 const MUTED := Color("789087")
 const PAPER := Color("f7f8ed")
 const ACCENT := Color("497c6b")
+const CAMERA_MIN_PITCH := deg_to_rad(4.0)
+const CAMERA_MAX_PITCH := deg_to_rad(89.0)
+const CAMERA_MIN_DISTANCE := 18.0
+const CAMERA_MAX_DISTANCE := 90.0
+const CAMERA_CLEARANCE := 1.35
 
 var model: HarborWorldModel
 var world: HarborBuildWorld
@@ -22,8 +27,8 @@ var yaw: float = 0.72
 var target_yaw: float = 0.72
 var pitch: float = 0.72
 var target_pitch: float = 0.72
-var zoom: float = 32.0
-var target_zoom: float = 32.0
+var zoom: float = 48.0
+var target_zoom: float = 48.0
 var orbiting: bool = false
 var panning: bool = false
 var pick_result: Dictionary = {}
@@ -83,9 +88,10 @@ func _ready() -> void:
 	world = World.new()
 	add_child(world)
 	world.setup(model)
-	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	camera.projection = Camera3D.PROJECTION_PERSPECTIVE
+	camera.fov = 42.0
 	camera.near = 0.1
-	camera.far = 300.0
+	camera.far = 1600.0
 	add_child(camera)
 	camera.current = true
 	_update_camera(1.0)
@@ -146,14 +152,20 @@ func _update_camera(delta: float) -> void:
 		if Input.is_physical_key_pressed(KEY_E): target_yaw -= delta * 0.9
 	target_focus.x = clampf(target_focus.x, -23, 23)
 	target_focus.z = clampf(target_focus.z, -23, 23)
+	target_focus.y = maxf(target_focus.y, 0.75)
+	var clearance_pitch := asin(clampf((CAMERA_CLEARANCE - target_focus.y) / maxf(target_zoom, 0.01), -1.0, 1.0))
+	target_pitch = clampf(target_pitch, maxf(CAMERA_MIN_PITCH, clearance_pitch), CAMERA_MAX_PITCH)
 	var weight := minf(1.0, delta * 12.0)
 	focus = focus.lerp(target_focus, weight)
 	yaw = lerpf(yaw, target_yaw, weight)
 	pitch = lerpf(pitch, target_pitch, weight)
 	zoom = lerpf(zoom, target_zoom, weight)
-	camera.size = zoom
-	camera.position = focus + Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch)) * 48.0
+	camera.position = focus + Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch)) * zoom
+	if camera.position.y < CAMERA_CLEARANCE:
+		camera.position.y = CAMERA_CLEARANCE
 	camera.look_at(focus, Vector3.UP)
+	if world != null:
+		world.set_viewer_position(camera.global_position)
 	if minimap != null and minimap.focus_position.distance_squared_to(focus) > 0.02:
 		minimap.focus_position = focus
 		minimap.queue_redraw()
@@ -163,7 +175,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and not event.pressed:
 		if event.button_index == MOUSE_BUTTON_RIGHT: orbiting = false
 		if event.button_index == MOUSE_BUTTON_MIDDLE: panning = false
-		if event.button_index == MOUSE_BUTTON_LEFT: painting = false
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			painting = false
+			panning = false
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		if modal != null:
 			_close_modal()
@@ -183,9 +197,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_MIDDLE:
 			panning = event.pressed
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			target_zoom = clampf(target_zoom - 1.6, 10.0, 48.0)
+			target_zoom = clampf(target_zoom - 3.0, CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE)
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			target_zoom = clampf(target_zoom + 1.6, 10.0, 48.0)
+			target_zoom = clampf(target_zoom + 3.0, CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE)
+		elif event.button_index == MOUSE_BUTTON_LEFT and event.shift_pressed:
+			panning = event.pressed
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			painting = true
 			last_painted = Vector3i(999,999,999)
@@ -193,14 +209,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		if orbiting:
 			target_yaw -= event.relative.x * 0.006
-			target_pitch = clampf(target_pitch + event.relative.y * 0.004, 0.38, 1.25)
+			target_pitch = clampf(target_pitch + event.relative.y * 0.005, CAMERA_MIN_PITCH, CAMERA_MAX_PITCH)
 		if panning:
 			var right := Vector3(cos(yaw), 0, -sin(yaw))
 			var forward := Vector3(sin(yaw), 0, cos(yaw))
-			target_focus -= (right * event.relative.x + forward * event.relative.y) * target_zoom * 0.0015
+			target_focus -= (right * event.relative.x + forward * event.relative.y) * target_zoom * 0.0012
 	elif event is InputEventScreenDrag:
-		if event.index == 1:
+		if event.index == 0:
+			var touch_right := Vector3(cos(yaw), 0, -sin(yaw))
+			var touch_forward := Vector3(sin(yaw), 0, cos(yaw))
+			target_focus -= (touch_right * event.relative.x + touch_forward * event.relative.y) * target_zoom * 0.0012
+		elif event.index == 1:
 			target_yaw -= event.relative.x * 0.006
+			target_pitch = clampf(target_pitch + event.relative.y * 0.005, CAMERA_MIN_PITCH, CAMERA_MAX_PITCH)
 	elif event is InputEventKey and event.pressed and not event.echo:
 		if event.ctrl_pressed and event.keycode == KEY_Z:
 			_redo() if event.shift_pressed else _undo()
@@ -387,7 +408,7 @@ func _build_ui() -> void:
 	selected_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_build_palette()
 	status_label = _label(hud, "选中一块建材，在海岛上开始建造。", 12)
-	help_strip = _label(hud, "左键 拼搭   /   右键拖动 环绕   /   WASD 平移   /   滚轮 缩放", 12, Color("335f59"))
+	help_strip = _label(hud, "左键 拼搭   /   右键拖动 环绕   /   中键或 Shift+拖动 平移   /   滚轮 缩放", 12, Color("335f59"))
 	help_strip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	footer_label = _label(hud, "GODOT + BLENDER  /  原创建造样板", 10, Color("476e64"))
 	toast_label = _label(hud, "", 14)
@@ -674,7 +695,7 @@ func _center_camera() -> void:
 	target_focus = Vector3(0,1,1)
 	target_yaw = 0.72
 	target_pitch = 0.72
-	target_zoom = 32.0
+	target_zoom = 48.0
 
 func _save() -> void:
 	if model.save_local():
@@ -689,7 +710,7 @@ func _toast(message: String, seconds: float = 3.5) -> void:
 	toast_time = seconds
 
 func _show_help() -> void:
-	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海湾。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：环绕视角    中键拖动 / WASD：平移\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转下一件建材    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：清晨/白昼/日落/夜晚    G：Cape Cod 浓雾\nP：隐藏界面    C：拍照并分享    Esc：返回\n\n六方向兼容接口会自动吸附并重算端点、直段、转角、三通和交叉形态。\n高模型占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，双指拖动旋转，使用界面按钮。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
+	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海湾。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：360° 环绕，俯仰可从贴近海平面到垂直俯视\n中键拖动 / Shift+左键 / WASD：平移场景\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转下一件建材    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：清晨/白昼/日落/夜晚    G：Cape Cod 浓雾\nP：隐藏界面    C：拍照并分享    Esc：返回\n\n六方向兼容接口会自动吸附并重算端点、直段、转角、三通和交叉形态。\n高模型占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，单指拖动场景，双指拖动环绕。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
 
 func _show_menu() -> void:
 	var options: Array = [

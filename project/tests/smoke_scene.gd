@@ -24,6 +24,21 @@ func _run() -> void:
 	check(scene.world.scenes.size() == expected_models, "all Blender GLBs imported")
 	check(scene.world.visible_faces > 0, "real terrain mesh generated")
 	check(scene.world.ground_collision.shape != null, "raycast collision generated")
+	check(scene.camera.projection == Camera3D.PROJECTION_PERSPECTIVE and scene.camera.far >= 1600.0, "perspective orbit camera sees the extended horizon")
+	check(scene.world.water_surface.mesh is PlaneMesh and scene.world.water_surface.mesh.size.x >= 1600.0, "extended ocean prevents low-angle edge reveals")
+	check(scene.world.shore_foam.mesh != null, "shoreline foam mesh surrounds exposed coast cells")
+	check(scene.world.horizon_lod.get_child_count() >= 16, "location-specific low-detail horizon surrounds the scene")
+	var water_shader_code: String = scene.world.sea_material.shader.code
+	check("fresnel" in water_shader_code and "screen_texture" in water_shader_code and "lod" in water_shader_code, "water shader includes Fresnel refraction and distance LOD")
+	scene.target_pitch = 0.0
+	scene.target_zoom = 18.0
+	scene._update_camera(1.0)
+	check(scene.target_pitch >= deg_to_rad(4.0) and scene.camera.position.y >= 1.35, "ground-level orbit stays above the ocean")
+	scene.target_pitch = PI
+	scene._update_camera(1.0)
+	check(scene.target_pitch <= deg_to_rad(89.0), "orbit reaches near-vertical without look-at singularity")
+	scene._center_camera()
+	scene._update_camera(1.0)
 	check(scene.model.place(Vector3i(24,0,24), "cottage", 2), "place through game model")
 	await process_frame
 	await physics_frame
@@ -37,8 +52,18 @@ func _run() -> void:
 	check(scene.world.phase == "sunset", "environment advances from day to sunset")
 	scene._toggle_night()
 	check(scene.world.night and scene.world.phase == "night", "four-state cycle reaches night")
+	scene.world._apply_environment_blend(1.0)
+	check(scene.world.moon_disc.visible and not scene.world.sun_disc.visible, "night sky displays the full moon instead of the sun")
+	check(scene.world.water_light < 0.5, "night phase darkens refractive water without removing moon reflections")
 	var real_lights: Array[Node] = scene.world.find_children("*", "OmniLight3D", true, false)
 	check(real_lights.is_empty(), "night rendering uses no OmniLight3D")
+	scene.world.set_phase("dawn", false)
+	var dawn_disc: Color = scene.world.sun_disc.modulate
+	scene.world.set_phase("day", false)
+	var day_disc: Color = scene.world.sun_disc.modulate
+	scene.world.set_phase("sunset", false)
+	var sunset_disc: Color = scene.world.sun_disc.modulate
+	check(scene.world.sun_disc.visible and dawn_disc != day_disc and day_disc != sunset_disc, "dawn day and sunset use distinct luminous sun colours")
 	scene._set_category("自然")
 	var selected_entry: Dictionary = scene.model.definition(scene.selected)
 	check(str(selected_entry.get("category", "")) == "自然", "category selects valid material")
