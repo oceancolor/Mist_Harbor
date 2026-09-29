@@ -7,28 +7,38 @@
 5. 引擎程序不属于源码包。.codebuddy/local/tools.json 记录当前电脑可用程序路径；换机器时修改该文件或使用 --godot。
 6. 不包含云端密钥、web-cb 后端、运行身份、玩家存档或课程提交记录。
 
-从本目录在终端执行（Python 3.11+）：
-  python tools/dev.py editor
-  python tools/dev.py run
-  python tools/dev.py test
-  python tools/dev.py export-web
-  python tools/dev.py preview --port 8188
-  python tools/dev.py package
+进入游戏后会先弹出「选择一个地点」：泉州 / 圣托里尼 / 塞舌尔 / Cape Cod 全部开放，
+随时可以从「作品管理 → 切换地点」换一个。每个地点有独立的地形、建材表、环境参数和一个独占机制。
+
+从本目录在终端执行（Python 3.11+，本机用 py 启动器）：
+  py tools/dev.py editor
+  py tools/dev.py run
+  py tools/dev.py test
+  py tools/dev.py export-web
+  py tools/dev.py preview --port 8188
+  py tools/dev.py package
 
 可覆盖 Godot 路径：
-  python tools/dev.py test --godot "C:/Tools/Godot_v4.7-stable_win64_console.exe"
+  py tools/dev.py test --godot "C:/Tools/Godot_v4.7-stable_win64_console.exe"
 Web 导出仍需要当前用户已安装匹配的 Godot 4.7 Web 模板；项目本身不要求 CodeBuddy/BFF 在线。
+换机器时先跑 py tools/fetch_templates.py（分块续传，反复执行至 complete）再解包到导出模板目录。
 
 目录：
-  project/       游戏场景、脚本、数据、模型、Blender源、学习指南、测试
-  tools/         本地开发辅助入口
-  .codebuddy/releases/  重新生成的源码/课程种子/Web包（不入库）
-  logs/                本次独立工程导入和测试日志（不入库）
-  .codebuddy/local/     仅本机工具路径和测试用户目录（不入库）
-  tutorial.yaml  平台教程任务图；独立运行游戏不需要导入平台
-  learning_tasks.json  教学任务，不含成绩和虚构完成状态
-  README.md      从 web-cb 样板带来的完整说明；其中仓库命令路径以原样板位置为准
-  import-manifest.json 来源提交、未提交文件标记、复制文件校验和
+  project/               游戏场景、脚本、数据、模型、Blender源、学习指南、测试
+    scripts/core/        共享底座：LocationProfile / 四态昼夜 / 水体 / 雾 / 光斑贴片 / 多格构件 / 地点注册表
+    scripts/locations/   四地点的地形生成器与独占机制（每地点只允许一个 location_mechanic）
+    data/locations/      四地点的环境参数（water-lighting-params v4.3 的机器可读副本）与建材表
+  tools/                 本地开发辅助入口
+  Dev Driven/            开发驱动文档集（环境数值唯一源是 water-lighting-params.md v4.3）
+  3D tools config/       AI 资产生成管线（Meshy / Tripo / Blender headless QA）
+  control-manifest.md    防复发控制清单（禁止真实点光源 · 雾三禁 · A-1 材质族 · 昼夜硬等价）
+  .codebuddy/releases/   重新生成的源码/课程种子/Web包（不入库）
+  logs/                  本次独立工程导入和测试日志（不入库）
+  .codebuddy/local/      仅本机工具路径和测试用户目录（不入库）
+  tutorial.yaml          平台教程任务图；独立运行游戏不需要导入平台
+  learning_tasks.json    教学任务，不含成绩和虚构完成状态
+  README.md              完整说明；其中仓库命令路径以原样板位置为准
+  import-manifest.json   来源提交、未提交文件标记、复制文件校验和
 
 本次未创建 Git 提交、未设置远端仓库、未发布或同步线上游戏。
 学习任务和课程UI仍由 web-cb 主线负责，本目录专注游戏开发。

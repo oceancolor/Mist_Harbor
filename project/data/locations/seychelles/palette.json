@@ -1,0 +1,200 @@
+{
+  "schema_version": 2,
+  "location_id": "seychelles",
+  "items": [
+    {
+      "id": "sand",
+      "name": "白沙",
+      "category": "地形",
+      "color": "F0E4CC",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "近白、带一点粉调的钙砂。石堆稳了之后，龟会从这里爬来。"
+    },
+    {
+      "id": "grass",
+      "name": "岛心草甸",
+      "category": "地形",
+      "color": "7FA96B",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "椰林下的草地，从花岗岩丘一直铺到沙滩。"
+    },
+    {
+      "id": "stone",
+      "name": "石基",
+      "category": "地形",
+      "color": "B8A092",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "花岗岩基座，给石堆一个平的起手。"
+    },
+    {
+      "id": "wood",
+      "name": "木栈道",
+      "category": "地形",
+      "color": "bb946c",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "跨过浅礁泻湖的窄栈道。"
+    },
+    {
+      "id": "boulder",
+      "name": "花岗岩巨石（大）",
+      "category": "核心",
+      "color": "B8A092",
+      "height": 2,
+      "size": [
+        3,
+        2,
+        3
+      ],
+      "mesh": "loc_sy_boulder",
+      "tip": "三格宽的大圆石。R 键转朝向，四个方向重心不同。",
+      "stack": true
+    },
+    {
+      "id": "boulder_mid",
+      "name": "花岗岩巨石（中）",
+      "category": "核心",
+      "color": "B8A092",
+      "height": 2,
+      "size": [
+        2,
+        2,
+        2
+      ],
+      "mesh": "loc_sy_nat_boulder_mid",
+      "tip": "两格宽的圆石，收分时放在上层。",
+      "stack": true
+    },
+    {
+      "id": "wedge",
+      "name": "楔石",
+      "category": "核心",
+      "color": "A89889",
+      "height": 1,
+      "mesh": "loc_sy_nat_wedge",
+      "tip": "楔石塞进石缝，能让上面的石头站得更稳。"
+    },
+    {
+      "id": "creole",
+      "name": "珊瑚石屋",
+      "category": "建筑",
+      "color": "E0D4C0",
+      "height": 2,
+      "size": [
+        2,
+        2,
+        2
+      ],
+      "mesh": "loc_sy_creole",
+      "tip": "珊瑚石墙 + 木构 + 茅草顶的克里奥尔小屋。"
+    },
+    {
+      "id": "arch",
+      "name": "天然石拱横梁",
+      "category": "建筑",
+      "color": "C0AE9C",
+      "height": 1,
+      "mesh": "arch",
+      "tip": "两块等高巨石相距两三格且都稳时，架上它就成了一座天然石拱。"
+    },
+    {
+      "id": "coco",
+      "name": "海椰子树",
+      "category": "自然",
+      "color": "2E7A4E",
+      "height": 3,
+      "mesh": "loc_sy_coco_ai",
+      "tip": "巨大扇形叶的国宝树；雌株结双瓣果。"
+    },
+    {
+      "id": "tortoise",
+      "name": "象龟",
+      "category": "生物",
+      "color": "7A6254",
+      "height": 1,
+      "mesh": "loc_sy_tortoise_ai",
+      "tip": "稳住的石堆旁会来一只象龟，慢慢爬。"
+    },
+    {
+      "id": "flower",
+      "name": "岩生海芋",
+      "category": "自然",
+      "color": "6FA36A",
+      "height": 1,
+      "mesh": "flower",
+      "tip": "石缝里长出来的绿意——稳度的回报，不是奖励。"
+    },
+    {
+      "id": "lamp",
+      "name": "暖光灯",
+      "category": "自然",
+      "color": "eac989",
+      "height": 2,
+      "mesh": "lamp",
+      "tip": "入夜后给潟湖边留一点暖光。",
+      "emit": true,
+      "patch": {
+        "radius": 1.5,
+        "color": "ffbd70"
+      }
+    },
+    {
+      "id": "palm",
+      "name": "棕榈",
+      "category": "自然",
+      "color": "37935A",
+      "height": 3,
+      "mesh": "loc_sy_nat_palm",
+      "tip": "挺直的棕榈，和椰子一高一矮正好配成林。"
+    },
+    {
+      "id": "shrub",
+      "name": "灌木丛",
+      "category": "自然",
+      "color": "4E8F52",
+      "height": 1,
+      "mesh": "loc_shared_nat_shrub",
+      "tip": "低矮的常绿灌木，填满礁石之间的绿意。"
+    },
+    {
+      "id": "reeds",
+      "name": "苇草",
+      "category": "自然",
+      "color": "b8a46a",
+      "height": 1,
+      "mesh": "loc_shared_nat_reeds",
+      "tip": "滩涂边的苇草，风一吹就沙沙响。"
+    },
+    {
+      "id": "resort",
+      "name": "度假村",
+      "category": "建筑",
+      "color": "F6F1E4",
+      "height": 2,
+      "size": [
+        4,
+        2,
+        3
+      ],
+      "mesh": "loc_sy_bld_resort",
+      "tip": "两排客房夹一座无边泳池——印度洋的清晨从这开始。"
+    },
+    {
+      "id": "golf",
+      "name": "高尔夫果岭",
+      "category": "建筑",
+      "color": "6FBF63",
+      "height": 1,
+      "size": [
+        3,
+        1,
+        3
+      ],
+      "mesh": "loc_sy_bld_golf",
+      "tip": "修剪草坪、一个沙坑、一面旗——海边的三杆洞。"
+    }
+  ]
+}

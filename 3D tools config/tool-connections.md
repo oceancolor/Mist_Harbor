@@ -43,7 +43,7 @@ Windows 注意：若客户端不自动包一层，需改为 `"command": "cmd", "
       "command": "npx",
       "args": ["-y", "tripo-ai-mcp-server"],
       "env": {
-        "TRIPO_API_KEY": "YOUR_TRIPO_KEY_HERE"
+        "TRIPO_API_KEY": "YOUR_KEY_HERE"
       }
     }
   }

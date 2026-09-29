@@ -164,6 +164,389 @@
       "task_id": "mist-harbor-lamp-v2-65a7138e"
     },
     {
+      "id": "loc_cc_bld_church",
+      "file": "loc_cc_bld_church.glb",
+      "source": "tools/art/bld_church.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 10216
+    },
+    {
+      "id": "loc_cc_bld_fogstation",
+      "file": "loc_cc_bld_fogstation.glb",
+      "source": "tools/art/bld_fogstation.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 13592
+    },
+    {
+      "id": "loc_cc_bld_nauset",
+      "file": "loc_cc_bld_nauset.glb",
+      "source": "tools/art/bld_nauset.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 29740
+    },
+    {
+      "id": "loc_cc_highland",
+      "file": "loc_cc_highland.glb",
+      "source": "tools/art/highland.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 37156
+    },
+    {
+      "id": "loc_cc_nat_beachgrass",
+      "file": "loc_cc_nat_beachgrass.glb",
+      "source": "tools/art/nat_beachgrass.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 13632
+    },
+    {
+      "id": "loc_cc_nat_pine",
+      "file": "loc_cc_nat_pine.glb",
+      "source": "tools/art/nat_pine.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 20632
+    },
+    {
+      "id": "loc_cc_prop_buoy",
+      "file": "loc_cc_prop_buoy.glb",
+      "triangles": 569,
+      "bounds": {
+        "blender_min": [
+          -0.45441174507141113,
+          -0.4485293924808502,
+          0
+        ],
+        "blender_max": [
+          0.45441174507141113,
+          0.4485293924808502,
+          1.5
+        ],
+        "godot_size": [
+          0.9088,
+          1.5,
+          0.8971
+        ]
+      },
+      "bytes": 28588,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": ".codebuddy/local/tripo/samples/buoy_s42b_low",
+      "task_id": "113aa564-10b4-40e4-84f9-414543c2390e"
+    },
+    {
+      "id": "loc_cc_shingle",
+      "file": "loc_cc_shingle.glb",
+      "source": "tools/art/shingle.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 24576
+    },
+    {
+      "id": "loc_qz_bld_beacon",
+      "file": "loc_qz_bld_beacon.glb",
+      "triangles": 380,
+      "bounds": {
+        "blender_min": [
+          -0.5,
+          -0.5,
+          0
+        ],
+        "blender_max": [
+          0.5,
+          0.5,
+          3.051138401031494
+        ],
+        "godot_size": [
+          1.0,
+          3.0511,
+          1.0
+        ]
+      },
+      "bytes": 27728,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/qz_beacon.py",
+      "task_id": ""
+    },
+    {
+      "id": "loc_qz_bld_mansion",
+      "file": "loc_qz_bld_mansion.glb",
+      "triangles": 1900,
+      "bounds": {
+        "blender_min": [
+          -1.0654351711273193,
+          -1.5,
+          0
+        ],
+        "blender_max": [
+          1.0654351711273193,
+          1.5,
+          1.9719845056533813
+        ],
+        "godot_size": [
+          2.1309,
+          1.972,
+          3.0
+        ]
+      },
+      "bytes": 1014848,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": ".codebuddy/local/tripo/samples/qz_mansion_hf",
+      "task_id": "0323ff09-485e-43bd-ad49-0a63c95b380b"
+    },
+    {
+      "id": "loc_qz_bld_oyster",
+      "file": "loc_qz_bld_oyster.glb",
+      "triangles": 1900,
+      "bounds": {
+        "blender_min": [
+          -0.9982484579086304,
+          -1,
+          0
+        ],
+        "blender_max": [
+          0.9982484579086304,
+          1,
+          2.03629732131958
+        ],
+        "godot_size": [
+          1.9965,
+          2.0363,
+          2
+        ]
+      },
+      "bytes": 659912,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": ".codebuddy/local/tripo/samples/qz_oyster_hf",
+      "task_id": "5f7d4504-912d-448a-a3ef-2d02dabdee5b"
+    },
+    {
+      "id": "loc_qz_bld_ridge",
+      "file": "loc_qz_bld_ridge.glb",
+      "triangles": 96,
+      "bounds": {
+        "blender_min": [
+          -0.5,
+          -0.05801629275083542,
+          0
+        ],
+        "blender_max": [
+          0.5,
+          0.05801629275083542,
+          0.34289637207984924
+        ],
+        "godot_size": [
+          1.0,
+          0.3429,
+          0.116
+        ]
+      },
+      "bytes": 8956,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/qz_ridge.py",
+      "task_id": ""
+    },
+    {
+      "id": "loc_qz_nat_banyan",
+      "file": "loc_qz_nat_banyan.glb",
+      "triangles": 1900,
+      "bounds": {
+        "blender_min": [
+          -0.7495108246803284,
+          -1,
+          0
+        ],
+        "blender_max": [
+          0.7495108246803284,
+          1,
+          1.9812290668487549
+        ],
+        "godot_size": [
+          1.499,
+          1.9812,
+          2
+        ]
+      },
+      "bytes": 578540,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": ".codebuddy/local/tripo/samples/qz_banyan_hf",
+      "task_id": "5d43a2f8-5aa8-4321-9401-53b72fb7c362"
+    },
+    {
+      "id": "loc_qz_nat_zayton",
+      "file": "loc_qz_nat_zayton.glb",
+      "triangles": 1900,
+      "bounds": {
+        "blender_min": [
+          -1,
+          -0.9607072472572327,
+          0
+        ],
+        "blender_max": [
+          1,
+          0.9607072472572327,
+          2.0078585147857666
+        ],
+        "godot_size": [
+          2,
+          2.0079,
+          1.9214
+        ]
+      },
+      "bytes": 797948,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": ".codebuddy/local/tripo/samples/qz_zayton_hf",
+      "task_id": "ce01ed6d-a741-4be0-acf2-bfc3954c5aa8"
+    },
+    {
+      "id": "loc_sa_bld_cavehouse",
+      "file": "loc_sa_bld_cavehouse.glb",
+      "source": "tools/art/bld_cavehouse.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 9996
+    },
+    {
+      "id": "loc_sa_bld_medgarden",
+      "file": "loc_sa_bld_medgarden.glb",
+      "source": "tools/art/bld_medgarden.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 31704
+    },
+    {
+      "id": "loc_sa_bld_warmhouse",
+      "file": "loc_sa_bld_warmhouse.glb",
+      "source": "tools/art/bld_warmhouse.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 9816
+    },
+    {
+      "id": "loc_sa_bld_whitehouse",
+      "file": "loc_sa_bld_whitehouse.glb",
+      "source": "tools/art/bld_whitehouse.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 9804
+    },
+    {
+      "id": "loc_sa_bluedome",
+      "file": "loc_sa_bluedome.glb",
+      "source": "tools/art/bluedome.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 68096
+    },
+    {
+      "id": "loc_sa_nat_bougainvillea",
+      "file": "loc_sa_nat_bougainvillea.glb",
+      "source": "tools/art/nat_bougainvillea.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 20208
+    },
+    {
+      "id": "loc_sa_nat_vine",
+      "file": "loc_sa_nat_vine.glb",
+      "source": "tools/art/nat_vine.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 102512
+    },
+    {
+      "id": "loc_sa_windmill",
+      "file": "loc_sa_windmill.glb",
+      "source": "tools/art/windmill.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 41692
+    },
+    {
+      "id": "loc_shared_nat_reeds",
+      "file": "loc_shared_nat_reeds.glb",
+      "source": "tools/art/nat_reeds.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 29636
+    },
+    {
+      "id": "loc_shared_nat_shrub",
+      "file": "loc_shared_nat_shrub.glb",
+      "triangles": 80,
+      "bounds": {
+        "blender_min": [
+          -0.5,
+          -0.3583541810512543,
+          0
+        ],
+        "blender_max": [
+          0.5,
+          0.3583541810512543,
+          0.7276583313941956
+        ],
+        "godot_size": [
+          1.0,
+          0.7277,
+          0.7167
+        ]
+      },
+      "bytes": 11360,
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "source": "tools/art/shared_shrub.py",
+      "task_id": ""
+    },
+    {
+      "id": "loc_sy_bld_golf",
+      "file": "loc_sy_bld_golf.glb",
+      "source": "tools/art/bld_golf.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 11420
+    },
+    {
+      "id": "loc_sy_bld_resort",
+      "file": "loc_sy_bld_resort.glb",
+      "source": "tools/art/bld_resort.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 15980
+    },
+    {
+      "id": "loc_sy_boulder",
+      "file": "loc_sy_boulder.glb",
+      "source": "tools/art/boulder.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 28236
+    },
+    {
+      "id": "loc_sy_coco",
+      "file": "loc_sy_coco.glb",
+      "source": "tools/art/coco.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 64552
+    },
+    {
+      "id": "loc_sy_creole",
+      "file": "loc_sy_creole.glb",
+      "source": "tools/art/creole.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 22992
+    },
+    {
+      "id": "loc_sy_nat_boulder_mid",
+      "file": "loc_sy_nat_boulder_mid.glb",
+      "source": "tools/art/nat_boulder_mid.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 20860
+    },
+    {
+      "id": "loc_sy_nat_palm",
+      "file": "loc_sy_nat_palm.glb",
+      "source": "tools/art/nat_palm.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 15028
+    },
+    {
+      "id": "loc_sy_nat_wedge",
+      "file": "loc_sy_nat_wedge.glb",
+      "source": "tools/art/nat_wedge.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 3976
+    },
+    {
+      "id": "loc_sy_tortoise",
+      "file": "loc_sy_tortoise.glb",
+      "source": "tools/art/tortoise.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 38584
+    },
+    {
       "id": "roof",
       "file": "roof.glb",
       "triangles": 44,
@@ -240,6 +623,62 @@
       "generator": "Khronos glTF Blender I/O v5.2.40",
       "source": "tools/art/windmill.py",
       "task_id": "mist-harbor-windmill-v1-d8798697"
+    },
+    {
+      "id": "loc_sa_bld_whitehouse_b",
+      "file": "loc_sa_bld_whitehouse_b.glb",
+      "source": "tools/art/sa_whitehouse_b.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 15996
+    },
+    {
+      "id": "loc_sa_bld_whitehouse_c",
+      "file": "loc_sa_bld_whitehouse_c.glb",
+      "source": "tools/art/sa_whitehouse_c.py",
+      "generator": "Khronos glTF Blender I/O v5.2.40",
+      "bytes": 12836
+    },
+    {
+      "id": "loc_sa_bld_bluedome_ai",
+      "file": "loc_sa_bld_bluedome_ai.glb",
+      "source": "tripo 2c4ef211 + tools/art/_tripo_qa.py (5000 tris, tex 1024)",
+      "generator": "Tripo text-to-model + Khronos glTF Blender I/O",
+      "bytes": 744252
+    },
+    {
+      "id": "loc_sa_bld_windmill_ai",
+      "file": "loc_sa_bld_windmill_ai.glb",
+      "source": "tripo a7b7dced + tools/art/_tripo_qa.py",
+      "generator": "Tripo text-to-model + Khronos glTF",
+      "bytes": 723948
+    },
+    {
+      "id": "loc_sy_tortoise_ai",
+      "file": "loc_sy_tortoise_ai.glb",
+      "source": "tripo b6349ff8 + tools/art/_tripo_qa.py",
+      "generator": "Tripo text-to-model + Khronos glTF",
+      "bytes": 1192388
+    },
+    {
+      "id": "loc_sy_coco_ai",
+      "file": "loc_sy_coco_ai.glb",
+      "source": "tripo 17d01402 + tools/art/_tripo_qa.py",
+      "generator": "Tripo text-to-model + Khronos glTF",
+      "bytes": 758016
+    },
+    {
+      "id": "loc_cc_bld_highland_ai",
+      "file": "loc_cc_bld_highland_ai.glb",
+      "source": "tripo d2832b49 + tools/art/_tripo_qa.py",
+      "generator": "Tripo text-to-model + Khronos glTF",
+      "bytes": 917092
+    },
+    {
+      "id": "loc_cc_bld_church_ai",
+      "file": "loc_cc_bld_church_ai.glb",
+      "source": "tripo be4c74d6 + tools/art/_tripo_qa.py",
+      "generator": "Tripo text-to-model + Khronos glTF",
+      "bytes": 1028864
     }
   ]
 }

@@ -11,6 +11,9 @@ build-win/
 course/site-single/
 .env
 .env.*
+3D tools config/3Denv.txt
+tripo_samples/
+tripo_exports/
 *.pem
 *.key
 *.blend1

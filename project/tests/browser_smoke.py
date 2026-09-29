@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 PROJECT = Path(__file__).resolve().parents[1]
+DEFAULT_LOCATION = "quanzhou"  # 与 HarborLocationRegistry.default_id() 保持一致
 
 
 def preview_url(base: str) -> str:
@@ -25,9 +26,11 @@ def artifact_directory(value: str | None = None) -> Path:
 
 
 def expected_model_count() -> int:
-    """Derive the GLB count from the build palette so new assets never break the check."""
-    palette = json.loads((PROJECT / "data" / "palette.json").read_text(encoding="utf-8"))
-    return sum(1 for item in palette.get("items", []) if str(item.get("mesh", "cube")) != "cube")
+    """Derive the GLB count from the default location palette so new assets never break the check."""
+    palette_path = PROJECT / "data" / "locations" / DEFAULT_LOCATION / "palette.json"
+    palette = json.loads(palette_path.read_text(encoding="utf-8"))
+    return sum(1 for item in palette.get("items", [])
+               if not str(item.get("mesh", "cube")).startswith(("cube", "proc:")))
 
 
 def main() -> int:
@@ -57,6 +60,9 @@ def main() -> int:
             page.goto(url, wait_until="networkidle", timeout=90000)
             page.wait_for_function("!!window.harborState", timeout=90000)
             page.wait_for_timeout(2500)
+            # 启动时的「选择一个地点」菜单：Esc 返回当前地点（玩家第一次进来的正常路径）。
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(600)
 
             def state():
                 return json.loads(page.evaluate("window.harborState"))
@@ -107,18 +113,22 @@ def main() -> int:
             click("rotate")
             check("Rotation button changes orientation", lambda: state()["rotation"] == 1)
             click("category-自然")
-            check("Nature category uses tree material", lambda: state()["selected"] == "tree")
+            check("Nature category selects a nature material", lambda: state()["category"] == "自然")
             click("item-flower")
             check("Flower module selectable", lambda: state()["selected"] == "flower")
             click("demolish")
             check("Demolition mode enabled", lambda: state()["demolish"])
             page.keyboard.press("b")
             check("Keyboard returns to building", lambda: not state()["demolish"])
+            # N 键四态循环：昼 → 日落 → 夜 → 晨 → 昼
             click("night")
-            check("Day/night toggles", lambda: state()["night"])
+            check("Sunset phase reached", lambda: state()["phase"] == 2)
+            click("night")
+            check("Night phase reached", lambda: state()["night"])
             page.mouse.move(1100, 640)
             page.wait_for_timeout(1000)
             page.screenshot(path=str(out / "mist-harbor-night.png"), full_page=True)
+            click("night")
             click("night")
             check("Daylight restored", lambda: not state()["night"])
             click("help")
@@ -142,8 +152,9 @@ def main() -> int:
             click("save")
             check("Browser save acknowledged", lambda: state()["stats"]["saved"] == 1 and not state()["dirty"])
             saved = state()["placed"]
-            # user:// in the Web export is flushed to IndexedDB asynchronously.
-            page.wait_for_timeout(5000)
+            # user:// in the Web export is flushed to IndexedDB asynchronously; the
+            # first write of a session has to create the slot file, so give it room.
+            page.wait_for_timeout(8000)
             page.reload(wait_until="networkidle", timeout=90000)
             page.wait_for_function("!!window.harborState", timeout=90000)
             check("Refresh restores persisted world", lambda: state()["placed"] == saved and state()["stats"]["saved"] == 1)

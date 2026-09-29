@@ -1,0 +1,196 @@
+{
+  "schema_version": 2,
+  "location_id": "cape-cod",
+  "items": [
+    {
+      "id": "sand",
+      "name": "沙丘",
+      "category": "地形",
+      "color": "DCD0B4",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "冰碛留下的沙质半岛，铺开就是海岸线。"
+    },
+    {
+      "id": "stone",
+      "name": "石基",
+      "category": "地形",
+      "color": "b9bcad",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "灯塔的地基；垫高一点，光就照得远一点。"
+    },
+    {
+      "id": "wood",
+      "name": "木栈道",
+      "category": "地形",
+      "color": "bb946c",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "跨过盐沼的窄栈道。"
+    },
+    {
+      "id": "marsh",
+      "name": "盐沼草滩",
+      "category": "地形",
+      "color": "6E8B5A",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "潮水一日两遍漫过的盐沼。"
+    },
+    {
+      "id": "cranberry",
+      "name": "蔓越莓沼泽",
+      "category": "地形",
+      "color": "A02A34",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "秋季水收时整片变血红——一年只红一次的画。"
+    },
+    {
+      "id": "highland",
+      "name": "高地灯塔",
+      "category": "光源建筑",
+      "color": "F4F1E8",
+      "height": 4,
+      "mesh": "loc_cc_bld_highland_ai",
+      "tip": "崖顶白塔，射程十八格；主力补光靠它。",
+      "emit": true,
+      "beam": {
+        "range": 18,
+        "color": "F2EFD8",
+        "lit": true,
+        "speed": 0.45,
+        "phase": 0.0,
+        "light_y": 3.15,
+        "light_x": 0.01,
+        "light_z": 0.28
+      }
+    },
+    {
+      "id": "nauset",
+      "name": "复刻小灯塔",
+      "category": "光源建筑",
+      "color": "E8E4DC",
+      "height": 3,
+      "mesh": "loc_cc_bld_nauset",
+      "tip": "Nauset 老灯塔：今天歇班，光是灭的——但塔还是风景。",
+      "emit": true,
+      "beam": {
+        "range": 8,
+        "color": "EAF2F6",
+        "lit": false,
+        "light_y": 2.9,
+        "light_x": 0.0,
+        "light_z": 0.0
+      }
+    },
+    {
+      "id": "fogstation",
+      "name": "雾号站",
+      "category": "光源建筑",
+      "color": "B0B4B0",
+      "height": 2,
+      "mesh": "loc_cc_bld_fogstation",
+      "tip": "雾天里光晕加倍的小站，射程六格。",
+      "emit": true,
+      "beam": {
+        "range": 6,
+        "color": "F2E9C8",
+        "lit": true,
+        "speed": 1.6,
+        "phase": 2.1,
+        "light_y": 1.4,
+        "light_x": -0.32,
+        "light_z": 0.0
+      }
+    },
+    {
+      "id": "shingle",
+      "name": "银灰木瓦小屋",
+      "category": "建筑",
+      "color": "A8A8A4",
+      "height": 2,
+      "size": [
+        2,
+        2,
+        2
+      ],
+      "mesh": "loc_cc_shingle",
+      "tip": "海风盐雾风化出的银灰木瓦，Cape Cod 的标志质感。"
+    },
+    {
+      "id": "roof",
+      "name": "坡屋顶",
+      "category": "建筑",
+      "color": "c67360",
+      "height": 1,
+      "mesh": "roof",
+      "tip": "给小屋加一片屋顶。"
+    },
+    {
+      "id": "lamp",
+      "name": "暖光灯",
+      "category": "自然",
+      "color": "eac989",
+      "height": 2,
+      "mesh": "lamp",
+      "tip": "屋前的门灯。它照的是门口，不是整条海岸。",
+      "emit": true,
+      "patch": {
+        "radius": 1.5,
+        "color": "ffbd70"
+      }
+    },
+    {
+      "id": "buoy",
+      "name": "龙虾笼与浮标",
+      "category": "自然",
+      "color": "C25B4A",
+      "height": 1,
+      "mesh": "loc_cc_prop_buoy",
+      "tip": "海面上的浮标，夜里会亮。"
+    },
+    {
+      "id": "pine",
+      "name": "海岸松",
+      "category": "自然",
+      "color": "2F5D3E",
+      "height": 3,
+      "mesh": "loc_cc_nat_pine",
+      "tip": "高纬度海岸的松树，深绿团冠。"
+    },
+    {
+      "id": "beachgrass",
+      "name": "沙滩草",
+      "category": "自然",
+      "color": "cdb97e",
+      "height": 1,
+      "mesh": "loc_cc_nat_beachgrass",
+      "tip": "沙丘固沙的金黄草丛。"
+    },
+    {
+      "id": "church",
+      "name": "教堂",
+      "category": "建筑",
+      "color": "F2EFE6",
+      "height": 3,
+      "size": [
+        2,
+        3,
+        2
+      ],
+      "mesh": "loc_cc_bld_church_ai",
+      "tip": "白板墙新英格兰教堂，尖塔是聚落的天际线。"
+    },
+    {
+      "id": "reeds",
+      "name": "盐沼苇草",
+      "category": "自然",
+      "color": "b8a46a",
+      "height": 1,
+      "mesh": "loc_shared_nat_reeds",
+      "tip": "盐沼里的苇草，秋末转金。"
+    }
+  ]
+}

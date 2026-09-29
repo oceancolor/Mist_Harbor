@@ -1,0 +1,188 @@
+{
+  "schema_version": 2,
+  "location_id": "santorini",
+  "items": [
+    {
+      "id": "tuff",
+      "name": "火山红褐岩",
+      "category": "地形",
+      "color": "9A6B52",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "火山崖基岩，圣托里尼悬崖的红褐色。"
+    },
+    {
+      "id": "stone",
+      "name": "白石基",
+      "category": "地形",
+      "color": "b9bcad",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "给崖壁上的房子垫出一片平台。"
+    },
+    {
+      "id": "wood",
+      "name": "木栈道",
+      "category": "地形",
+      "color": "bb946c",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "崖间挑出的木平台；悬挑超过三格要先加扶壁柱。"
+    },
+    {
+      "id": "blacksand",
+      "name": "黑砂",
+      "category": "地形",
+      "color": "4A4A52",
+      "height": 1,
+      "mesh": "cube",
+      "tip": "火山黑砂滩，崖下的那一圈深色。"
+    },
+    {
+      "id": "whitehouse",
+      "name": "白墙屋",
+      "category": "建筑",
+      "color": "F8F8F4",
+      "height": 2,
+      "size": [
+        2,
+        2,
+        2
+      ],
+      "mesh": "loc_sa_bld_whitehouse",
+      "tip": "纯白平顶立方，可以一层层叠上去；悬挑最多三格。"
+    },
+    {
+      "id": "whitehouse_c",
+      "name": "白墙屋·露台",
+      "category": "建筑",
+      "mesh": "loc_sa_bld_whitehouse_c",
+      "color": "F8F8F4",
+      "height": 2,
+      "tip": "两层退台露台的白屋，可眺海。"
+    },
+    {
+      "id": "whitehouse_b",
+      "name": "白墙屋·拱廊",
+      "category": "建筑",
+      "mesh": "loc_sa_bld_whitehouse_b",
+      "color": "F8F8F4",
+      "height": 2,
+      "tip": "带三拱门廊与台阶的白屋。"
+    },
+    {
+      "id": "bluedome",
+      "name": "蓝顶",
+      "category": "建筑",
+      "color": "2A6CB4",
+      "height": 2,
+      "size": [
+        2,
+        1,
+        2
+      ],
+      "mesh": "loc_sa_bld_bluedome_ai",
+      "tip": "半圆穹顶，盖在白墙屋顶上。"
+    },
+    {
+      "id": "warmhouse",
+      "name": "彩色小屋",
+      "category": "建筑",
+      "mesh": "loc_sa_bld_warmhouse",
+      "color": "D8A05A",
+      "height": 2,
+      "tip": "暖赭色小屋，点在白房子中间。"
+    },
+    {
+      "id": "windmill",
+      "name": "风车",
+      "category": "建筑",
+      "mesh": "loc_sa_bld_windmill_ai",
+      "color": "F6F4EC",
+      "height": 3,
+      "tip": "崖顶风车，基克拉泽斯的白色塔身。"
+    },
+    {
+      "id": "cavehouse",
+      "name": "洞穴屋",
+      "category": "建筑",
+      "color": "D4C4A8",
+      "height": 2,
+      "mesh": "loc_sa_bld_cavehouse",
+      "tip": "Yposkafa 穴居：嵌进崖壁，洞口留一盏暖光。"
+    },
+    {
+      "id": "arch",
+      "name": "崖壁扶壁柱",
+      "category": "建筑",
+      "color": "d4cfb8",
+      "height": 1,
+      "mesh": "arch",
+      "tip": "翻转九十度的石梁：想悬挑得更远，就靠它撑住。"
+    },
+    {
+      "id": "bougainvillea",
+      "name": "三角梅",
+      "category": "自然",
+      "color": "D4537E",
+      "height": 1,
+      "mesh": "loc_sa_nat_bougainvillea",
+      "tip": "紫红花簇，攀在白墙上最好看。"
+    },
+    {
+      "id": "vine",
+      "name": "葡萄藤篮",
+      "category": "自然",
+      "color": "7A8A5A",
+      "height": 1,
+      "mesh": "loc_sa_nat_vine",
+      "tip": "Kouloura 篮式修剪，贴地绕成一环。"
+    },
+    {
+      "id": "lamp",
+      "name": "暖光灯",
+      "category": "自然",
+      "color": "eac989",
+      "height": 2,
+      "mesh": "lamp",
+      "tip": "入夜点亮崖壁；朝火山口那侧的窗会亮成金色。",
+      "emit": true,
+      "patch": {
+        "radius": 1.5,
+        "color": "ffbd70"
+      }
+    },
+    {
+      "id": "flower",
+      "name": "花坛",
+      "category": "自然",
+      "color": "d9aeae",
+      "height": 1,
+      "mesh": "flower",
+      "tip": "给白墙之间留一点柔软。"
+    },
+    {
+      "id": "shrub",
+      "name": "灌木",
+      "category": "自然",
+      "color": "4E8F52",
+      "height": 1,
+      "mesh": "loc_shared_nat_shrub",
+      "tip": "崖顶台地的耐旱灌木。"
+    },
+    {
+      "id": "medgarden",
+      "name": "地中海花园",
+      "category": "建筑",
+      "color": "D9D2C0",
+      "height": 2,
+      "size": [
+        2,
+        2,
+        2
+      ],
+      "mesh": "loc_sa_bld_medgarden",
+      "tip": "石台葡萄棚架，崖顶花园的心脏。"
+    }
+  ]
+}

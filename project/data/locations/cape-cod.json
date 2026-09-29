@@ -1,0 +1,106 @@
+{
+  "id": "cape-cod",
+  "display_name": "Cape Cod",
+  "verb": "照",
+  "tagline": "在夜与雾里织一张光网——用灯塔的光锥覆盖整条海岸，让夜晚没有暗角。",
+  "world_seed": 240925,
+  "min_y": -4,
+  "max_y": 20,
+  "max_cells": 16000,
+  "edge": 34,
+  "has_weather_toggle": true,
+  "weather_label": "云",
+  "water": {
+    "deep_color": "4A7E8C",
+    "shallow_color": "6FA8AC",
+    "lagoon_radius": 0.0,
+    "shallow_radius": 15.0,
+    "deep_radius": 30.0,
+    "transparency": 0.7,
+    "foam_color": "E4EAEE",
+    "foam_width": 1.4,
+    "wave_scale": 1.6,
+    "wave_speed": 0.9,
+    "wave_normal_strength": 0.95
+  },
+  "fog": {
+    "light_color": "B4C0C8",
+    "density_day": 0.0028,
+    "density_night": 0.0058,
+    "density_weather": 0.0,
+    "night_floor": "4E5A66",
+    "aerial_perspective": 0.6
+  },
+  "day": {
+    "ambient": 0.38,
+    "tonemap_exposure": 1.0,
+    "light_color": "EDF0F4",
+    "light_energy": 0.65,
+    "shadow_blur": 0.65,
+    "shadow_opacity": 0.8,
+    "sun_rotation_x": -48.0,
+    "sun_rotation_y": -30.0,
+    "sky_top": "#6FB5E8",
+    "sky_horizon": "#D8ECF8",
+    "ground_horizon": "7899AC",
+    "fill_light_energy": 0.0
+  },
+  "sunset": {
+    "sun_color": "FFC98F",
+    "light_energy": 0.68,
+    "sky_top": "#9A6EA8",
+    "sky_horizon": "#F5B8A0",
+    "ambient": 0.34,
+    "duration_scale": 1.0,
+    "narrative": "清冷晚霞",
+    "shadow_blur": 0.7,
+    "shadow_opacity": 0.8
+  },
+  "morning": {
+    "light_color": "F2E6D2",
+    "light_energy": 0.65,
+    "ambient": 0.42,
+    "shadow_blur": 0.8,
+    "shadow_opacity": 0.75,
+    "sky_top": "8FA0B4",
+    "sky_horizon": "E2D8C8",
+    "sun_rotation_y": -70
+  },
+  "night": {
+    "light_color": "#F5E6B8",
+    "light_energy": 0.12,
+    "ambient": 0.16,
+    "sky_top": "#182842",
+    "sky_horizon": "#2C3E60"
+  },
+  "wind_direction_deg": -25.0,
+  "far_islands": [
+    {
+      "x": -70,
+      "z": -30,
+      "width": 20,
+      "height": 2.5
+    },
+    {
+      "x": 68,
+      "z": -20,
+      "width": 14,
+      "height": 2
+    },
+    {
+      "x": -30,
+      "z": 70,
+      "width": 10,
+      "height": 1.5
+    }
+  ],
+  "surf": {
+    "breaker_intensity": 0.9,
+    "breaker_period": 6.0,
+    "breaker_dist": 9.0,
+    "breaker_wavespan": 8.0,
+    "whitecap_intensity": 0.16
+  },
+  "cloud_coverage": 0.08,
+  "weather_kind": "cloud"
+}

@@ -1,0 +1,110 @@
+{
+  "id": "santorini",
+  "display_name": "圣托里尼",
+  "verb": "凿 / 悬挑",
+  "tagline": "在近乎垂直的火山口崖壁上向外悬挑，从崖壁要出一片会亮灯的白蓝城。",
+  "world_seed": 240923,
+  "min_y": -4,
+  "max_y": 32,
+  "max_cells": 16000,
+  "edge": 34,
+  "has_weather_toggle": true,
+  "water": {
+    "deep_color": "1E56A8",
+    "shallow_color": "2E86C8",
+    "lagoon_color": "41B8CE",
+    "lagoon_radius": 4.0,
+    "shallow_radius": 14.0,
+    "deep_radius": 30.0,
+    "transparency": 0.82,
+    "foam_color": "FFFFFF",
+    "foam_width": 0.8,
+    "wave_scale": 0.6,
+    "wave_speed": 0.4,
+    "wave_normal_strength": 0.45
+  },
+  "fog": {
+    "light_color": "CFE0EC",
+    "density_day": 0.0015,
+    "density_night": 0.0026,
+    "density_weather": 0.0,
+    "night_floor": "5A6A84",
+    "aerial_perspective": 0.5
+  },
+  "day": {
+    "ambient": 0.36,
+    "tonemap_exposure": 1.04,
+    "light_color": "FFF6E4",
+    "light_energy": 0.6,
+    "shadow_blur": 0.6,
+    "shadow_opacity": 0.85,
+    "sun_rotation_x": -54.0,
+    "sun_rotation_y": -90.0,
+    "sky_top": "#2E7FD0",
+    "sky_horizon": "#A8D8F0",
+    "ground_horizon": "2E86C0",
+    "fill_light_energy": 0.0
+  },
+  "sunset": {
+    "sun_color": "FFC77E",
+    "light_energy": 0.48,
+    "sky_top": "#6B4A9E",
+    "sky_horizon": "#D9578C",
+    "ambient": 0.3,
+    "duration_scale": 1.0,
+    "narrative": "Oia 金色日落",
+    "shadow_blur": 0.5,
+    "shadow_opacity": 0.85
+  },
+  "morning": {
+    "light_color": "FFE9C6",
+    "light_energy": 0.6,
+    "ambient": 0.28,
+    "shadow_blur": 0.8,
+    "shadow_opacity": 0.75,
+    "sky_top": "5E9BD6",
+    "sky_horizon": "F5E8CE"
+  },
+  "night": {
+    "light_color": "#F5E6B8",
+    "light_energy": 0.12,
+    "ambient": 0.18,
+    "sky_top": "#16223F",
+    "sky_horizon": "#2A3556"
+  },
+  "wind_direction_deg": -150.0,
+  "far_islands": [
+    {
+      "x": 0,
+      "z": -72,
+      "width": 30,
+      "height": 5
+    },
+    {
+      "x": 60,
+      "z": -30,
+      "width": 12,
+      "height": 2.5
+    },
+    {
+      "x": -58,
+      "z": -20,
+      "width": 10,
+      "height": 2
+    }
+  ],
+  "camera": {
+    "yaw": 0.0,
+    "zoom": 38
+  },
+  "surf": {
+    "breaker_intensity": 0.07,
+    "breaker_period": 9.0,
+    "breaker_dist": 3.0,
+    "breaker_wavespan": 6.0,
+    "whitecap_intensity": 0.03
+  },
+  "cloud_coverage": 0.15,
+  "weather_label": "云",
+  "weather_kind": "cloud"
+}

@@ -1,0 +1,118 @@
+{
+  "id": "seychelles",
+  "display_name": "塞舌尔",
+  "verb": "叠",
+  "tagline": "在白沙滩的花岗岩巨石上，堆一座不会倒的岛——垫稳一块，石缝就会长出花。",
+  "world_seed": 240924,
+  "min_y": -4,
+  "max_y": 20,
+  "max_cells": 16000,
+  "edge": 34,
+  "has_weather_toggle": false,
+  "water": {
+    "deep_color": "17709E",
+    "shallow_color": "3FB0BC",
+    "lagoon_color": "8FDFD4",
+    "lagoon_radius": 22.0,
+    "shallow_radius": 30.0,
+    "deep_radius": 46.0,
+    "transparency": 0.92,
+    "foam_color": "FFFFFF",
+    "foam_width": 1.6,
+    "wave_scale": 0.45,
+    "wave_speed": 0.3,
+    "wave_normal_strength": 0.35,
+    "sand_color": "E9E4CE",
+    "sand_reach": 5.0
+  },
+  "fog": {
+    "light_color": "E4F0EC",
+    "density_day": 0.0012,
+    "density_night": 0.0018,
+    "density_weather": 0.0,
+    "night_floor": "5E7A82",
+    "aerial_perspective": 0.35
+  },
+  "day": {
+    "ambient": 0.36,
+    "tonemap_exposure": 1.2,
+    "light_color": "FFFBF0",
+    "light_energy": 0.48,
+    "shadow_blur": 0.35,
+    "shadow_opacity": 0.92,
+    "sun_rotation_x": -82.0,
+    "sun_rotation_y": -30.0,
+    "sky_top": "#1FA8DC",
+    "sky_horizon": "#BFE8F5",
+    "ground_horizon": "4FD8C0",
+    "fill_light_color": "B8D4E0",
+    "fill_light_energy": 0.3,
+    "fill_light_rotation": [
+      -25.0,
+      200.0,
+      0.0
+    ]
+  },
+  "sunset": {
+    "sun_color": "FFC37B",
+    "light_energy": 0.55,
+    "sky_top": "#8A4A6E",
+    "sky_horizon": "#FF6B7A",
+    "ambient": 0.26,
+    "duration_scale": 0.55,
+    "narrative": "赤道日落 20 分钟",
+    "shadow_blur": 0.4,
+    "shadow_opacity": 0.9
+  },
+  "morning": {
+    "light_color": "FFF0D0",
+    "light_energy": 0.5,
+    "ambient": 0.38,
+    "shadow_blur": 0.45,
+    "shadow_opacity": 0.85,
+    "sky_top": "4E9AD4",
+    "sky_horizon": "F0EEDF"
+  },
+  "night": {
+    "light_color": "#F5E6B8",
+    "light_energy": 0.12,
+    "ambient": 0.2,
+    "sky_top": "#142240",
+    "sky_horizon": "#243B5E"
+  },
+  "wind_direction_deg": 35.0,
+  "far_islands": [
+    {
+      "x": -60,
+      "z": 52,
+      "width": 10,
+      "height": 2
+    },
+    {
+      "x": 64,
+      "z": 40,
+      "width": 12,
+      "height": 2.5
+    },
+    {
+      "x": 0,
+      "z": -70,
+      "width": 8,
+      "height": 1.8
+    }
+  ],
+  "camera": {
+    "pitch": 0.52,
+    "zoom": 42
+  },
+  "surf": {
+    "breaker_intensity": 0.3,
+    "breaker_period": 8.0,
+    "breaker_dist": 5.0,
+    "breaker_wavespan": 7.0,
+    "whitecap_intensity": 0.05
+  },
+  "cloud_coverage": 0.2,
+  "weather_label": "",
+  "weather_kind": "fog"
+}

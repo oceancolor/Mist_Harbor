@@ -1,0 +1,110 @@
+{
+  "id": "quanzhou",
+  "display_name": "雾港 · 泉州湾",
+  "verb": "连",
+  "tagline": "把散落的屿、桥、厝连成一条活的水道——连通那一刻，灯火从水边一路亮进村里。",
+  "world_seed": 240910,
+  "min_y": -4,
+  "max_y": 20,
+  "max_cells": 16000,
+  "edge": 34,
+  "has_weather_toggle": true,
+  "water": {
+    "deep_color": "1D5E93",
+    "shallow_color": "2E7BA8",
+    "lagoon_radius": 3.0,
+    "shallow_radius": 18.0,
+    "deep_radius": 32.0,
+    "transparency": 0.68,
+    "foam_color": "E0DCC8",
+    "foam_width": 0.6,
+    "wave_scale": 0.75,
+    "wave_speed": 0.5,
+    "wave_normal_strength": 0.55,
+    "lagoon_color": "4FA3B8"
+  },
+  "fog": {
+    "light_color": "DCDAD0",
+    "density_day": 0.0028,
+    "density_night": 0.0026,
+    "density_weather": 0.0045,
+    "night_floor": "6A7078",
+    "aerial_perspective": 0.62
+  },
+  "day": {
+    "ambient": 0.36,
+    "tonemap_exposure": 0.95,
+    "light_color": "F4F0E2",
+    "light_energy": 0.75,
+    "shadow_blur": 0.6,
+    "shadow_opacity": 0.85,
+    "sun_rotation_x": -65.0,
+    "sun_rotation_y": -30.0,
+    "sky_top": "#4A9BE8",
+    "sky_horizon": "#C8E6FA",
+    "ground_horizon": "74A98D",
+    "fill_light_energy": 0.0
+  },
+  "sunset": {
+    "sun_color": "FFCB7A",
+    "light_energy": 0.7,
+    "sky_top": "#5C6FA8",
+    "sky_horizon": "#FFB347",
+    "ambient": 0.4,
+    "duration_scale": 1.0,
+    "narrative": "洛阳桥落潮",
+    "shadow_blur": 0.6,
+    "shadow_opacity": 0.8
+  },
+  "morning": {
+    "light_color": "E8DCC4",
+    "light_energy": 0.7,
+    "ambient": 0.4,
+    "shadow_blur": 0.8,
+    "shadow_opacity": 0.75,
+    "sky_top": "C4C6C4",
+    "sky_horizon": "DED8CC",
+    "sun_rotation_y": -60
+  },
+  "night": {
+    "light_color": "#F5E6B8",
+    "light_energy": 0.16,
+    "ambient": 0.24,
+    "sky_top": "#1A2C4E",
+    "sky_horizon": "#2E3F66"
+  },
+  "wind_direction_deg": 18.0,
+  "far_islands": [
+    {
+      "x": 0,
+      "z": -64,
+      "width": 22,
+      "height": 4
+    },
+    {
+      "x": -56,
+      "z": -40,
+      "width": 14,
+      "height": 2.5
+    },
+    {
+      "x": 58,
+      "z": -46,
+      "width": 16,
+      "height": 3
+    }
+  ],
+  "camera": {
+    "yaw": 0.72
+  },
+  "surf": {
+    "breaker_intensity": 0.55,
+    "breaker_period": 7.0,
+    "breaker_dist": 6.0,
+    "breaker_wavespan": 7.0,
+    "whitecap_intensity": 0.08
+  },
+  "cloud_coverage": 0.3,
+  "weather_label": "海雾",
+  "weather_kind": "fog"
+}

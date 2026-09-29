@@ -14,6 +14,9 @@ Usage:
   python tools/asset_pipeline.py build --id barrel [--version N] [--category 建筑]
          [--name 木桶] [--color b07d4f] [--tip "码头边的木桶"] [--height N]
          [--no-register] [--no-import] [--timeout 300]
+  python tools/asset_pipeline.py sync-manifest [--task id=uuid] [--source id=path]
+  python tools/asset_pipeline.py build-tripo --location cape-cod --kind buoy
+         --sample buoy_s42b_low --name loc_cc_prop_buoy [--flat] [--no-apply]
 
 Credentials: .codebuddy/local/pilot.json (gitignored, see tools/pilot.example.json)
 or env PILOT_BLENDER_URL / PILOT_BLENDER_TOKEN.
@@ -38,6 +41,7 @@ PROJECT = ROOT / "project"
 MODELS = PROJECT / "assets" / "models"
 MANIFEST = MODELS / "manifest.json"
 PALETTE = PROJECT / "data" / "palette.json"
+DEFAULT_LOCATION = "quanzhou"  # 与 HarborLocationRegistry.default_id() 保持一致
 ART = PROJECT / "art"
 PREVIEWS = ART / "previews"
 PROVENANCE = ART / "provenance"
@@ -174,6 +178,83 @@ def read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+# ---------------------------------------------------------------- glb inspect
+
+
+def glb_json(path: Path) -> dict:
+    """Parse a GLB's glTF JSON chunk with stdlib only."""
+    import struct
+
+    raw = path.read_bytes()
+    if raw[:4] != b"glTF":
+        fail(f"not a GLB: {path}")
+    length = struct.unpack_from("<I", raw, 8)[0]
+    offset = 12
+    while offset < min(length, len(raw)):
+        chunk_len, chunk_type = struct.unpack_from("<II", raw, offset)
+        if chunk_type == 0x4E4F534A:  # JSON
+            return json.loads(raw[offset + 8 : offset + 8 + chunk_len].decode("utf-8"))
+        offset += 8 + chunk_len
+    fail(f"no glTF JSON chunk in {path}")
+
+
+def upsert_manifest_entry(asset_id: str, task_id: str = "", source: str | None = None) -> dict:
+    """Add or refresh a manifest entry from the GLB actually on disk.
+
+    model_thumbnail.gd reads bounds.godot_size to frame dock icons, so every
+    game-ready GLB needs an entry even when it was not built by `build`
+    (Tripo assets arrive via qa_batch and used to skip the manifest).
+    Bounds convention matches update_manifest(): glTF is Y-up, the stored
+    blender_* axes are the [x, z, y] permutation of it.
+    """
+    glb = MODELS / f"{asset_id}.glb"
+    if not glb.is_file():
+        fail(f"missing {glb}")
+    gltf = glb_json(glb)
+    minimum = maximum = None
+    triangles = 0
+    for mesh in gltf.get("meshes", []):
+        for primitive in mesh.get("primitives", []):
+            accessor = gltf["accessors"][primitive["attributes"]["POSITION"]]
+            low, high = accessor.get("min"), accessor.get("max")
+            if not low or not high:
+                fail(f"{asset_id}: POSITION accessor lacks min/max")
+            if minimum is None:
+                minimum, maximum = list(low), list(high)
+            else:
+                minimum = [min(a, b) for a, b in zip(minimum, low)]
+                maximum = [max(a, b) for a, b in zip(maximum, high)]
+            if "indices" in primitive:
+                triangles += gltf["accessors"][primitive["indices"]]["count"] // 3
+            else:
+                triangles += accessor["count"] // 3
+    if minimum is None or maximum is None:
+        fail(f"{asset_id}: no mesh primitives")
+
+    if source is None:
+        source = f"tools/art/{asset_id}.py" if (ROOT / "tools" / "art" / f"{asset_id}.py").is_file() else ""
+    entry = {
+        "id": asset_id,
+        "file": glb.name,
+        "triangles": int(triangles),
+        "bounds": {
+            "blender_min": [minimum[0], minimum[2], minimum[1]],
+            "blender_max": [maximum[0], maximum[2], maximum[1]],
+            "godot_size": [round(hi - lo, 4) for lo, hi in zip(minimum, maximum)],
+        },
+        "bytes": glb.stat().st_size,
+        "generator": (gltf.get("asset") or {}).get("generator", ""),
+        "source": source,
+        "task_id": task_id,
+    }
+    manifest = read_json(MANIFEST)
+    assets = [item for item in manifest.get("assets", []) if item.get("id") != asset_id]
+    assets.append(entry)
+    manifest["assets"] = sorted(assets, key=lambda item: str(item["id"]))
+    write_json(MANIFEST, manifest)
+    return entry
+
+
 def write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -234,15 +315,22 @@ def godot_import() -> None:
         fail(f"Godot import failed; see logs/asset-import.log (exit={result.returncode})")
 
 
+def location_palette(location: str = DEFAULT_LOCATION) -> Path:
+    """建材表按地点分目录（四个地点各一份）；data/palette.json 只是旧版回退。"""
+    return PROJECT / "data" / "locations" / location / "palette.json"
+
+
 def register_palette(asset_id: str, name: str | None, category: str | None, color: str | None,
-                     height: int | None, tip: str | None, default_height: int | None = None) -> None:
+                     height: int | None, tip: str | None, default_height: int | None = None,
+                     location: str = DEFAULT_LOCATION) -> None:
     """Register or refresh a palette entry.
 
     An existing id keeps its slot and keeps any field the caller did not pass, so
     rebuilding an asset never reorders the build dock or drops its Chinese copy
     (PowerShell mangling an argument can no longer wipe the stored text).
     """
-    palette = read_json(PALETTE)
+    palette_path = location_palette(location)
+    palette = read_json(palette_path)
     items = list(palette.get("items", []))
     index = next((i for i, item in enumerate(items) if item.get("id") == asset_id), None)
 
@@ -273,8 +361,8 @@ def register_palette(asset_id: str, name: str | None, category: str | None, colo
         action = "updated"
 
     palette["items"] = items
-    write_json(PALETTE, palette)
-    print(f"palette: {action} '{asset_id}' in {entry['category']} (height={entry['height']})")
+    write_json(palette_path, palette)
+    print(f"palette: {action} '{asset_id}' in {entry['category']} (height={entry['height']}) -> {palette_path.relative_to(ROOT)}")
 
 
 # ------------------------------------------------------------------------ build
@@ -374,9 +462,9 @@ def build(args: argparse.Namespace) -> None:
     print(f"done: {args.id} (version {version})")
 
 
-def list_assets(_: argparse.Namespace) -> None:
+def list_assets(args: argparse.Namespace) -> None:
     manifest = read_json(MANIFEST)
-    palette = read_json(PALETTE)
+    palette = read_json(location_palette(getattr(args, "location", DEFAULT_LOCATION)))
     meshes = {item["id"]: item.get("mesh") for item in palette.get("items", [])}
     print(f"{'id':<12}{'triangles':>10}{'height':>8}{'registered':>12}  script")
     for asset in sorted(manifest.get("assets", []), key=lambda item: str(item["id"])):
@@ -387,10 +475,84 @@ def list_assets(_: argparse.Namespace) -> None:
               f"{str(meshes.get(asset_id, '-')):>12}  {'(tools/art)' if script.is_file() else '-'}")
 
 
+def sync_manifest(args: argparse.Namespace) -> None:
+    """Backfill manifest entries for GLBs that reached the project by other paths
+    (Tripo via art_from_tripo, or pilot runs done in a hurry).
+
+    Every game-ready GLB needs a bounds entry: model_thumbnail.gd frames the
+    build-dock icon from bounds.godot_size and falls back to 1x1x1 without it.
+    """
+    tasks = dict(pair.split("=", 1) for pair in (args.task or []))
+    sources = dict(pair.split("=", 1) for pair in (args.source or []))
+    # Map Tripo task uuid -> sample dir so --task also resolves the provenance path.
+    samples: dict[str, str] = {}
+    samples_root = ROOT / ".codebuddy" / "local" / "tripo" / "samples"
+    if samples_root.is_dir():
+        for meta_path in samples_root.glob("*/meta.json"):
+            try:
+                meta = read_json(meta_path)
+            except (OSError, json.JSONDecodeError):
+                continue
+            if meta.get("task_id"):
+                samples[str(meta["task_id"])] = meta_path.parent.name
+
+    manifest = read_json(MANIFEST)
+    known = {item.get("id") for item in manifest.get("assets", [])}
+    for glb in sorted(MODELS.glob("*.glb")):
+        asset_id = glb.stem
+        if asset_id in known:
+            continue
+        task_id = tasks.get(asset_id, "")
+        source = sources.get(asset_id)
+        if source is None and task_id and task_id in samples:
+            source = f".codebuddy/local/tripo/samples/{samples[task_id]}"
+        entry = upsert_manifest_entry(asset_id, task_id, source)
+        print(f"manifest: added '{asset_id}' triangles={entry['triangles']} "
+              f"godot_size={entry['bounds']['godot_size']} task={task_id or '-'}")
+
+
+def build_tripo(args: argparse.Namespace) -> None:
+    """Unified Tripo entry: sample GLB -> qa_batch (Blender headless) -> game asset.
+
+    Wraps tools/art_from_tripo.py (decimate / normalise / strip PBR), then does the
+    two steps it historically skipped: the manifest entry and the Godot import.
+    """
+    sample_dir = ROOT / ".codebuddy" / "local" / "tripo" / "samples" / args.sample
+    sample_glb = sample_dir / f"{args.sample}_model.glb"
+    if not sample_glb.is_file():
+        fail(f"missing sample {sample_glb}; run tools/tripo_gen.py first")
+    meta = read_json(sample_dir / "meta.json")
+    task_id = str(meta.get("task_id", ""))
+
+    cmd = [sys.executable, str(ROOT / "tools" / "art_from_tripo.py"),
+           "--location", args.location, "--kind", args.kind,
+           "--glb", str(sample_glb), "--name", args.name, "--faces", str(args.faces)]
+    if args.flat:
+        cmd.append("--flat")
+    if args.footprint:
+        cmd += ["--footprint", args.footprint]
+    if not args.no_apply:
+        cmd.append("--apply")
+    result = subprocess.run(cmd)
+    if result.returncode:
+        fail(f"art_from_tripo.py failed with exit={result.returncode}")
+
+    entry = upsert_manifest_entry(args.name, task_id, f".codebuddy/local/tripo/samples/{args.sample}")
+    print(f"manifest: {entry['id']} triangles={entry['triangles']} godot_size={entry['bounds']['godot_size']}")
+    if not args.no_import:
+        godot_import()
+        if not (MODELS / f"{args.name}.glb.import").is_file():
+            fail(f"Godot did not produce {args.name}.glb.import")
+        print(f"wrote {args.name}.glb.import")
+    print(f"done: {args.sample} -> {args.name} (palette mesh for {args.location}/{args.kind})")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     subparsers = parser.add_subparsers(dest="action", required=True)
-    subparsers.add_parser("list", help="show manifest assets, triangles and palette registration").set_defaults(func=list_assets)
+    list_parser = subparsers.add_parser("list", help="show manifest assets, triangles and palette registration")
+    list_parser.add_argument("--location", default=DEFAULT_LOCATION, help="which location palette to inspect")
+    list_parser.set_defaults(func=list_assets)
 
     build_parser = subparsers.add_parser("build", help="author one asset through the remote Blender pilot")
     build_parser.add_argument("--id", required=True)
@@ -402,11 +564,36 @@ def main() -> None:
     build_parser.add_argument("--tip", help="tooltip shown in the build dock; existing entries keep theirs")
     build_parser.add_argument("--height", type=int, help="grid cells reserved; existing entries keep theirs")
     build_parser.add_argument("--retry", action="store_true",
-                              help="force a fresh task id; use after a failed run with an unchanged script")
-    build_parser.add_argument("--no-register", action="store_true", help="do not touch palette.json")
+                             help="force a fresh task id; use after a failed run with an unchanged script")
+    build_parser.add_argument("--no-register", action="store_true", help="do not touch the location palette")
+    build_parser.add_argument("--location", default=DEFAULT_LOCATION,
+                              help="register the asset in this location palette (default: quanzhou)")
     build_parser.add_argument("--no-import", action="store_true", help="do not run Godot import")
     build_parser.add_argument("--timeout", type=int, default=300)
     build_parser.set_defaults(func=build)
+
+    sync_parser = subparsers.add_parser(
+        "sync-manifest",
+        help="backfill manifest entries for GLBs that skipped the build flow (Tripo, rushed pilot runs)")
+    sync_parser.add_argument("--task", action="append", default=[],
+                             metavar="ID=UUID", help="set the Tripo task id for an asset (repeatable)")
+    sync_parser.add_argument("--source", action="append", default=[],
+                             metavar="ID=PATH", help="override the source field for an asset (repeatable)")
+    sync_parser.set_defaults(func=sync_manifest)
+
+    tripo_parser = subparsers.add_parser(
+        "build-tripo", help="turn one Tripo sample into a game asset (qa_batch + manifest + palette + import)")
+    tripo_parser.add_argument("--location", required=True, help="location palette that owns the kind")
+    tripo_parser.add_argument("--kind", required=True, help="palette entry id (e.g. buoy)")
+    tripo_parser.add_argument("--sample", required=True, help="Tripo sample dir under .codebuddy/local/tripo/samples")
+    tripo_parser.add_argument("--name", required=True, help="mesh name to write (loc_{place}_{cat}_{thing})")
+    tripo_parser.add_argument("--flat", action="store_true", help="strip textures for a solid palette colour")
+    tripo_parser.add_argument("--footprint", default="", help="override visual footprint (e.g. 2,2); default: palette size")
+    tripo_parser.add_argument("--faces", type=int, default=2000,
+                              help="triangle budget; the old 600 cap was lifted 2026-09-27 for visual quality")
+    tripo_parser.add_argument("--no-apply", action="store_true", help="do not point the palette mesh at the new asset")
+    tripo_parser.add_argument("--no-import", action="store_true", help="do not run Godot import")
+    tripo_parser.set_defaults(func=build_tripo)
 
     args = parser.parse_args()
     args.func(args)

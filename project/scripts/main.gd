@@ -8,6 +8,15 @@ const INK := Color("2d514b")
 const MUTED := Color("789087")
 const PAPER := Color("f7f8ed")
 const ACCENT := Color("497c6b")
+# 相机常量（R-ENG-13）：48.0 曾被「轨道半径」与「zoom 上限」共用，必须拆成两个具名常量。
+const CAM_ORBIT_RADIUS := 48.0
+const CAM_ZOOM_MIN := 10.0
+const CAM_ZOOM_MAX := 48.0
+const CAM_DEFAULT_PITCH := 0.72
+const CAM_DEFAULT_YAW := 0.72
+const CAM_DEFAULT_ZOOM := 32.0
+const CAM_PITCH_MIN := 0.02
+const CAM_PITCH_MAX := 1.54
 
 var model: HarborWorldModel
 var world: HarborBuildWorld
@@ -52,6 +61,7 @@ var chapters: Array = []
 var achievements: Achievements
 var photo_stats: Dictionary = {"photos": 0, "night_photos": 0}
 var chapter_title: Label
+var location_label: Label
 var minimap: Control
 var modal: ColorRect
 var sound := AudioStreamPlayer.new()
@@ -67,11 +77,6 @@ var paint_elapsed: float = 0.0
 var paint_screen := Vector2.ZERO
 
 func _ready() -> void:
-	model = Model.new()
-	model.reset()
-	model.migrate_legacy_save()
-	if FileAccess.file_exists(Model.slot_path(model.current_slot)):
-		model.load_local()
 	if ModelThumbnails.ENABLED:
 		thumbs = ModelThumbnails.new()
 		add_child(thumbs)
@@ -79,14 +84,40 @@ func _ready() -> void:
 	achievements = Achievements.new()
 	add_child(achievements)
 	achievements.unlocked.connect(_on_achievement_unlocked)
-	world = World.new()
-	add_child(world)
-	world.setup(model)
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.near = 0.1
 	camera.far = 300.0
 	add_child(camera)
 	camera.current = true
+	_enter_location(HarborLocationRegistry.default_id())
+	var qa_location := _qa_text("location")
+	if HarborLocationRegistry.is_valid(qa_location) and qa_location != model.location_id:
+		_enter_location(qa_location)
+	if _qa_flag("cine"):
+		cine_t = 0.0   # 电影运镜模式：--write-movie 录制用（R-ENG-27 延伸）
+		hud.visible = false   # 风光片不带 UI
+	# qa 机位参数：zoom 必须先于 pitch（俯仰下限依赖 zoom：拉远自动抬角）。
+	var qa_zoom := _qa_value("zoom", -1)
+	if qa_zoom >= 0:
+		target_zoom = clampf(float(qa_zoom), CAM_ZOOM_MIN, CAM_ZOOM_MAX)
+		zoom = target_zoom
+	var qa_pitch := _qa_value("pitch", -1)
+	if qa_pitch >= 0:
+		target_pitch = clampf(float(qa_pitch) / 100.0, _pitch_floor(), CAM_PITCH_MAX)
+		pitch = target_pitch
+	var qa_yaw := _qa_value("yaw", -999)
+	if qa_yaw > -999:
+		target_yaw = float(qa_yaw) / 100.0
+		yaw = target_yaw
+	# qa phase 参数（0 晨 / 1 昼 / 2 日落 / 3 夜）：验收与截图用，直接跳变不播过渡。
+	var qa_phase := _qa_value("phase", -1)
+	if qa_phase >= 0 and qa_phase < 4 and world != null:
+		world.set_phase(qa_phase, false, false)
+	# qa noshadow 必须在 phase 之后（_apply_state 会覆盖 shadow_opacity）。
+	# 用 opacity 而不是 shadow_enabled：WebGL 运行时切 enabled 触发 shader variant
+	# 重编译导致光照丢失（实测画面反常变暗 35），不可作对照。
+	if world != null and world.daylight != null and _qa_flag("noshadow"):
+		world.daylight.sun.shadow_opacity = 0.0
 	_update_camera(1.0)
 	add_child(sound)
 	sound.volume_db = -20.0
@@ -94,16 +125,58 @@ func _ready() -> void:
 	objectives = data.get("objectives", []) if data is Dictionary else []
 	chapters = data.get("chapters", []) if data is Dictionary else []
 	_build_ui()
-	if thumbs != null:
-		thumbs.request(model.palette.keys())
-	model.changed.connect(_refresh_ui)
-	_refresh_ui()
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 	_setup_browser()
-	_toast("欢迎来到雾港。选一块建材，把你的想法放在岛上。", 6.0)
+	if not _qa_flag("nomenu"):
+		_show_location_picker()
+
+## ── 电影运镜模式（cine qa 标志 + --write-movie 录制用）──
+## 10 秒四地风光片：每地 2.4-2.6 秒，运镜 = smoothstep 缓动的推拉摇；
+## 地点在切点瞬切（重建世界），phase 直接跳变（无过渡 tween）。
+const CINE_SHOTS := [
+	{"loc": "santorini", "phase": 1, "t": 0.0, "yaw0": 0.62, "yaw1": 1.45,
+		"pitch": 0.34, "zoom0": 32.0, "zoom1": 22.0},
+	{"loc": "quanzhou", "phase": 0, "t": 2.6, "yaw0": 0.70, "yaw1": 1.25,
+		"pitch": 0.36, "zoom0": 30.0, "zoom1": 24.0},
+	{"loc": "seychelles", "phase": 1, "t": 5.0, "yaw0": 0.72, "yaw1": 1.40,
+		"pitch": 0.10, "zoom0": 20.0, "zoom1": 17.0},
+	{"loc": "cape-cod", "phase": 3, "t": 7.4, "yaw0": 0.50, "yaw1": 1.30,
+		"pitch": 0.18, "zoom0": 24.0, "zoom1": 30.0},
+]
+const CINE_LEN := 10.0
+var cine_t := -1.0
+var cine_stage := -1
+
+
+func _cine_tick(delta: float) -> void:
+	cine_t += delta
+	if cine_t >= CINE_LEN + 0.3:
+		get_tree().quit()
+		return
+	var idx := 0
+	for i in range(CINE_SHOTS.size()):
+		if cine_t >= float(CINE_SHOTS[i]["t"]):
+			idx = i
+	var shot: Dictionary = CINE_SHOTS[idx]
+	if idx != cine_stage:
+		cine_stage = idx
+		if model.location_id != str(shot["loc"]):
+			_enter_location(str(shot["loc"]))
+		world.set_phase(int(shot["phase"]), false, false)
+	var t0 := float(shot["t"])
+	var t1: float = float(CINE_SHOTS[idx + 1]["t"]) if idx + 1 < CINE_SHOTS.size() else CINE_LEN
+	var k := clampf((cine_t - t0) / maxf(t1 - t0, 0.001), 0.0, 1.0)
+	var e := k * k * (3.0 - 2.0 * k)
+	target_yaw = lerpf(float(shot["yaw0"]), float(shot["yaw1"]), e)
+	target_pitch = float(shot["pitch"])
+	target_zoom = lerpf(float(shot["zoom0"]), float(shot["zoom1"]), e)
+
 
 func _process(delta: float) -> void:
+	if cine_t >= 0.0:
+		_cine_tick(delta)   # 只写 target_*，让 _update_camera 正常执行相机位姿
+	_update_camera(delta)
 	_update_camera(delta)
 	paint_elapsed += delta
 	if painting and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
@@ -145,15 +218,18 @@ func _update_camera(delta: float) -> void:
 		target_focus += (right * direction.x + forward * direction.y) * delta * target_zoom * 0.33
 		if Input.is_physical_key_pressed(KEY_Q): target_yaw += delta * 0.9
 		if Input.is_physical_key_pressed(KEY_E): target_yaw -= delta * 0.9
-	target_focus.x = clampf(target_focus.x, -23, 23)
-	target_focus.z = clampf(target_focus.z, -23, 23)
+	# 平移范围随地点可建造区走，防止看到风景带之外的虚空（穿模防护）。
+	var pan_limit := float(maxi(12, model.edge - 6))
+	target_focus.x = clampf(target_focus.x, -pan_limit, pan_limit)
+	target_focus.z = clampf(target_focus.z, -pan_limit, pan_limit)
+	target_pitch = maxf(target_pitch, _pitch_floor())
 	var weight := minf(1.0, delta * 12.0)
 	focus = focus.lerp(target_focus, weight)
 	yaw = lerpf(yaw, target_yaw, weight)
 	pitch = lerpf(pitch, target_pitch, weight)
 	zoom = lerpf(zoom, target_zoom, weight)
 	camera.size = zoom
-	camera.position = focus + Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch)) * 48.0
+	camera.position = focus + Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch)) * CAM_ORBIT_RADIUS
 	camera.look_at(focus, Vector3.UP)
 	if minimap != null and minimap.focus_position.distance_squared_to(focus) > 0.02:
 		minimap.focus_position = focus
@@ -184,9 +260,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_MIDDLE:
 			panning = event.pressed
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			target_zoom = clampf(target_zoom - 1.6, 10.0, 48.0)
+			target_zoom = clampf(target_zoom - 1.6, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			target_zoom = clampf(target_zoom + 1.6, 10.0, 48.0)
+			target_zoom = clampf(target_zoom + 1.6, CAM_ZOOM_MIN, CAM_ZOOM_MAX)
 		elif event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			painting = true
 			last_painted = Vector3i(999,999,999)
@@ -194,7 +270,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		if orbiting:
 			target_yaw -= event.relative.x * 0.006
-			target_pitch = clampf(target_pitch + event.relative.y * 0.004, 0.38, 1.25)
+			target_pitch = clampf(target_pitch + event.relative.y * 0.004, _pitch_floor(), CAM_PITCH_MAX)
 		if panning:
 			var right := Vector3(cos(yaw), 0, -sin(yaw))
 			var forward := Vector3(sin(yaw), 0, cos(yaw))
@@ -209,7 +285,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.ctrl_pressed and event.keycode == KEY_S: _save()
 		elif event.keycode == KEY_B: _toggle_demolition()
 		elif event.keycode == KEY_R: _rotate_piece()
-		elif event.keycode == KEY_N: _toggle_night()
+		elif event.keycode == KEY_N: _cycle_phase()
+		elif event.keycode == KEY_M: _toggle_weather()
+		elif event.keycode == KEY_K: _toggle_heatmap()
 		elif event.keycode == KEY_F: _center_camera()
 		elif event.keycode == KEY_H: _show_help()
 		elif event.keycode == KEY_P: hud.visible = not hud.visible
@@ -323,8 +401,10 @@ func _build_ui() -> void:
 	_label(brand, "MIST HARBOR", 18)
 	_label(brand, "雾港造物记  /  给灵感一座岛", 11, MUTED)
 	_spacer(header)
-	_label(header, "创造模式 · 无限建材", 12, MUTED)
-	_button(header, "日景  N", _toggle_night, "night")
+	location_label = _label(header, "", 12, MUTED)
+	_button(header, "昼  N", _cycle_phase, "night")
+	_button(header, "天气  M", _toggle_weather, "weather")
+	_button(header, "地点", _show_location_picker, "location")
 	_button(header, "保存作品", _save, "save")
 	_button(header, "作品管理", _show_menu, "menu")
 	_button(header, "?", _show_help, "help")
@@ -467,7 +547,7 @@ func _update_chapter_title() -> void:
 func _objective_amount(goal: Dictionary, counts: Dictionary) -> int:
 	var key := str(goal["kind"])
 	if key == "garden":
-		return mini(3, int(counts.get("tree", 0))) + mini(3, int(counts.get("flower", 0)))
+		return _planted_trees(counts) + mini(3, int(counts.get("flower", 0)))
 	if key == "journal":
 		return mini(1, int(model.stats.get("saved", 0))) + mini(1, int(model.stats.get("undone", 0)))
 	if key == "variety":
@@ -480,7 +560,25 @@ func _objective_amount(goal: Dictionary, counts: Dictionary) -> int:
 		return model.placed_count()
 	if key == "night_photo":
 		return int(photo_stats.get("night_photos", 0))
-	return int(counts.get(key, 0))
+	if model.palette.has(key):
+		return int(counts.get(key, 0))
+	# 四地共用一份目标文案：本地点没有这件建材时按同类计，保证六条新手目标在每个地点都可达。
+	var fallback_category := str(goal.get("category", ""))
+	if fallback_category.is_empty():
+		return 0
+	var total := 0
+	for kind in counts:
+		if str(model.definition(kind).get("category", "")) == fallback_category:
+			total += int(counts[kind])
+	return total
+
+
+func _planted_trees(counts: Dictionary) -> int:
+	var planted := 0
+	for kind in counts:
+		if str(model.definition(kind).get("category", "")) == "自然" and model.item_height(kind) >= 2:
+			planted += int(counts[kind])
+	return mini(3, planted)
 
 func _chapter_objectives(chapter_id: int) -> Array:
 	var result: Array = []
@@ -590,11 +688,25 @@ func _refresh_ui() -> void:
 		action_buttons["undo"].disabled = model.undo_stack.is_empty()
 		action_buttons["redo"].disabled = model.redo_stack.is_empty()
 		action_buttons["save"].text = "保存作品 *" if model.dirty else "保存作品"
-		action_buttons["night"].text = "夜景  N" if world.night else "日景  N"
+		action_buttons["night"].text = "%s  N" % [world.daylight.phase_label()]
+		var weather_button: Button = action_buttons.get("weather", null)
+		if weather_button != null:
+			weather_button.visible = model.profile.has_weather_toggle
+			weather_button.text = "%s：%s  M" % [model.profile.weather_label, "开" if world.weather_on else "关"]
+	if location_label != null:
+		location_label.text = "%s · 动词「%s」 · 已新建 %d/%d" % [
+			model.profile.display_name, model.mechanic.verb(), model.placed_count(), model.max_cells]
 	_check_achievements()
 	_update_chapter_title()
 	if selected_label != null:
-		selected_label.text = "拆除模式 · 点击或拖动移除格子，撤销可以恢复" if demolishing else str(model.definition(selected)["tip"]) + "  朝向 %d°" % [piece_rotation * 90]
+		if demolishing:
+			selected_label.text = "拆除模式 · 点击或拖动移除格子，撤销可以恢复"
+		else:
+			# 新规则的教学绑定到具体建材：选中时才浮现一句话，不开局弹教程墙。
+			var hint := model.mechanic.hint_for(selected)
+			if hint.is_empty():
+				hint = str(model.definition(selected)["tip"])
+			selected_label.text = hint + "  朝向 %d°" % [piece_rotation * 90]
 	if minimap != null: minimap.queue_redraw()
 
 func _layout() -> void:
@@ -650,15 +762,118 @@ func _redo() -> void:
 	if model.redo(): _toast("已重做。", 1.5)
 
 func _toggle_night() -> void:
-	world.set_night(not world.night)
+	_cycle_phase()
+
+
+func _cycle_phase() -> void:
+	## N 键：晨 → 昼 → 日落 → 夜 四态循环。四地共用唯一一条 set_night 分支。
+	world.set_phase((world.phase + 1) % 4, world.weather_on)
 	_refresh_ui()
-	_toast("夜色降临，看看灯塔与路灯。" if world.night else "晨光回到海湾。", 2.0)
+	var label := world.daylight.phase_label()
+	_toast("环境切到「%s」。" % [label], 2.0)
+
+
+func _toggle_weather() -> void:
+	## M 键：天气轴开关（正交于四态昼夜）。目前只有 Cape Cod 的海雾。
+	if not model.profile.has_weather_toggle:
+		_toast("这个地点没有天气开关。", 2.0)
+		return
+	world.toggle_weather()
+	_refresh_ui()
+	_toast("%s：%s" % [model.profile.weather_label, "开" if world.weather_on else "关"], 2.0)
+
+
+func _toggle_heatmap() -> void:
+	## K 键：Cape Cod 的覆盖热力图（默认关闭，不给分数、不弹达成）。
+	if world.toggle_heatmap():
+		_toast("覆盖热力图：%s（只用来构图，不评分）" % ["开" if world.heatmap_on else "关"], 2.4)
+	else:
+		_toast("这个地点没有覆盖热力图。", 2.0)
+
+
+## 俯仰下限 = 0（规格 §1/§2，2026-09-28）：海已是不透明 800×800 无限平面（规格 §2），
+## 任何 zoom 下画面下缘都由海面承接，不存在"看穿场景"——摄像机在任意 FOV 都能
+## 压到海平面（pitch 0 = 海平线居中的正侧视全景）。旧的 zoom 联动抬角公式废弃。
+func _pitch_floor() -> float:
+	return 0.0
+
 
 func _center_camera() -> void:
 	target_focus = Vector3(0,1,1)
-	target_yaw = 0.72
-	target_pitch = 0.72
-	target_zoom = 32.0
+	target_yaw = CAM_DEFAULT_YAW
+	target_pitch = CAM_DEFAULT_PITCH
+	target_zoom = CAM_DEFAULT_ZOOM
+	# 地点可带自己的默认机位（如塞舌尔给天空/太阳留画面、圣托里尼面朝崖壁）。
+	if model != null and model.profile != null:
+		if model.profile.camera_yaw >= 0.0:
+			target_yaw = model.profile.camera_yaw
+		if model.profile.camera_pitch > 0.0:
+			target_pitch = model.profile.camera_pitch
+		if model.profile.camera_zoom > 0.0:
+			target_zoom = model.profile.camera_zoom
+
+func _enter_location(id: String, with_village: bool = true) -> void:
+	## 地点切换器：换资源 = 换 LocationProfile + 建材表 + 独占机制；手感四地完全一致。
+	if world != null:
+		remove_child(world)
+		world.queue_free()
+		world = null
+	model = Model.new(id)
+	model.reset(model.profile.world_seed, with_village)
+	model.migrate_legacy_save()
+	if FileAccess.file_exists(model.slot_path(model.current_slot)):
+		model.load_local()
+	world = World.new()
+	add_child(world)
+	world.setup(model)
+	if world.daylight != null and _qa_flag("waterdebug"):
+		world.daylight.debug_water_override(_qa_value("waterdebug", 1))
+	if _qa_flag("hideground"):
+		world.terrain.visible = false
+		world.props.visible = false
+		world.decor.visible = false
+	if _qa_flag("skydebug") and world.daylight != null:
+		# 天空盒诊断：背景换成 default_clear_color（青色）+ 水体隐藏。
+		# 若画面是青色 → 天空盒 shader 没渲染（看到的是引擎清屏色）；灰色 → 天空盒 shader 在渲染。
+		world.daylight.environment.background_mode = Environment.BG_CLEAR_COLOR
+		world.daylight.water.visible = false
+	category = "地形"
+	demolishing = false
+	piece_rotation = 0
+	selected = str(_category_items()[0].get("id", "stone"))
+	if minimap != null:
+		minimap.model = model
+	if thumbs != null:
+		thumbs.request(model.palette.keys())
+	model.changed.connect(_refresh_ui)
+	if dock_items != null:
+		_build_palette()
+	_refresh_ui()
+	_center_camera()
+
+
+func _show_location_picker() -> void:
+	var options: Array = []
+	for id in HarborLocationRegistry.ids():
+		var info := HarborLocationRegistry.summary(id)
+		var target := id
+		options.append({
+			"text": "进入 %s（动词：%s）" % [str(info["name"]), str(info["verb"])],
+			"action": func() -> void: _pick_location(target),
+		})
+	_show_dialog("选择一个地点",
+		"四个地点全部开放，随时可以回来换一个。\n"
+		+ "它们换的是「动词」：连 / 悬挑 / 叠 / 照，落在四个不同的空间维度上。\n"
+		+ "相机、建造、撤销、拍照的手感四地完全一致。", options)
+
+
+func _pick_location(id: String) -> void:
+	if model != null and id == model.location_id:
+		return
+	_enter_location(id)
+	var info := HarborLocationRegistry.summary(id)
+	_toast("%s —— %s" % [str(info["name"]), str(info["tagline"])], 6.0)
+
 
 func _save() -> void:
 	if model.save_local():
@@ -673,7 +888,7 @@ func _toast(message: String, seconds: float = 3.5) -> void:
 	toast_time = seconds
 
 func _show_help() -> void:
-	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海湾。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：环绕视角    中键拖动 / WASD：平移\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转下一件建材    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：切换昼夜    P：隐藏界面拍照    C：保存截图    Esc：返回\n\n水面可以直接搭地基，空中格子须与既有建材相接。\n高模型占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，双指拖动旋转，使用界面按钮。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
+	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海岸。\n四个地点换的是「动词」：泉州「连」/ 圣托里尼「悬挑」/ 塞舌尔「叠」/ Cape Cod「照」。\n相机、建造、撤销、拍照的手感四地完全一致。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：环绕视角    中键拖动 / WASD：平移\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转建材（多格构件可换朝向）    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：晨 → 昼 → 日落 → 夜 四态循环    M：天气开关（Cape Cod 海雾）\nP：隐藏界面拍照    C：保存截图并分享    Esc：返回\n\n地点在菜单里全部开放，游戏内没有解锁与购买。\n新规则只在选中建材时提示一句，不会开局弹教程。\n\n水面可以直接搭地基，空中格子须与既有建材相接。\n多格构件（古厝 / 巨石 / 灯塔）占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，双指拖动旋转，使用界面按钮。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
 
 func _show_menu() -> void:
 	_show_dialog("作品管理", "存档仅保存在当前浏览器或设备。清理浏览器数据可能丢失作品，\n建议定期导出 JSON。导入时会校验版本、坐标、重叠与体积。\n\n加载或开始新岛会替换当前场景；请先保存或导出。\n样板预置建筑不计入小挑战，只有亲手新增的建材才计数。", [
@@ -681,6 +896,7 @@ func _show_menu() -> void:
 		{"text":"存档槽…", "action":_show_slots},
 		{"text":"导出 JSON", "action":_export_world},
 		{"text":"导入 JSON", "action":_import_world},
+		{"text":"切换地点", "action":_show_location_picker},
 		{"text":"空白群岛", "action":func() -> void: _confirm_reset(false)},
 		{"text":"恢复灵感海湾", "action":func() -> void: _confirm_reset(true)},
 		{"text":"音效：" + ("开" if sound_enabled else "关"), "action":func() -> void: sound_enabled = not sound_enabled}
@@ -786,6 +1002,34 @@ func _export_world() -> void:
 			file.close()
 			_show_dialog("已导出", ProjectSettings.globalize_path("user://mist-harbor-export.json"), [])
 
+func _qa_flag(name_value: String) -> bool:
+	if not OS.has_feature("web"):
+		# 桌面（测试/录帧）：HARBOR_QA="noshadow=1;pitch=55" 分号分隔。
+		for pair in OS.get_environment("HARBOR_QA").split(";"):
+			if pair.split("=")[0].strip_edges() == name_value:
+				return true
+		return false
+	return bool(JavaScriptBridge.eval("new URLSearchParams(location.search).has('%s')" % [name_value]))
+
+
+func _qa_value(name_value: String, fallback: int) -> int:
+	if not OS.has_feature("web"):
+		for pair in OS.get_environment("HARBOR_QA").split(";"):
+			var kv := pair.split("=")
+			if kv.size() == 2 and kv[0].strip_edges() == name_value:
+				return int(kv[1].strip_edges())
+		return fallback
+	var raw: Variant = JavaScriptBridge.eval("new URLSearchParams(location.search).get('%s')" % [name_value])
+	return int(str(raw)) if raw != null else fallback
+
+
+func _qa_text(name_value: String, fallback: String = "") -> String:
+	if not OS.has_feature("web"):
+		return fallback
+	var raw: Variant = JavaScriptBridge.eval("new URLSearchParams(location.search).get('%s')" % [name_value])
+	return str(raw) if raw != null else fallback
+
+
 func _setup_browser() -> void:
 	if not OS.has_feature("web"): return
 	qa_enabled = bool(JavaScriptBridge.eval("new URLSearchParams(location.search).has('qa')"))
@@ -842,4 +1086,7 @@ func qa_snapshot() -> Dictionary:
 	for key in item_buttons:
 		var rect: Rect2 = item_buttons[key].get_global_rect()
 		controls["item-" + key] = [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
-	return {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,"slot":model.current_slot,"save_exists":FileAccess.file_exists(Model.slot_path(model.current_slot)),"last_error":model.last_error,"photos":photo_stats,"placed":model.placed_count(),"counts":model.player_counts(),"cells":model.cells.size(),"undo":model.undo_stack.size(),"redo":model.redo_stack.size(),"dirty":model.dirty,"stats":model.stats,"faces":world.visible_faces,"assets":world.scenes.keys(),"modal":modal!=null,"buttons":controls,"viewport":[get_viewport().get_visible_rect().size.x,get_viewport().get_visible_rect().size.y],"pick":str(pick_result),"camera":[target_yaw,target_pitch,target_zoom],"revision":model.revision}
+	return {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,
+		"render":world.daylight.render_diagnostics() if world.daylight != null else {},
+		"location":model.location_id,"phase":world.phase,"weather":world.weather_on,"mechanic":model.mechanic.id(),
+		"profile":{"name":model.profile.display_name,"verb":model.profile.verb},"slot":model.current_slot,"save_exists":FileAccess.file_exists(model.slot_path(model.current_slot)),"last_error":model.last_error,"photos":photo_stats,"placed":model.placed_count(),"counts":model.player_counts(),"cells":model.cells.size(),"undo":model.undo_stack.size(),"redo":model.redo_stack.size(),"dirty":model.dirty,"stats":model.stats,"faces":world.visible_faces,"assets":world.scenes.keys(),"modal":modal!=null,"buttons":controls,"viewport":[get_viewport().get_visible_rect().size.x,get_viewport().get_visible_rect().size.y],"pick":str(pick_result),"camera":[target_yaw,target_pitch,target_zoom],"revision":model.revision}

@@ -29,8 +29,10 @@ FONT_OUT = PROJECT / "assets" / "fonts" / "harbor-sc.ttf"
 FONT_SOURCES = [LOCAL / "NotoSansSC.ttf", Path("F:/web-cb/.codebuddy/tools/NotoSansSC.ttf")]
 
 TEXT_SOURCES = (
-    list((PROJECT / "data").glob("*.json"))
-    + list((PROJECT / "scripts").glob("*.gd"))
+    # 🔴 用 rglob：四地点的建材表在 data/locations/<id>/，core/locations 脚本在子目录里，
+    # 曾因只扫顶层目录导致新文案全部缺字（豆腐块，2026-09-26）。
+    list((PROJECT / "data").rglob("*.json"))
+    + list((PROJECT / "scripts").rglob("*.gd"))
     + [ROOT / "README.md", ROOT / "START_HERE.txt", ROOT / "tutorial.yaml",
        ROOT / "learning_tasks.json", PROJECT / "docs" / "learning-guide.md",
        PROJECT / "docs" / "requirements.md"]
@@ -119,7 +121,9 @@ def main() -> None:
 
     check = TTFont(FONT_OUT)
     still_missing = [ch for ch in missing if ord(ch) not in check.getBestCmap()]
-    print(f"base {BASE.name}: added {len(missing)} glyph(s); still missing: {still_missing or 'none'}")
+    # GBK 控制台打印 emoji 会 UnicodeEncodeError；转义后再输出。
+    report = "".join(still_missing) if still_missing else "none"
+    print(f"base {BASE.name}: added {len(missing)} glyph(s); still missing: {report.encode('unicode_escape').decode('ascii')}")
     print(f"font -> {FONT_OUT} ({FONT_OUT.stat().st_size // 1024} KB)")
 
 

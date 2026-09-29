@@ -47,6 +47,19 @@ def invoke(executable, arguments, label, isolated=False):
         raise RuntimeError(f'{label} failed; see logs/{label}.log (exit={result.returncode})')
     return text
 
+def newest_source_time():
+    """Newest mtime across scripts/scenes/data — used to detect stale exports."""
+    latest = 0.0
+    for folder in ['scripts', 'data', 'tests']:
+        for path in (PROJECT / folder).rglob('*'):
+            if path.is_file() and path.suffix in {'.gd', '.json', '.tscn', '.gdshader'}:
+                latest = max(latest, path.stat().st_mtime)
+    scene = PROJECT / 'main.tscn'
+    if scene.is_file():
+        latest = max(latest, scene.stat().st_mtime)
+    return latest
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['import', 'test', 'editor', 'run', 'export-web', 'export-windows', 'preview', 'package'])
@@ -57,13 +70,37 @@ def main():
         web = BUILD
         if not (web / 'index.html').is_file():
             parser.error('No Web export yet. Run export-web first.')
-        return subprocess.call([sys.executable, '-m', 'http.server', str(args.port), '--bind', '127.0.0.1', '--directory', str(web)])
+
+        # 带 no-cache 头的静态服务：浏览器不再缓存 index.pck/wasm——
+        # 否则重新导出后普通刷新仍跑旧包（2026-09-27 幽灵错位"修了没生效"的元凶）。
+        import http.server
+        import functools
+
+        class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+            def end_headers(self):
+                self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                self.send_header('Pragma', 'no-cache')
+                self.send_header('Expires', '0')
+                super().end_headers()
+
+        handler = functools.partial(NoCacheHandler, directory=str(web))
+        server = http.server.ThreadingHTTPServer(('127.0.0.1', args.port), handler)
+        print(f'preview: http://127.0.0.1:{args.port}/index.html  (no-cache)')
+        try:
+            return server.serve_forever()
+        except KeyboardInterrupt:
+            return 0
     if args.action == 'package':
         command = [sys.executable, str(ROOT / 'package_sample.py'), '--output', str(ROOT / '.codebuddy/releases')]
         if (BUILD / 'index.wasm').is_file():
             command += ['--web-dir', str(BUILD)]
         return subprocess.call(command, cwd=ROOT)
     binary = engine(args.godot)
+    # 🔴 R-ENG-18（新增）：.godot/exported/ 的脚本编译缓存**不随 .gd 修改而失效**，
+    # 导出会静默打包旧脚本（2026-09-26 事故：连续多次导出都是旧代码，观感"时灵时不灵"）。
+    # 导出/测试前强制清掉该缓存；imported/（资源导入缓存）保留以免全量重导。
+    if args.action in {'export-web', 'export-windows'}:
+        shutil.rmtree(PROJECT / '.godot' / 'exported', ignore_errors=True)
     if args.action in {'editor', 'run'}:
         command = [binary, '--path', str(PROJECT)]
         if args.action == 'editor': command.append('--editor')
@@ -90,6 +127,8 @@ def main():
         invoke(binary, ['--export-release', 'Web', str(web / 'index.html')], 'web-export')
         if not all((web / name).is_file() for name in ['index.html', 'index.js', 'index.pck', 'index.wasm']):
             raise RuntimeError('Export completed without required Web artifacts')
+        if (web / 'index.pck').stat().st_mtime < newest_source_time():
+            raise RuntimeError('index.pck is older than the newest source file; the export was stale')
     elif args.action == 'export-windows':
         windows = BUILD_WIN
         windows.mkdir(exist_ok=True)

@@ -95,6 +95,91 @@ python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑
    `role ∈ {model/asset, preview, receipt/inspect, log}`；本仓库管线已按 role 优先、
    缺失时回退后缀的方式实现（`tools/asset_pipeline.py` 的 `pick_artifact`）。
 
+## Tripo（AI 3D 生成 API）— 2026-09-26 首次接入
+
+- 凭据：`3D tools config/3Denv.txt`（**已在 .gitignore 中忽略，勿提交**）；`--save` 后另存 `.codebuddy/local/tripo.json`（不入库）。
+- 生效版本：**v3**，`base_url = https://openapi.tripo3d.ai/v3`，鉴权 `Authorization: Bearer {api_key}`。
+  v2（`api.tripo3d.ai/v2/openapi`）对该 key 不可用（路径 404）。
+- 实测可达端点：`GET /v3/account/balance`（OK）、`POST /v3/tasks/list`（body `taskIds: [...]`）、`GET /v3/tasks/{task_id}`（id 为 UUID）。
+- 待用（文档登记，未实测）：`POST /v3/files` 上传、`POST /v3/generation/text-to-model`、
+  `POST /v3/generation/image-to-model`、`POST /v3/models/convert`（转 glb）。
+- 自检：`py tools/tripo_check.py [--save]`；打样：`py tools/tripo_gen.py --name <id> [--task-id ...] [--wait N]`。
+- **站点不互通**：国际站 `openapi.tripo3d.ai` 与国内站 `openapi.tripo3d.com` 账号/key 各自独立
+  （本机 key 在国际站有效，在国内站返回 `Invalid API key`）。换站写 `.codebuddy/local/tripo.json` 的
+  `base_url` 或设 `TRIPO_BASE_URL`。
+- **积分体系**：网页版会员积分（`www.tripo3d.ai`）与 API credits（`platform.tripo3d.ai`）**不互通**，
+  两者余额需分别充值。API 侧 `balance=1000`（2026-09-26 充值）。
+- **v2 已退役公告**：2026-11-01 起 v2 端点停用，本项目全走 v3，无需改动。
+
+### 首次打样（2026-09-26，成功）
+
+```powershell
+py tools/tripo_gen.py --name buoy --wait 20      # 提交（先短等，拿 task_id）
+py tools/tripo_gen.py --name buoy --wait 120     # 续轮询 + 下载产物（可省 --task-id，meta 里有）
+```
+
+打样台账（均为 `P1-20260311` / texture+pbr / `auto_size=true`，**单价 40 credits/次**，每件约 80–150 秒）：
+
+| 名称 | face_limit | 三角面 | 顶点 | GLB 体积 | 贴图 | task_id |
+|---|---:|---:|---:|---:|---:|---|
+| `buoy` | 3000 | 2767 | 2265 | 2,890,056 B | 3 | `d99a33f6-…` |
+| `buoy_low` | 800 | **736** | 717 | 2,365,724 B | 3 | `df824254-…` |
+| `lighthouse` | 3000 | 2741 | 4136 | 1,800,052 B | 3 | `bdf2f8a8-…` |
+| `buoy_s42b` | 3000, seed=42 | 2492 | 2210 | 2,239,888 B | 3 | `ef692fcf-…` |
+| `buoy_s42b_low` | 800, seed=42 | **722** | 849 | 1,907,820 B | 3 | `113aa564-…` |
+
+结论：
+1. `face_limit` 对面数**线性有效**（同 seed 下 3000→800：2492→722，且**轮廓/贴图保持一致**，仅细节简化）。
+2. 但 GLB **体积主要由 3 张 PBR 贴图决定**：面数 -71% 体积只降 15%（2.24→1.91 MB）。压体积必须动贴图
+   （降 `texture_quality` / 关 `pbr` 只留 base_color / 转换时缩贴图）。
+3. **seed 教训**：要可复现/同形减面，必须同时固定 `image_seed`（内部 text2image 参考图）+ `model_seed`
+   + `texture_seed`。只固定后两者时参考图每次随机，几何完全不同（`buoy_s42`/`buoy_s42_low` 即废案）。
+   `tripo_gen.py --seed` 现已同时设三个 seed。
+
+产物在 `.codebuddy/local/tripo/samples/<name>/`（镜像到 `tripo_samples/`，已 gitignore）。
+
+产物分三个 role 落盘：`*_model.glb`、`*_preview.webp`（渲染预览，注意是 webp 不是 png）、
+`*_reference.jpeg`（text2image 参考图）。对比现有手工资产 `barrel`（632 面），Tripo 件面数与体积都偏大，
+进工程前建议先跑 `/v3/mesh/decimate` 减面或用 `--face-limit` 调小。
+
+### Tripo 进度状态（跨会话以本节为准，改完请就地更新）
+
+**已完成**
+1. key 配置与连通性验证（`tools/tripo_check.py`，v3 生效，国内/国际站点已区分）。
+2. 生成脚本 `tools/tripo_gen.py`（提交 / 轮询 / 下载 3 类产物 / GLB 统计 / meta 落盘 / 等额度自动开跑）。
+3. 五件打样完成（`buoy` / `buoy_low` / `lighthouse` / `buoy_s42b` / `buoy_s42b_low`），各 40 credits，
+   余额 1000 → **720**（其中 `buoy_s42` / `buoy_s42_low` 因未固定 image_seed 为废案，不计入有效对比）。
+   产物在 `.codebuddy/local/tripo/samples/<name>/`，镜像 `tripo_samples/`（已 gitignore）。
+4. 接入工程（2026-09-26 ~ 27，另一 session 起步 + 本 session 收尾）：泉厦四件
+   `loc_qz_bld_mansion` / `loc_qz_bld_oyster` / `loc_qz_nat_banyan` / `loc_qz_nat_zayton`
+   （源样 `qz_*_hf`，face_limit 3000）与 `loc_cc_prop_buoy`（源样 `buoy_s42b_low`，--flat 纯色）
+   均已落 GLB + palette 注册 + Godot 导入。
+5. **统一入口**（2026-09-27）：`asset_pipeline.py` 新增两个子命令——
+   - `build-tripo --location L --kind K --sample S --name N [--flat] [--footprint W,D] [--no-apply] [--no-import]`
+     一条龙：art_from_tripo（qa_batch 减面/归一/剥 PBR）→ manifest 条目 → palette mesh → Godot 导入。
+   - `sync-manifest [--task id=uuid] [--source id=path]`：为绕过 build 流程落盘的 GLB 回填 manifest
+     （`model_thumbnail.gd` 靠 `bounds.godot_size` 给建材坞图标取景，缺条目会按 1×1×1 兜底）。
+   `art_from_tripo.py` 保留可单跑，但新资产一律走 `build-tripo`。
+6. **面数/体积治理**（2026-09-27）：
+   - ⭐ **裁定（2026-09-27 用户）：600 面/件硬顶已解除**，为先保表现力，当前口径 **2000 面/件**。
+     `qa_batch.py` / `art_from_tripo.py` / `build-tripo` 的 `--faces` 默认值已同步改 2000。
+     后续 session **不得**再以"超 600 面、无豁免记录"为由擅自减面（本 session 曾误判一次并回滚，
+     四件 qz 资产维持 **1900 面**）。美术档（泉州植物 ≤500 等）为美术侧定标口径，与工具硬预算分离，
+     是否回收该口径由用户裁定。
+   - 已删除 16 个无引用的旁挂贴图孤儿（`*_Color_<uuid>.jpg(+.import)`，共 4.85MB，
+     Godot 导入的 .scn 内嵌贴图自包含，已验证零引用）。此清理与面数裁定无关，保留有效。
+7. 验收：`py tools/dev.py test` 全绿（model 159 / scene 0）。
+
+**遗留（不阻塞）**
+- [ ] `loc_cc_prop_buoy` 的源样假设为 `buoy_s42b_low`（task `113aa564…`，--flat 后贴图已剥，无直接物证），
+      若有出入改 manifest 的 task_id / source 两字段即可。
+- [ ] 面数最终口径（当前 2000）若日后因 Web 端性能回收，由用户裁定后改三处默认值并逐件重build。
+
+**约定**：Tripo 相关状态只写本节，不要分散到对话里；换 session 时先读本节。
+
+**坑**：替换/删除 `project/assets/models/` 下的 GLB 或贴图后，`.godot` 旧缓存会让下次 headless 导入
+直接 0xC0000005 崩溃（import.log 无具体错误）——先删 `project/.godot` 再跑 `py tools/dev.py test`。
+
 ## 已知坑
 
 - ~~**4.7 导出模板未安装**~~ 已解决：模板已装到 `%APPDATA%\Godot\export_templates\4.7.stable`
@@ -103,6 +188,8 @@ python tools/asset_pipeline.py build --id barrel --name 木桶 --category 建筑
 - **uv 在本机不可用**：`uvx` / `uv venv` 创建 Windows trampoline 时被拦截（拒绝访问）。blender-mcp 改用标准库 `python -m venv .venv-mcp` + pip 安装。
 - **Blender 不能后台跑 MCP**：插件明确拒绝 `blender -b`（主循环定时器不执行，命令会挂），必须 GUI，见 `tools/blender_mcp_autostart.py`。
 - **Blender 遥测**：已通过 `BLENDER_MCP_DISABLE_TELEMETRY=true` 关闭（MCP 条目里设置）。
+- **`python` 命令是 Windows Store stub**：PATH 里 `python` 指向 `WindowsApps\python.exe`，调用会**静默无输出退出**（exitCode 0）。所有脚本改用 `py`（3.14.4）。
+- **git 命令行不在 PATH**：PowerShell 里 `git` 不可用（`where git` 空），版本控制操作需先修 PATH 或用其他端。
 - 旧路径 `f:/web-cb/...`（原 web-cb 工具链）已不再依赖。
 
 ## 尚未完成（商业化路线）
