@@ -211,14 +211,17 @@ void fragment() {
 	}
 	float view_dist = length(world_pos.xz - cam_pos_w.xz);
 	float dist_fade = 1.0 - smoothstep(100.0, 240.0, view_dist);
-	// 流体折射：近岸（浅水）以折射像为主——沙底/石基透过波幅畸变的屏幕采样
-	// 显现出来，加一层泻湖水色滤镜；离岸变深回归水色；远海折射关闭。
+	// 流体折射：近岸（≤26 格渐变）沙底/石基透过波幅畸变的屏幕采样显现出来。
+	// 🔴 浑浊度随离岸加重（0.4→0.85）：近岸清澈透底，远处自然过渡回深水色——
+	// 两个旧版本都翻车：(5,26)+0.3 在海平面机位透出整个岛基剖面（太透）；
+	// (2,12) 突然截止在俯角 12° 留下一条硬色带界线（太急）。渐变+加重双保险。
 	vec2 refract_off = vec2(sin(world_pos.x * 1.4 + TIME * 1.1),
 		sin(world_pos.z * 1.2 - TIME * 0.8)) * 0.0034;
 	vec3 refracted = textureLod(screen_tex, SCREEN_UV + refract_off, 0.0).rgb;
 	vec3 underwater = refracted * (lagoon_color * 1.35 + vec3(0.06));
-	float refr_gate = (1.0 - smoothstep(5.0, 26.0, shore_d)) * dist_fade;
-	color = mix(color, mix(underwater, color, 0.3), refr_gate);
+	float refr_gate = (1.0 - smoothstep(2.0, 26.0, shore_d)) * dist_fade;
+	float refr_murk = clamp(0.4 + shore_d * 0.025, 0.4, 0.85);
+	color = mix(color, mix(underwater, color, refr_murk), refr_gate);
 	color = mix(color, sky_refl_color, smoothstep(160.0, 290.0, view_dist));
 	// 菲涅尔掠射：视线越接近水平，水面反射天空越多（物理正确的海面表现）。
 	// 高机位俯视 → 深浅水色主导；海平面机位 → 下半屏是映着天色的透视水面。
@@ -293,6 +296,7 @@ var sky: MeshInstance3D
 var water: MeshInstance3D
 var sky_material := ShaderMaterial.new()
 var water_material := ShaderMaterial.new()
+var curtain_material: StandardMaterial3D
 
 var _tween: Tween
 var _from: Dictionary = {}
@@ -343,16 +347,22 @@ func setup(location_profile: HarborLocationProfile) -> void:
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(water)
 	# 🔴 近机位水下幕帘（规格 §2，用户方案定稿）：正交视锥下缘在低角度会探到
-	# 海平面以下——平面海无法接住"已在水面下"的射线（永不命中），露出的
-	# 天空球下半球就是近景灰带（四地截图复验）。幕帘挂在海平面以下、
-	# 每帧随相机前移 95 格，与海面同 shader 同色带 → 水下视线全部落在它上，
-	# 近景与海面光照逻辑完全一致。位置/朝向在 _process 里跟随相机。
+	# 海平面以下——平面海无法接住"已在水面下"的射线（永不命中），水下视线
+	# 必须全部先落在幕帘上。每帧随相机前移 3 格（见 _process 注释：必须在
+	# 一切场景几何之前）。🔴 幕帘**不共享**水体 shader——实测水 shader 版幕帘
+	# 在场景中不产出像素（洋红 StandardMaterial 立即正常，原因未深究，
+	# 2026-09-30 扫描线定位），改用专用 StandardMaterial：深水色 + 开雾
+	# （随相位自动过渡），cull 关闭（双面）。位置/朝向在 _process 里跟随相机。
+	curtain_material = StandardMaterial3D.new()
+	curtain_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	curtain_material.roughness = 1.0
+	curtain_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var curtain_mesh := PlaneMesh.new()
 	curtain_mesh.size = Vector2(220, 90)
 	sea_curtain = MeshInstance3D.new()
 	sea_curtain.mesh = curtain_mesh
 	sea_curtain.rotation_degrees = Vector3(-90.0, 0.0, 0.0)
-	sea_curtain.material_override = water_material
+	sea_curtain.material_override = curtain_material
 	sea_curtain.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(sea_curtain)
 
@@ -372,7 +382,10 @@ func _build_scenery() -> void:
 	var haze := profile.fog_light_color.lerp(profile.water_deep_color, 0.35)
 	for island in profile.far_islands:
 		var width := float(island.get("width", 12.0))
-		var height := float(island.get("height", 3.0))
+		# 🔴 高度钳制：顶 = 0.2 + 1.4×height，height 无钳制时（2-4）山顶到 +3~+5.8——
+		# 海平面正交侧视（pitch 0）下山丘与视线等高，整圈剪影连成横贯画面的灰墙，
+		# 主岛像坐在壕沟里（2026-09-30 用户复验）。钳到顶 ≈+2.2：贴地平线的低矮岛影。
+		var height := minf(float(island.get("height", 3.0)), 1.4)
 		var base := MeshInstance3D.new()
 		var base_mesh := CylinderMesh.new()
 		base_mesh.top_radius = width * 0.5
@@ -410,8 +423,10 @@ func _shader(code: String) -> Shader:
 	return shader
 
 
+var _curtain_debug_material: StandardMaterial3D
+
 func debug_water_override(_mode: int = 1) -> void:
-	## 渲染诊断用：水体强制成不透明洋红。
+	## 渲染诊断用：水体强制成不透明洋红；幕帘换纯洋红无光照材质（排除 shader 因素）。
 	water_material.set_shader_parameter("deep_color", Color(1, 0, 1))
 	water_material.set_shader_parameter("shallow_color", Color(1, 0, 1))
 	water_material.set_shader_parameter("lagoon_color", Color(1, 0, 1))
@@ -419,6 +434,13 @@ func debug_water_override(_mode: int = 1) -> void:
 	water_material.set_shader_parameter("tint", Color(1, 1, 1))
 	water_material.set_shader_parameter("breaker_intensity", 0.0)
 	water_material.set_shader_parameter("whitecap_intensity", 0.0)
+	if sea_curtain != null:
+		if _curtain_debug_material == null:
+			_curtain_debug_material = StandardMaterial3D.new()
+			_curtain_debug_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			_curtain_debug_material.albedo_color = Color(1, 0, 1)
+			_curtain_debug_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		sea_curtain.material_override = _curtain_debug_material
 
 
 func render_diagnostics() -> Dictionary:
@@ -429,6 +451,11 @@ func render_diagnostics() -> Dictionary:
 		"water_aabb": [water.get_aabb().size.x, water.get_aabb().size.y, water.get_aabb().size.z],
 		"water_has_mesh": water.mesh != null,
 		"water_has_material": water.material_override != null,
+		"curtain_visible": sea_curtain.visible if sea_curtain != null else null,
+		"curtain_position": ([sea_curtain.global_position.x, sea_curtain.global_position.y, sea_curtain.global_position.z] if sea_curtain != null else null),
+		"curtain_aabb": ([sea_curtain.get_aabb().size.x, sea_curtain.get_aabb().size.y, sea_curtain.get_aabb().size.z] if sea_curtain != null else null),
+		"curtain_global_aabb_pos": ([sea_curtain.global_transform * sea_curtain.get_aabb().position] if sea_curtain != null else null),
+		"curtain_basis": ([sea_curtain.global_transform.basis] if sea_curtain != null else null),
 		"sun_dir": [snappedf(fwd.x, 0.001), snappedf(fwd.y, 0.001), snappedf(fwd.z, 0.001)],
 		"sky_sun_dir": sky_material.get_shader_parameter("sun_dir"),
 		"cel_disk": sky_material.get_shader_parameter("cel_disk"),
@@ -608,14 +635,18 @@ func _process(_delta: float) -> void:
 		sky_material.set_shader_parameter("cam_axis", axis)
 		sky_material.set_shader_parameter("cam_pos", cam.global_position)
 		sky_material.set_shader_parameter("cam_half", cam.size * 0.5)
-		# 水下幕帘：竖立在海平面以下、随相机前移 95 格（位于远海淡出带之前、
-		# 大多数水下地形之后），面朝相机。上缘与海面齐平 → 水线即幕帘顶边。
+		# 水下幕帘：竖立在海平面以下、**随相机前移仅 3 格**。轨道相机半径 48、
+		# 地形盒 edge ≤44 → 最近场景几何距相机 ≥4 格，幕帘在 3 格 = 必然在一切
+		# 场景几何之前，水下射线（正交水平射线永不命中海面大平面！）先撞幕帘。
+		# 🔴 演进史：95（比岛远，剖面裸露）→ 8（仍输给 edge≈40 的地形盒近侧裙边墙，
+		# 2026-09-30 扫描线定位）→ 3。面朝相机，上缘与海面齐平 = 水线即幕帘顶边。
 		if sea_curtain != null:
 			var fwd := Vector3(axis.x, 0.0, axis.z)
 			if fwd.length_squared() > 0.0001:
 				fwd = fwd.normalized()
-				sea_curtain.global_position = cam.global_position + fwd * 95.0
-				sea_curtain.global_position.y = -0.23 - 45.0   # 平面高 90，上缘贴海面
+				sea_curtain.global_position = cam.global_position + fwd * 3.0
+				# 顶边压到 -0.55（波谷最低 -0.32）：避免幕帘顶边从波谷里戳出硬横线。
+				sea_curtain.global_position.y = -0.55 - 45.0   # 平面高 90，上缘沉于波谷
 				sea_curtain.rotation.y = atan2(fwd.x, fwd.z)
 
 
@@ -655,6 +686,9 @@ func apply_water() -> void:
 	water_material.set_shader_parameter("foam_color", profile.foam_color)
 	water_material.set_shader_parameter("wave_scale", profile.wave_scale)
 	water_material.set_shader_parameter("wave_strength", profile.wave_normal_strength)
+	# 幕帘随相位换深水色（略压暗，与水线上的海面拉开层次）。
+	if curtain_material != null:
+		curtain_material.albedo_color = profile.water_deep_color.darkened(0.06)
 
 
 func state_for(target_phase: int, target_weather: bool) -> Dictionary:
