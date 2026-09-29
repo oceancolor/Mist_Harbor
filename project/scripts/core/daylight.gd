@@ -152,6 +152,10 @@ uniform vec3 far_sea_color : source_color = vec3(0.12, 0.22, 0.26);
 // sand_reach ≤ 0 关闭（每地配置）。
 uniform vec3 sand_color : source_color = vec3(0.91, 0.89, 0.8);
 uniform float sand_reach = 0.0;
+// 流体折射（§2/§5 方案 B 定稿，cursor_work 移植改良）：水体不透明（R-ENG-19），
+// 近岸以屏幕纹理折射"透视"水底——沙底/石基带着波幅畸变透出来；离岸变深回归
+// 水色；远海完全水色与天际衔接。水下幕帘共享本材质，同样折射其后方的水下世界。
+uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap, repeat_disable;
 varying vec3 world_pos;
 varying float shore_d;
 
@@ -206,11 +210,26 @@ void fragment() {
 		color = mix(sand_color, color, smoothstep(0.6, sand_reach, shore_d));
 	}
 	float view_dist = length(world_pos.xz - cam_pos_w.xz);
+	float dist_fade = 1.0 - smoothstep(100.0, 240.0, view_dist);
+	// 流体折射：近岸（浅水）以折射像为主——沙底/石基透过波幅畸变的屏幕采样
+	// 显现出来，加一层泻湖水色滤镜；离岸变深回归水色；远海折射关闭。
+	vec2 refract_off = vec2(sin(world_pos.x * 1.4 + TIME * 1.1),
+		sin(world_pos.z * 1.2 - TIME * 0.8)) * 0.0034;
+	vec3 refracted = textureLod(screen_tex, SCREEN_UV + refract_off, 0.0).rgb;
+	vec3 underwater = refracted * (lagoon_color * 1.35 + vec3(0.06));
+	float refr_gate = (1.0 - smoothstep(5.0, 26.0, shore_d)) * dist_fade;
+	color = mix(color, mix(underwater, color, 0.3), refr_gate);
 	color = mix(color, sky_refl_color, smoothstep(160.0, 290.0, view_dist));
 	// 菲涅尔掠射：视线越接近水平，水面反射天空越多（物理正确的海面表现）。
 	// 高机位俯视 → 深浅水色主导；海平面机位 → 下半屏是映着天色的透视水面。
 	float grazing = pow(clamp(1.0 - abs(normalize(cam_dir_w).y), 0.0, 1.0), 4.0);
-	color = mix(color, sky_refl_color, grazing * 0.78);
+	// 波面法线细节（cursor_work 移植改良）：细尺度噪声扰动掠射项与整体明度——
+	// 中景水面出现随波流动的明暗变化，不再是均匀"泳池色块"。
+	float slope_a = vnoise(world_pos.xz * vec2(0.50, 0.42) + vec2(TIME * 0.28, -TIME * 0.16)) - 0.5;
+	float slope_b = vnoise(world_pos.xz * vec2(0.36, 0.55) + vec2(-TIME * 0.20, TIME * 0.24)) - 0.5;
+	float grazing_local = clamp(grazing * 0.78 + (slope_a * 0.16 + slope_b * 0.12) * dist_fade, 0.0, 1.0);
+	color = mix(color, sky_refl_color, grazing_local);
+	color *= 1.0 + (slope_a + slope_b) * 0.05 * dist_fade;
 
 	float total_foam = 0.0;
 	// 域扭曲（与顶点一致）：湍流让破碎线/泡沫坐标自然摆动。
@@ -254,7 +273,6 @@ void fragment() {
 	glint *= 0.45 + 0.55 * vnoise(world_pos.xz * 1.6 + vec2(TIME * 0.4, -TIME * 0.3));
 	// 远处细节淡出（规格 §2）：泡沫与鳞光在 100-240 格渐隐，远水面趋近平色，
 	// 与 camera.far 之外的天空球远海（同 fog 匹配色）无缝衔接——远处不再有闪动纹理暴露接缝。
-	float dist_fade = 1.0 - smoothstep(100.0, 240.0, length(world_pos.xz - cam_pos_w.xz));
 	total_foam *= dist_fade;
 	color = mix(color, foam_color, clamp(total_foam, 0.0, 0.85));
 	color += glitter_color * glint * glitter_strength * dist_fade;

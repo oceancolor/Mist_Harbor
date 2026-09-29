@@ -26,6 +26,9 @@ var ground_body := StaticBody3D.new()
 var ground_collision := CollisionShape3D.new()
 var props := Node3D.new()
 var decor := Node3D.new()
+var shore_foam := MeshInstance3D.new()
+var horizon_lod := Node3D.new()
+var horizon_location := ""
 var ghost := Node3D.new()
 var ghost_kind: String = ""
 var ghost_material := StandardMaterial3D.new()
@@ -66,6 +69,8 @@ func setup(source: HarborWorldModel) -> void:
 	add_child(props)
 	add_child(decor)
 	add_child(ghost)
+	add_child(shore_foam)
+	add_child(horizon_lod)
 	ghost.visible = false
 	ghost_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ghost_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -183,7 +188,14 @@ func rebuild() -> void:
 						corner.y = -0.8
 					vertices.append(Vector3(part) + corner)
 					normals.append(Vector3(offset))
-					colors.append(shaded)
+					# 水下染色（§5 方案 B，流体折射配套）：海平面以下的顶点向深水色
+					# 渐变——石基/滩涂的水下部分呈"浸在水中"的观感，被水面折射
+					# 透视出来时是自然的水下色而不是干露的岩色。
+					var final_color := shaded
+					var world_corner_y: float = float(part.y) + corner.y
+					if world_corner_y < -0.2:
+						final_color = shaded.lerp(Color("2a6478"), 0.5)
+					colors.append(final_color)
 	if vertices.is_empty():
 		terrain.mesh = null
 		ground_collision.shape = null
@@ -202,6 +214,155 @@ func rebuild() -> void:
 		var shape := mesh.create_trimesh_shape()
 		shape.backface_collision = true
 		ground_collision.shape = shape
+		_rebuild_shore_foam()
+		_rebuild_horizon_lod()
+
+
+## 岸线浪花镶边（cursor_work 移植）：每条水线边贴 0.24m 泡沫条，波纹 shader
+## 做 8-13Hz 的涟漪×闪光脉动——比水面 shader 里的 swash 更"咬"住岸线。
+func _rebuild_shore_foam() -> void:
+	var vertices := PackedVector3Array()
+	var foam_width := 0.24
+	var foam_y := -0.17
+	for cell: Vector3i in model.cells:
+		if cell.y != 0:
+			continue
+		var item: Dictionary = model.get_cell(cell)
+		if str(model.definition(str(item.get("kind", "stone"))).get("mesh", "cube")) != "cube":
+			continue
+		for direction in [Vector3i.RIGHT, Vector3i.LEFT, Vector3i.FORWARD, Vector3i.BACK]:
+			if model.has_cell(cell + direction):
+				continue   # 邻居有实体 = 不是水线边
+			var a := Vector3.ZERO
+			var b := Vector3.ZERO
+			var c := Vector3.ZERO
+			var d := Vector3.ZERO
+			if direction == Vector3i.RIGHT:
+				a = Vector3(cell.x + 1.0, foam_y, cell.z)
+				b = Vector3(cell.x + 1.0, foam_y, cell.z + 1.0)
+				c = b + Vector3(foam_width, 0, 0)
+				d = a + Vector3(foam_width, 0, 0)
+			elif direction == Vector3i.LEFT:
+				a = Vector3(cell.x, foam_y, cell.z + 1.0)
+				b = Vector3(cell.x, foam_y, cell.z)
+				c = b + Vector3(-foam_width, 0, 0)
+				d = a + Vector3(-foam_width, 0, 0)
+			elif direction == Vector3i.FORWARD:
+				a = Vector3(cell.x, foam_y, cell.z)
+				b = Vector3(cell.x + 1.0, foam_y, cell.z)
+				c = b + Vector3(0, 0, -foam_width)
+				d = a + Vector3(0, 0, -foam_width)
+			else:
+				a = Vector3(cell.x + 1.0, foam_y, cell.z + 1.0)
+				b = Vector3(cell.x, foam_y, cell.z + 1.0)
+				c = b + Vector3(0, 0, foam_width)
+				d = a + Vector3(0, 0, foam_width)
+			for vertex in [a, b, c, a, c, d]:
+				vertices.append(vertex)
+	if vertices.is_empty():
+		shore_foam.mesh = null
+		return
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	var foam_mesh := ArrayMesh.new()
+	foam_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var foam_material := ShaderMaterial.new()
+	var foam_shader := Shader.new()
+	foam_shader.code = """shader_type spatial;
+render_mode unshaded, cull_disabled, fog_disabled, blend_mix, depth_draw_never;
+varying vec3 world_pos;
+void vertex(){ world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
+void fragment(){
+ float ripple = sin((world_pos.x + world_pos.z) * 7.0 + TIME * 1.7) * 0.5 + 0.5;
+ float shimmer = sin((world_pos.x - world_pos.z) * 13.0 - TIME * 2.3) * 0.5 + 0.5;
+ ALBEDO = mix(vec3(0.86, 0.94, 0.95), vec3(1.0), ripple);
+ ALPHA = 0.20 + ripple * 0.24 + shimmer * 0.08;
+}"""
+	foam_material.shader = foam_shader
+	foam_mesh.surface_set_material(0, foam_material)
+	shore_foam.mesh = foam_mesh
+
+
+## 每地主题化远景环（cursor_work 移植，尺度收到天空球内）：16 件远山石/远城郭
+## 绕岛一圈（120-143 格），切点随地点换色换形——泉州塔、圣托里尼白盒子。
+func _rebuild_horizon_lod() -> void:
+	if horizon_location == model.location_id:
+		return
+	horizon_location = model.location_id
+	for child in horizon_lod.get_children():
+		horizon_lod.remove_child(child)
+		child.queue_free()
+	var base_color := Color("6e8e82")
+	var accent_color := Color("d5c3a5")
+	var height_scale := 4.0
+	var distance_base := 120.0
+	match model.location_id:
+		"santorini":
+			base_color = Color("6e625d")
+			accent_color = Color("ece5da")
+			height_scale = 8.0
+			distance_base = 126.0
+		"seychelles":
+			base_color = Color("766f66")
+			accent_color = Color("4f876b")
+			height_scale = 5.0
+			distance_base = 122.0
+		"cape_cod":
+			base_color = Color("9a9687")
+			accent_color = Color("d5d0bd")
+			height_scale = 3.0
+			distance_base = 118.0
+	for index in range(16):
+		var angle := TAU * float(index) / 16.0 + 0.11
+		var distance := distance_base + float(posmod(index * 17, 15))
+		var width := 14.0 + float(posmod(index * 13, 9))
+		var height := height_scale * (0.62 + float(posmod(index * 7, 10)) / 13.0)
+		var piece := MeshInstance3D.new()
+		# 山丘盒：宽而矮、下半截沉入水下（低角度掠视时只见顶部弧线，
+		# 不会出现"悬浮碎片"——旧扁平椭球盘观感差，2026-09-29 复验）。
+		var hill := BoxMesh.new()
+		hill.size = Vector3(width, height, width * 0.55)
+		piece.mesh = hill
+		piece.position = Vector3(sin(angle) * distance, -1.4 + height * 0.28, cos(angle) * distance)
+		piece.rotation.y = angle
+		var piece_material := _material(base_color.lerp(Color("c8d4d4"), 0.3).lightened(float(posmod(index, 4)) * 0.02))
+		piece_material.roughness = 1.0
+		piece.material_override = piece_material
+		piece.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		horizon_lod.add_child(piece)
+		if model.location_id == "santorini" and index % 3 == 0:
+			_add_distant_box(piece.position + Vector3(0, height * 0.55, 0), Vector3(4.8, 2.0, 3.8), accent_color)
+		elif model.location_id == "quanzhou" and index % 5 == 0:
+			_add_distant_tower(piece.position + Vector3(0, height * 0.4 + 2.2, 0), accent_color, 4.2)
+		elif model.location_id == "seychelles" and index % 4 == 0:
+			_add_distant_tower(piece.position + Vector3(0, height * 0.4 + 1.6, 0), accent_color, 3.2)
+
+
+func _add_distant_box(position_value: Vector3, size_value: Vector3, color: Color) -> void:
+	var instance := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = size_value
+	instance.mesh = mesh
+	instance.position = position_value
+	var material := _material(color)
+	material.roughness = 1.0
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	horizon_lod.add_child(instance)
+
+
+func _add_distant_tower(position_value: Vector3, color: Color, height: float) -> void:
+	var instance := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(1.6, height, 1.6)
+	instance.mesh = mesh
+	instance.position = position_value
+	var material := _material(color)
+	material.roughness = 1.0
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	horizon_lod.add_child(instance)
 	_rebuild_patches()
 
 

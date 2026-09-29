@@ -159,13 +159,13 @@ func _seed_village(levels: Dictionary) -> void:
 		var roll := rng.randf()
 		if shores.has(key):
 			if roll < 0.62:
-				_seed_house(top, rng)
+				_seed_house(top, rng, key)
 			elif roll < 0.70:
-				_seed(top, "warmhouse")
+				_seed(top, "warmhouse", _shore_rotation(key))
 			elif roll < 0.74:
 				_seed(top, "lamp")
 		elif roll < 0.10:
-			_seed_house(top, rng)   # 台地内部第二排（层叠感）
+			_seed_house(top, rng, key)   # 台地内部第二排（层叠感）
 
 
 func _scatter_greens(noise: FastNoiseLite) -> void:
@@ -185,13 +185,13 @@ func _scatter_greens(noise: FastNoiseLite) -> void:
 			model.place_natural(Vector3i(x, top, z), kind, rng.randi_range(0, 3))
 
 
-func _seed(cell: Vector3i, kind: String) -> void:
+func _seed(cell: Vector3i, kind: String, rotation: int = 0) -> void:
 	## 物理一致性守卫（2026-09-28 悬空建筑修复）：玩家放置有支承校验，
 	## 自然预置路径同样必须有——月牙重建后残留旧坐标曾让 cavehouse 悬空在湾口水面。
 	if not model.has_cell(cell + Vector3i.DOWN):
 		push_warning("santorini seed skipped (no support): %s @ %s" % [kind, cell])
 		return
-	model.place_natural(cell, kind)
+	model.place_natural(cell, kind, rotation)
 
 
 # ── 表现：晨间过路船 + 夜间发光浮标（2026-09-28 用户规格）──
@@ -247,12 +247,22 @@ func tick(delta: float) -> void:
 			HarborAmbientLife.bob(_sea_buoys[i], _sea_time, float(i) * 1.9, 0.0)
 
 
-## 白屋三变体（方体/拱廊/露台）随机选型 + 随机朝向：真实小镇没有两栋完全相同的房子，
-## 也没有排成一列的门——同一性是程序生成的最大破绽（2026-09-27 A1）。
-func _seed_house(cell: Vector3i, rng: RandomNumberGenerator) -> void:
+## 白屋三变体（方体/拱廊/露台）随机选型；朝向统一朝海（顺崖等高线）——
+## R-ENG-38 保留"变体差异"，收回"随机朝向"（崖壁小尺度上读作乱堆，2026-09-29 复验）。
+func _seed_house(cell: Vector3i, rng: RandomNumberGenerator, key: Vector2i) -> void:
 	var roll := rng.randf()
 	var kind := "whitehouse" if roll < 0.5 else ("whitehouse_b" if roll < 0.8 else "whitehouse_c")
-	model.place_natural(cell, kind, rng.randi_range(0, 3))
+	model.place_natural(cell, kind, _shore_rotation(key))
+
+
+## 朝海朝向：门面统一指向湾心外侧（低一级台地/海）——Oia 参考图里房子全部
+## 顺着崖等高线朝海排布。
+## 🔴 必须用 posmod：GDScript 的 % 对负数保持负号（-2 % 4 == -2），atan2 出负角
+## 时 rot=-2 会写进存档，load_document 校验 0..3 直接拒载（2026-09-29 回归抓到）。
+func _shore_rotation(key: Vector2i) -> int:
+	var dx := float(key.x) - CALDERA.x
+	var dz := float(key.y) - CALDERA.y
+	return posmod(int(round(atan2(dx, dz) / (PI * 0.5))), 4)
 
 
 # ── 机制：悬挑 ──
