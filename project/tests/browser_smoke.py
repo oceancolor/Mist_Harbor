@@ -116,6 +116,9 @@ def main() -> int:
             check("Keyboard returns to building", lambda: not state()["demolish"])
             click("night")
             check("Day advances to sunset", lambda: state()["phase"] == "sunset" and not state()["night"])
+            check("Sunset enables low golden light and glow",
+                  lambda: state()["sun_energy"] >= 1.0 and state()["sun_rotation"][0] >= -15.0 and state()["glow"])
+            page.screenshot(path=str(out / "mist-harbor-sunset.png"), full_page=True)
             click("night")
             check("Sunset advances to night", lambda: state()["phase"] == "night" and state()["night"])
             page.mouse.move(1100, 640)
@@ -129,6 +132,8 @@ def main() -> int:
                 page.evaluate("(id) => window.mistHarborQaSetLocation(id)", location_id)
                 check(f"Location switch reaches {location_id}", lambda location_id=location_id: state()["location"] == location_id)
                 check(f"{location_id} terrain renders", lambda: state()["faces"] > 100)
+                if location_id == "seychelles":
+                    check("Seychelles coast exposes wet sand overlays", lambda: state()["wet_shore"])
                 page.wait_for_timeout(600)
                 page.screenshot(path=str(out / f"mist-harbor-{location_id}.png"), full_page=True)
             click("help")

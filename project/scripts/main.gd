@@ -66,6 +66,9 @@ var qa_time: float = 0.0
 var qa_enabled: bool = false
 var import_callback: Variant
 var location_callback: Variant
+var phase_callback: Variant
+var camera_callback: Variant
+var sunset_frame_callback: Variant
 var dialog: FileDialog
 var last_painted := Vector3i(999,999,999)
 var painting: bool = false
@@ -182,7 +185,7 @@ func _input(event: InputEvent) -> void:
 		if modal != null:
 			_close_modal()
 		elif not hud.visible:
-			hud.visible = true
+			_set_photo_mode(false)
 		else:
 			demolishing = false
 			_refresh_ui()
@@ -233,7 +236,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_G: _toggle_weather_fog()
 		elif event.keycode == KEY_F: _center_camera()
 		elif event.keycode == KEY_H: _show_help()
-		elif event.keycode == KEY_P: hud.visible = not hud.visible
+		elif event.keycode == KEY_P: _toggle_photo_mode()
 		elif event.keycode == KEY_C: _capture_photo()
 		elif event.keycode >= KEY_1 and event.keycode <= KEY_9:
 			var items := _category_items()
@@ -389,7 +392,7 @@ func _build_ui() -> void:
 	map_box.add_child(minimap)
 	count_label = _label(map_box, "", 12)
 	_button(map_box, "回到岛屿  F", _center_camera, "center")
-	_button(map_box, "拍照模式  P", func() -> void: hud.visible = false, "photo")
+	_button(map_box, "黄昏截图  P", _toggle_photo_mode, "photo")
 	_button(map_box, "保存截图  C", _capture_photo, "capture")
 	dock = _panel(hud)
 	var dock_box := _vbox(dock, 8)
@@ -546,13 +549,33 @@ func _show_progress() -> void:
 func _on_achievement_unlocked(entry: Dictionary) -> void:
 	_toast("成就达成 · %s：%s" % [str(entry["title"]), str(entry["description"])], 4.5)
 
+func _toggle_photo_mode() -> void:
+	_set_photo_mode(hud.visible)
+
+func _set_photo_mode(enabled: bool) -> void:
+	hud.visible = not enabled
+	world.set_cinematic(enabled)
+	if enabled:
+		_frame_toward_sun()
+		_toast("黄昏截图模式：镜头朝向太阳，海面碎金可见。按 P 返回建造。", 3.0)
+
+func _frame_toward_sun() -> void:
+	target_focus = Vector3(0, 1, 1)
+	target_yaw = world.sun_look_yaw()
+	target_pitch = world.sun_look_pitch()
+	target_zoom = 42.0
+	_update_camera(1.0)
+
 func _capture_photo() -> void:
 	var was_visible := hud.visible
+	var was_cinematic := world.cinematic
 	hud.visible = false
+	world.set_cinematic(true)
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	hud.visible = was_visible
+	world.set_cinematic(was_cinematic)
 	if image == null or image.is_empty():
 		_toast("截图失败，请再试一次。")
 		return
@@ -710,7 +733,7 @@ func _toast(message: String, seconds: float = 3.5) -> void:
 	toast_time = seconds
 
 func _show_help() -> void:
-	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海湾。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：360° 环绕，俯仰可从贴近海平面到垂直俯视\n中键拖动 / Shift+左键 / WASD：平移场景\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转下一件建材    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：清晨/白昼/日落/夜晚    G：Cape Cod 浓雾\nP：隐藏界面    C：拍照并分享    Esc：返回\n\n六方向兼容接口会自动吸附并重算端点、直段、转角、三通和交叉形态。\n高模型占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，单指拖动场景，双指拖动环绕。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
+	_show_dialog("给灵感一座岛", "这是一座没有资源限制、没有战斗的自由建造海湾。\n\n左键点击 / 拖动：放置建材    B：拆除或挖取地形\n右键拖动：360° 环绕，俯仰可从贴近海平面到垂直俯视\n中键拖动 / Shift+左键 / WASD：平移场景\n滚轮：缩放    Q / E：转动视角    F：回到岛屿\nR：旋转下一件建材    1—9：切换当前分类的建材\nCtrl+Z / Ctrl+Y：撤销 / 重做    Ctrl+S：保存\nN：清晨/白昼/日落/夜晚    G：Cape Cod 浓雾\nP：黄昏截图（朝向太阳）    C：拍照并分享    Esc：返回\n\n日落用方向光、雾和不透明海面碎金高光，不启用体积雾或实时反射。\n建造模式会提高灰紫补光，避免建筑背光变成黑块。\n\n六方向兼容接口会自动吸附并重算端点、直段、转角、三通和交叉形态。\n高模型占用多格，不能重叠。Ctrl+Z 最多回溯 160 次操作。\n移动设备建议横屏：点按建造，单指拖动场景，双指拖动环绕。\n\n学习任务是自练提示，不是自动教师评分。更多教材见工程 docs/learning-guide.md。", [{"text":"开始创造", "action":func() -> void: pass}])
 
 func _show_menu() -> void:
 	var options: Array = [
@@ -878,6 +901,12 @@ func _setup_browser() -> void:
 	if qa_enabled:
 		location_callback = JavaScriptBridge.create_callback(_location_callback)
 		JavaScriptBridge.get_interface("window").mistHarborQaSetLocation = location_callback
+		phase_callback = JavaScriptBridge.create_callback(_phase_callback)
+		JavaScriptBridge.get_interface("window").mistHarborQaSetPhase = phase_callback
+		camera_callback = JavaScriptBridge.create_callback(_camera_callback)
+		JavaScriptBridge.get_interface("window").mistHarborQaSetCamera = camera_callback
+		sunset_frame_callback = JavaScriptBridge.create_callback(_sunset_frame_callback)
+		JavaScriptBridge.get_interface("window").mistHarborQaFrameSunset = sunset_frame_callback
 	JavaScriptBridge.eval("document.addEventListener('contextmenu', function(e){e.preventDefault();}); document.addEventListener('keydown', function(e){if(e.ctrlKey && ['s','z','y'].includes(e.key.toLowerCase())) e.preventDefault();});")
 
 func _import_world() -> void:
@@ -901,6 +930,23 @@ func _import_callback(arguments: Array) -> void:
 func _location_callback(arguments: Array) -> void:
 	if arguments.size() == 1:
 		_switch_location(str(arguments[0]))
+
+func _phase_callback(arguments: Array) -> void:
+	if arguments.size() == 1:
+		var value := str(arguments[0])
+		if value in ["dawn", "day", "sunset", "night"]:
+			world.set_phase(value, false)
+
+func _camera_callback(arguments: Array) -> void:
+	if arguments.size() >= 3:
+		target_yaw = float(arguments[0])
+		target_pitch = clampf(float(arguments[1]), CAMERA_MIN_PITCH, CAMERA_MAX_PITCH)
+		target_zoom = clampf(float(arguments[2]), CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE)
+		_update_camera(1.0)
+
+func _sunset_frame_callback(_arguments: Array) -> void:
+	world.set_phase("sunset", false)
+	_set_photo_mode(true)
 
 func _accept_import(text_value: String) -> void:
 	_show_dialog("导入作品？", "导入将替换当前未保存场景。请确认已保存当前作品。", [{"text":"确认导入", "action":func() -> void:
@@ -933,4 +979,4 @@ func qa_snapshot() -> Dictionary:
 	for key in item_buttons:
 		var rect: Rect2 = item_buttons[key].get_global_rect()
 		controls["item-" + key] = [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
-	return {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,"phase":world.phase,"weather_fog":world.weather_fog,"fog_density":world.environment.fog_density,"location":model.location_id,"mechanic":model.mechanic_progress(),"slot":model.current_slot,"save_exists":FileAccess.file_exists(Model.slot_path(model.current_slot, model.location_id)),"last_error":model.last_error,"photos":photo_stats,"placed":model.placed_count(),"counts":model.player_counts(),"cells":model.cells.size(),"undo":model.undo_stack.size(),"redo":model.redo_stack.size(),"dirty":model.dirty,"stats":model.stats,"faces":world.visible_faces,"assets":world.scenes.keys(),"modal":modal!=null,"buttons":controls,"viewport":[get_viewport().get_visible_rect().size.x,get_viewport().get_visible_rect().size.y],"pick":str(pick_result),"camera":[target_yaw,target_pitch,target_zoom],"revision":model.revision}
+	return {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,"phase":world.phase,"weather_fog":world.weather_fog,"fog_density":world.environment.fog_density,"sun_energy":world.sun.light_energy,"sun_rotation":[world.sun.rotation_degrees.x,world.sun.rotation_degrees.y],"glow":world.environment.glow_enabled,"cinematic":world.cinematic,"wet_shore":world.wet_shore.mesh!=null,"location":model.location_id,"mechanic":model.mechanic_progress(),"slot":model.current_slot,"save_exists":FileAccess.file_exists(Model.slot_path(model.current_slot, model.location_id)),"last_error":model.last_error,"photos":photo_stats,"placed":model.placed_count(),"counts":model.player_counts(),"cells":model.cells.size(),"undo":model.undo_stack.size(),"redo":model.redo_stack.size(),"dirty":model.dirty,"stats":model.stats,"faces":world.visible_faces,"assets":world.scenes.keys(),"modal":modal!=null,"buttons":controls,"viewport":[get_viewport().get_visible_rect().size.x,get_viewport().get_visible_rect().size.y],"pick":str(pick_result),"camera":[target_yaw,target_pitch,target_zoom],"revision":model.revision}

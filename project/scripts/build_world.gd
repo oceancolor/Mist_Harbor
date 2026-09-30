@@ -26,11 +26,14 @@ var outline_material := StandardMaterial3D.new()
 var needs_rebuild: bool = false
 var sun := DirectionalLight3D.new()
 var tropical_fill := DirectionalLight3D.new()
+var build_fill := DirectionalLight3D.new()
+var cinematic: bool = false
 var environment := Environment.new()
 var sky_material := ProceduralSkyMaterial.new()
 var sea_material: ShaderMaterial
 var water_surface := MeshInstance3D.new()
 var shore_foam := MeshInstance3D.new()
+var wet_shore := MeshInstance3D.new()
 var horizon_lod := Node3D.new()
 var sun_disc := Sprite3D.new()
 var moon_disc := Sprite3D.new()
@@ -108,10 +111,19 @@ func _build_environment() -> void:
 	sky_material.sky_horizon_color = Color("e0e0d8")
 	sky_material.ground_horizon_color = Color("74a98d")
 	sky_material.ground_bottom_color = Color("35685c")
+	sky_material.sun_angle_max = 8.0
+	sky_material.sun_curve = 0.12
+	sky_material.sky_energy_multiplier = 1.0
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color("dceae0")
 	environment.ambient_light_energy = 0.30
-	environment.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	environment.tonemap_exposure = 1.0
+	environment.glow_enabled = false
+	environment.glow_intensity = 0.42
+	environment.glow_strength = 0.68
+	environment.glow_bloom = 0.04
+	environment.glow_hdr_threshold = 1.15
 	environment.fog_enabled = true
 	environment.fog_light_color = Color("cadfd8")
 	environment.fog_density = 0.0035
@@ -125,7 +137,7 @@ func _build_environment() -> void:
 	sun.light_color = Color("ffe6bd")
 	sun.light_energy = 0.55
 	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 85.0
+	sun.directional_shadow_max_distance = 70.0
 	sun.shadow_bias = 0.05
 	add_child(sun)
 	tropical_fill.rotation_degrees = Vector3(-25, 200, 0)
@@ -134,6 +146,11 @@ func _build_environment() -> void:
 	tropical_fill.shadow_enabled = false
 	tropical_fill.visible = false
 	add_child(tropical_fill)
+	build_fill.rotation_degrees = Vector3(-28, 75, 0)
+	build_fill.light_color = Color("8a8494")
+	build_fill.light_energy = 0.22
+	build_fill.shadow_enabled = false
+	add_child(build_fill)
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(1600, 1600)
 	plane.subdivide_width = 96
@@ -143,51 +160,88 @@ func _build_environment() -> void:
 	sea_material = ShaderMaterial.new()
 	var shader := Shader.new()
 	shader.code = """shader_type spatial;
-render_mode unshaded, cull_disabled, fog_disabled, blend_mix, depth_draw_opaque;
-uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear_mipmap;
+render_mode specular_schlick_ggx, cull_disabled, depth_draw_opaque;
 uniform vec3 deep_color : source_color = vec3(0.37, 0.62, 0.62);
 uniform vec3 shallow_color : source_color = vec3(0.64, 0.80, 0.76);
 uniform vec3 lagoon_color : source_color = vec3(0.64, 0.80, 0.76);
-uniform vec3 sky_reflection : source_color = vec3(0.78, 0.86, 0.90);
-uniform vec3 viewer_position = vec3(0.0, 12.0, 32.0);
 uniform float water_light = 1.0;
 uniform float lagoon_radius = 18.0;
 uniform float shallow_radius = 18.0;
 uniform float deep_radius = 32.0;
 uniform float wave_scale = 0.75;
 uniform float wave_speed = 0.50;
+uniform vec3 dark_water : source_color = vec3(0.16, 0.20, 0.19);
+uniform float sunset_mix : hint_range(0.0, 1.0) = 0.0;
+uniform float wave_strength : hint_range(0.0, 0.3) = 0.08;
+uniform float water_roughness : hint_range(0.02, 1.0) = 0.18;
+uniform float base_fill : hint_range(0.0, 0.2) = 0.025;
 varying vec3 world_pos;
+
+vec2 fade(vec2 t) {
+ return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+}
+
+vec2 hash_grad(vec2 cell) {
+ float n = sin(dot(cell, vec2(127.1, 311.7))) * 43758.5453;
+ return vec2(cos(n), sin(n * 1.6183));
+}
+
+float perlin(vec2 p) {
+ vec2 cell = floor(p);
+ vec2 f = fract(p);
+ vec2 u = fade(f);
+ float n00 = dot(hash_grad(cell), f);
+ float n10 = dot(hash_grad(cell + vec2(1.0, 0.0)), f - vec2(1.0, 0.0));
+ float n01 = dot(hash_grad(cell + vec2(0.0, 1.0)), f - vec2(0.0, 1.0));
+ float n11 = dot(hash_grad(cell + vec2(1.0, 1.0)), f - vec2(1.0, 1.0));
+ return mix(mix(n00, n10, u.x), mix(n01, n11, u.x), u.y);
+}
+
+float fbm(vec2 p) {
+ float value = 0.0;
+ float amp = 0.55;
+ float freq = 1.0;
+ for (int i = 0; i < 4; i++) {
+  value += perlin(p * freq) * amp;
+  freq *= 2.03;
+  amp *= 0.48;
+ }
+ return value;
+}
+
 void vertex(){
  world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
+
 void fragment(){
- float camera_distance = distance(viewer_position, world_pos);
- float lod = smoothstep(55.0, 240.0, camera_distance);
- float phase_a = world_pos.x * wave_scale + world_pos.z * wave_scale * 0.53 + TIME * wave_speed;
- float phase_b = world_pos.z * wave_scale * 0.73 - world_pos.x * wave_scale * 0.27 - TIME * wave_speed * 0.49;
- float near_wave = sin(phase_a) * 0.58 + sin(phase_b) * 0.42;
- float far_wave = sin(world_pos.x * wave_scale * 0.16 + world_pos.z * 0.07 + TIME * wave_speed * 0.35);
- float wave = mix(near_wave, far_wave, lod);
- vec2 slope = mix(
-  vec2(cos(phase_a) * wave_scale * 0.58 - cos(phase_b) * wave_scale * 0.27 * 0.42,
-       cos(phase_a) * wave_scale * 0.53 * 0.58 + cos(phase_b) * wave_scale * 0.73 * 0.42),
-  vec2(cos(world_pos.x * wave_scale * 0.16 + world_pos.z * 0.07 + TIME * wave_speed * 0.35) * wave_scale * 0.16,
-       cos(world_pos.x * wave_scale * 0.16 + world_pos.z * 0.07 + TIME * wave_speed * 0.35) * 0.07),
-  lod);
- vec3 water_normal = normalize(vec3(-slope.x * 0.13, 1.0, -slope.y * 0.13));
- vec3 view_direction = normalize(viewer_position - world_pos);
- float fresnel = pow(1.0 - clamp(dot(water_normal, view_direction), 0.0, 1.0), 4.0);
+ float scale = mix(0.085, 0.145, clamp(wave_scale, 0.0, 1.6) / 1.6);
+ vec2 p = world_pos.xz * scale;
+ float t = TIME * wave_speed * 0.22;
+ vec2 warp = vec2(
+  perlin(p * 0.55 + vec2(t * 0.37, -t * 0.21)),
+  perlin(p * 0.47 + vec2(18.2, 7.4) - t * 0.29)
+ );
+ vec2 q = p + warp * 0.85;
+ float e = 0.22;
+ float h = fbm(q + vec2(t * 0.31, -t * 0.19));
+ float hx = fbm(q + vec2(e + t * 0.31, -t * 0.19));
+ float hz = fbm(q + vec2(t * 0.31, e - t * 0.19));
+ vec2 slope = vec2(hx - h, hz - h) / e;
+ float swell = perlin(q * 0.28 + vec2(-t * 0.17, t * 0.11));
+ slope += vec2(0.22, 0.08) * swell;
+ float camera_distance = length(CAMERA_POSITION_WORLD - world_pos);
+ slope *= wave_strength * 1.65 * mix(1.0, 0.22, smoothstep(40.0, 220.0, camera_distance));
+ vec3 world_normal = normalize(vec3(-slope.x, 1.0, -slope.y));
+ NORMAL = normalize((VIEW_MATRIX * vec4(world_normal, 0.0)).xyz);
  float radial = length(world_pos.xz);
  vec3 near_water = mix(lagoon_color, shallow_color, smoothstep(lagoon_radius, shallow_radius, radial));
  vec3 water_color = mix(near_water, deep_color, smoothstep(shallow_radius, deep_radius, radial));
- float perspective_depth = smoothstep(35.0, 280.0, camera_distance);
- water_color = mix(water_color, deep_color, perspective_depth * 0.22);
- vec2 refraction_offset = slope * mix(0.0032, 0.0006, lod);
- vec3 refracted = textureLod(screen_texture, SCREEN_UV + refraction_offset, lod * 2.0).rgb;
- float glint = smoothstep(0.82, 0.99, wave) * mix(0.10, 0.025, lod);
- vec3 optical_color = mix(refracted, water_color, 0.72 + perspective_depth * 0.10);
- ALBEDO = mix(optical_color + glint, sky_reflection, fresnel * 0.48) * water_light;
- ALPHA = mix(0.92, 0.985, fresnel);
+ water_color = mix(water_color, dark_water, sunset_mix);
+ ALBEDO = water_color * water_light;
+ METALLIC = 0.0;
+ SPECULAR = 0.5;
+ ROUGHNESS = clamp(water_roughness + h * 0.045, 0.08, 0.42);
+ EMISSION = water_color * base_fill;
 }
 """
 	sea_material.shader = shader
@@ -196,6 +250,8 @@ void fragment(){
 	add_child(water_surface)
 	shore_foam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(shore_foam)
+	wet_shore.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(wet_shore)
 	add_child(horizon_lod)
 	_build_celestial_bodies()
 	_make_boat(Vector3(5, -0.08, -9), 0.5)
@@ -267,7 +323,7 @@ func _moon_target() -> Vector3:
 	return _celestial_target("night")
 
 func _rebuild_horizon_lod() -> void:
-	if model == null or horizon_location == model.location_id:
+	if model == null:
 		return
 	horizon_location = model.location_id
 	for child in horizon_lod.get_children():
@@ -293,28 +349,21 @@ func _rebuild_horizon_lod() -> void:
 			accent_color = Color("d5d0bd")
 			height_scale = 3.0
 			distance_base = 138.0
+	var sun_away := sun_look_yaw() + PI
 	for index in range(16):
 		var angle := TAU * float(index) / 16.0 + 0.11
+		if absf(angle_difference(angle, sun_away)) < deg_to_rad(28.0):
+			continue
 		var distance := distance_base + float(posmod(index * 17, 19))
 		var width := 12.0 + float(posmod(index * 13, 9))
 		var height := height_scale * (0.62 + float(posmod(index * 7, 10)) / 13.0)
 		var piece := MeshInstance3D.new()
-		if model.location_id != "santorini":
-			var rock := SphereMesh.new()
-			rock.radius = 1.0
-			rock.height = 2.0
-			rock.radial_segments = 8
-			rock.rings = 4
-			piece.mesh = rock
-			var depth := width * (0.52 if model.location_id == "cape_cod" else 0.38)
-			piece.scale = Vector3(width * 0.5, height * 0.5, depth * 0.5)
-		else:
-			var ridge := BoxMesh.new()
-			ridge.size = Vector3(width, height, 8.0)
-			piece.mesh = ridge
-		piece.position = Vector3(sin(angle) * distance, -0.4 + height * 0.5, cos(angle) * distance)
+		var ridge := BoxMesh.new()
+		ridge.size = Vector3(width, height * 0.55, 7.0 if model.location_id == "santorini" else 14.0)
+		piece.mesh = ridge
+		piece.position = Vector3(sin(angle) * distance, height * 0.12, cos(angle) * distance)
 		piece.rotation.y = angle
-		piece.material_override = _distant_material(base_color.lightened(float(posmod(index, 4)) * 0.025))
+		piece.material_override = _distant_material(base_color.darkened(0.18 + float(posmod(index, 4)) * 0.03))
 		piece.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		horizon_lod.add_child(piece)
 		if model.location_id == "santorini" and index % 3 == 0:
@@ -326,8 +375,9 @@ func _rebuild_horizon_lod() -> void:
 	_add_location_landmark(model.location_id, accent_color, distance_base)
 
 func _distant_material(color: Color) -> StandardMaterial3D:
-	var material := _material(color)
+	var material := _material(color.darkened(0.12))
 	material.roughness = 1.0
+	material.metallic = 0.0
 	return material
 
 func _add_distant_box(position_value: Vector3, size_value: Vector3, color: Color) -> void:
@@ -469,15 +519,36 @@ func rebuild() -> void:
 
 func _rebuild_shore_foam() -> void:
 	var vertices := PackedVector3Array()
+	var wet_vertices := PackedVector3Array()
+	var wet_normals := PackedVector3Array()
 	var foam_width := 0.30
 	var foam_y := -0.145
 	for cell: Vector3i in model.cells:
 		if cell.y != 0 or not _is_voxel(model.cells[cell]):
 			continue
-		for direction in [Vector3i.RIGHT, Vector3i.LEFT, Vector3i.FORWARD, Vector3i.BACK]:
+		var directions := [Vector3i.RIGHT, Vector3i.LEFT, Vector3i.FORWARD, Vector3i.BACK]
+		var coast_directions: Array[Vector3i] = []
+		for direction: Vector3i in directions:
 			var neighbor := model.get_cell(cell + direction)
 			if not neighbor.is_empty() and _is_voxel(neighbor):
 				continue
+			coast_directions.append(direction)
+		if coast_directions.is_empty():
+			continue
+		var kind := str(model.cells[cell].get("kind", ""))
+		if kind in ["sand", "grass", "stone", "granite"]:
+			var wet_y := float(cell.y) + 1.004
+			for vertex in [
+				Vector3(cell.x, wet_y, cell.z),
+				Vector3(cell.x, wet_y, cell.z + 1),
+				Vector3(cell.x + 1, wet_y, cell.z + 1),
+				Vector3(cell.x, wet_y, cell.z),
+				Vector3(cell.x + 1, wet_y, cell.z + 1),
+				Vector3(cell.x + 1, wet_y, cell.z),
+			]:
+				wet_vertices.append(vertex)
+				wet_normals.append(Vector3.UP)
+		for direction: Vector3i in coast_directions:
 			var a := Vector3.ZERO
 			var b := Vector3.ZERO
 			var c := Vector3.ZERO
@@ -506,27 +577,43 @@ func _rebuild_shore_foam() -> void:
 				vertices.append(vertex)
 	if vertices.is_empty():
 		shore_foam.mesh = null
-		return
-	var arrays: Array = []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = vertices
-	var foam_mesh := ArrayMesh.new()
-	foam_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var foam_material := ShaderMaterial.new()
-	var foam_shader := Shader.new()
-	foam_shader.code = """shader_type spatial;
-render_mode unshaded, cull_disabled, fog_disabled, blend_mix, depth_draw_never;
+	else:
+		var arrays: Array = []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = vertices
+		var foam_mesh := ArrayMesh.new()
+		foam_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		var foam_material := ShaderMaterial.new()
+		var foam_shader := Shader.new()
+		foam_shader.code = """shader_type spatial;
+render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
 varying vec3 world_pos;
 void vertex(){ world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; }
 void fragment(){
  float ripple = sin((world_pos.x + world_pos.z) * 7.0 + TIME * 1.7) * 0.5 + 0.5;
  float shimmer = sin((world_pos.x - world_pos.z) * 13.0 - TIME * 2.3) * 0.5 + 0.5;
+ float broken = smoothstep(0.42, 0.78, ripple * 0.62 + shimmer * 0.38);
  ALBEDO = mix(vec3(0.86, 0.94, 0.95), vec3(1.0), ripple);
- ALPHA = 0.20 + ripple * 0.24 + shimmer * 0.08;
+ ALPHA = broken * (0.20 + ripple * 0.28);
 }"""
-	foam_material.shader = foam_shader
-	foam_mesh.surface_set_material(0, foam_material)
-	shore_foam.mesh = foam_mesh
+		foam_material.shader = foam_shader
+		foam_mesh.surface_set_material(0, foam_material)
+		shore_foam.mesh = foam_mesh
+	if wet_vertices.is_empty():
+		wet_shore.mesh = null
+		return
+	var wet_arrays: Array = []
+	wet_arrays.resize(Mesh.ARRAY_MAX)
+	wet_arrays[Mesh.ARRAY_VERTEX] = wet_vertices
+	wet_arrays[Mesh.ARRAY_NORMAL] = wet_normals
+	var wet_mesh := ArrayMesh.new()
+	wet_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, wet_arrays)
+	var sand_color := Color(str(model.definition("sand").get("color", "d9c89f"))).darkened(0.28)
+	var wet_material := _material(sand_color)
+	wet_material.roughness = 0.22
+	wet_material.metallic = 0.0
+	wet_mesh.surface_set_material(0, wet_material)
+	wet_shore.mesh = wet_mesh
 
 func _add_prop(cell: Vector3i, item: Dictionary) -> void:
 	var kind := str(item["kind"])
@@ -535,6 +622,7 @@ func _add_prop(cell: Vector3i, item: Dictionary) -> void:
 	var variant := model.connection_variant(cell)
 	var visual := _visual(kind, variant)
 	visual.rotation.y = float(item.get("rot", 0)) * PI / 2.0
+	_harden_building_materials(visual)
 	root.add_child(visual)
 	var body := StaticBody3D.new()
 	body.set_meta("cell", cell)
@@ -553,6 +641,21 @@ func _add_prop(cell: Vector3i, item: Dictionary) -> void:
 		_add_emissive_light(root, height, kind)
 	props.add_child(root)
 	prop_nodes[cell] = root
+
+func _harden_building_materials(node: Node) -> void:
+	if node is MeshInstance3D:
+		var source: Material = node.material_override
+		if source == null:
+			source = node.get_active_material(0)
+		if source is StandardMaterial3D:
+			var material := (source as StandardMaterial3D).duplicate() as StandardMaterial3D
+			material.roughness = maxf(material.roughness, 0.78)
+			material.metallic = minf(material.metallic, 0.04)
+			material.ao_enabled = true
+			material.ao_light_affect = 0.35
+			node.material_override = material
+	for child in node.get_children():
+		_harden_building_materials(child)
 
 func _visual(kind: String, variant: String = "single") -> Node3D:
 	var variant_path := "res://assets/models/%s_%s.glb" % [kind, variant]
@@ -713,14 +816,13 @@ func set_night(value: bool) -> void:
 func set_phase(value: String, animated: bool = true) -> void:
 	if model.location == null:
 		return
-	_rebuild_horizon_lod()
 	phase_from_night = night
 	celestial_from = sun_disc.position
 	celestial_to = _celestial_target(value)
 	water_light_from = water_light
 	water_light_to = _water_light_for_phase(value)
 	phase_from = _current_environment_state()
-	phase_to = model.location.phase(value)
+	phase_to = _styled_phase(value, model.location.phase(value))
 	if weather_fog and model.location.fog_density_weather > 0.0:
 		phase_to["fog_density"] = model.location.fog_density_weather
 	_apply_location_water()
@@ -729,6 +831,40 @@ func set_phase(value: String, animated: bool = true) -> void:
 	tropical_fill.visible = model.location_id == "seychelles" and not night
 	phase_blend = 0.0 if animated else 1.0
 	_apply_environment_blend(phase_blend)
+	_rebuild_horizon_lod()
+
+func _styled_phase(value: String, source: Dictionary) -> Dictionary:
+	var result := source.duplicate(true)
+	var azimuths := {"dawn": 105.0, "day": -140.0, "sunset": -105.0, "night": -145.0}
+	result["sun_rotation_y"] = float(azimuths.get(value, -30.0))
+	if value != "sunset":
+		return result
+	# Sunset is the cinematic/photo phase. Preserve each location's base
+	# palette while converging on a readable gold backlight and warm haze.
+	var horizon := Color(str(result.get("background", "e6c59b"))).lerp(Color("e2c79f"), 0.68)
+	var sky_top := Color(str(result.get("sky_top", "b76543"))).lerp(Color("b96747"), 0.62)
+	var location_sun := Color(str(result.get("sun", "ffd29a")))
+	result["background"] = horizon.to_html(false)
+	result["sky_top"] = sky_top.to_html(false)
+	result["ambient"] = Color(str(result.get("ambient", "8f8494"))).lerp(Color("8f8494"), 0.72).to_html(false)
+	result["ambient_energy"] = clampf(float(result.get("ambient_energy", 0.32)), 0.30, 0.38)
+	result["sun"] = location_sun.lerp(Color("ffd29a"), 0.78).to_html(false)
+	result["sun_energy"] = clampf(float(result.get("sun_energy", 1.0)), 1.0, 1.60)
+	result["sun_rotation_x"] = -12.0
+	result["fog"] = horizon.darkened(0.06).to_html(false)
+	return result
+
+func set_cinematic(value: bool) -> void:
+	cinematic = value
+	if not phase_to.is_empty():
+		_apply_environment_blend(phase_blend)
+
+func sun_look_yaw() -> float:
+	var to_sun := sun.global_transform.basis.z
+	return atan2(-to_sun.x, -to_sun.z)
+
+func sun_look_pitch() -> float:
+	return deg_to_rad(11.0)
 
 func set_weather_fog(value: bool) -> bool:
 	if model.location_id != "cape_cod":
@@ -752,6 +888,7 @@ func _current_environment_state() -> Dictionary:
 		"sun": sun.light_color.to_html(false),
 		"sun_energy": sun.light_energy,
 		"sun_rotation_x": sun.rotation_degrees.x,
+		"sun_rotation_y": sun.rotation_degrees.y,
 		"fog": environment.fog_light_color.to_html(false),
 		"fog_density": environment.fog_density,
 	}
@@ -764,13 +901,14 @@ func _apply_location_water() -> void:
 	sea_material.set_shader_parameter("lagoon_radius", float(water.get("lagoon_radius", water.get("shallow_radius", 18.0))))
 	sea_material.set_shader_parameter("shallow_radius", float(water.get("shallow_radius", 18.0)))
 	sea_material.set_shader_parameter("deep_radius", float(water.get("deep_radius", 32.0)))
-	sea_material.set_shader_parameter("wave_scale", float(water.get("wave_scale", 0.75)))
+	var location_wave_scale := float(water.get("wave_scale", 0.75))
+	sea_material.set_shader_parameter("wave_scale", location_wave_scale)
 	sea_material.set_shader_parameter("wave_speed", float(water.get("wave_speed", 0.5)))
+	sea_material.set_shader_parameter("wave_strength", 0.055 + minf(location_wave_scale, 1.6) * 0.025)
+	sea_material.set_shader_parameter("dark_water", Color(0.16, 0.20, 0.19))
 
 func set_viewer_position(value: Vector3) -> void:
 	viewer_position = value
-	if sea_material != null:
-		sea_material.set_shader_parameter("viewer_position", viewer_position)
 
 func _water_light_for_phase(value: String) -> float:
 	match value:
@@ -793,24 +931,44 @@ func _apply_environment_blend(weight: float) -> void:
 	sky_material.sky_top_color = _mix_color("sky_top", weight)
 	sky_material.ground_horizon_color = Color(str(model.location.water.get("lagoon_color", model.location.water.get("shallow_color", "74a98d"))))
 	sky_material.ground_bottom_color = Color(str(model.location.water.get("deep_color", "35685c")))
-	sea_material.set_shader_parameter("sky_reflection", _mix_color("background", weight).lightened(0.08))
 	water_light = lerpf(water_light_from, water_light_to, weight)
 	sea_material.set_shader_parameter("water_light", water_light)
+	sea_material.set_shader_parameter("sunset_mix", 0.62 if phase == "sunset" else (0.18 if phase == "night" else 0.0))
+	sea_material.set_shader_parameter("water_roughness", 0.16 if phase == "sunset" else (0.28 if phase == "night" else 0.22))
+	sea_material.set_shader_parameter("base_fill", 0.04 if phase == "night" else 0.025)
 	environment.fog_light_color = _mix_color("fog", weight)
 	environment.ambient_light_color = _mix_color("ambient", weight)
 	environment.fog_density = lerpf(float(phase_from.get("fog_density", phase_to.get("fog_density", 0.0035))), float(phase_to.get("fog_density", 0.0035)), weight)
-	environment.ambient_light_energy = lerpf(float(phase_from.get("ambient_energy", environment.ambient_light_energy)), float(phase_to.get("ambient_energy", 0.3)), weight)
+	var ambient_energy := lerpf(float(phase_from.get("ambient_energy", environment.ambient_light_energy)), float(phase_to.get("ambient_energy", 0.3)), weight)
+	if not cinematic and phase == "sunset":
+		ambient_energy = minf(ambient_energy + 0.14, 0.52)
+	environment.ambient_light_energy = ambient_energy
 	sun.light_color = _mix_color("sun", weight)
 	sun.light_energy = lerpf(float(phase_from.get("sun_energy", phase_to.get("sun_energy", 0.5))), float(phase_to.get("sun_energy", 0.5)), weight)
 	var rotation_x := lerpf(float(phase_from.get("sun_rotation_x", sun.rotation_degrees.x)), float(phase_to.get("sun_rotation_x", -48.0)), weight)
 	sun.rotation_degrees.x = rotation_x
+	var rotation_y := lerp_angle(
+		deg_to_rad(float(phase_from.get("sun_rotation_y", sun.rotation_degrees.y))),
+		deg_to_rad(float(phase_to.get("sun_rotation_y", -30.0))),
+		weight
+	)
+	sun.rotation_degrees.y = rad_to_deg(rotation_y)
+	environment.glow_enabled = phase in ["sunset", "night"]
+	sky_material.sun_angle_max = 12.0 if phase == "sunset" else (6.0 if phase == "night" else 8.0)
+	sky_material.sun_curve = 0.18 if phase == "sunset" else 0.10
+	build_fill.visible = not cinematic
+	build_fill.light_energy = 0.28 if phase == "sunset" else (0.12 if phase == "night" else 0.18)
+	build_fill.rotation_degrees = Vector3(-28, sun.rotation_degrees.y + 160.0, 0)
 	sun_disc.position = celestial_from.lerp(celestial_to, weight)
 	moon_disc.position = _moon_target()
 	var target_night := phase == "night"
 	var sun_alpha := lerpf(0.0 if phase_from_night else 1.0, 0.0 if target_night else 1.0, weight)
 	var moon_alpha := lerpf(1.0 if phase_from_night else 0.0, 1.0 if target_night else 0.0, weight)
 	var disc_color := _mix_color("sun", weight).lightened(0.18)
-	sun_disc.modulate = Color(disc_color.r, disc_color.g, disc_color.b, sun_alpha)
-	moon_disc.modulate = Color(0.82, 0.89, 1.0, moon_alpha)
-	sun_disc.visible = sun_alpha > 0.01
+	var sun_boost := 1.7 if phase == "sunset" else 1.15
+	sun_disc.modulate = Color(disc_color.r * sun_boost, disc_color.g * sun_boost, disc_color.b * sun_boost, sun_alpha)
+	moon_disc.modulate = Color(1.02, 1.10, 1.25, moon_alpha)
+	# ProceduralSky already draws the sun disk; the extra sprite punched a
+	# dark hole into the glitter path when the camera faced the light.
+	sun_disc.visible = false
 	moon_disc.visible = moon_alpha > 0.01
