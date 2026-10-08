@@ -2,6 +2,9 @@ class_name HarborBuildWorld
 extends Node3D
 
 const MODEL_SCRIPT = preload("res://scripts/world_model.gd")
+const RELIEF_SCRIPT = preload("res://scripts/block_relief.gd")
+# 形制档位：0 = 关闭（退回纯立方，用于性能降级/回归对照）｜1 = 低｜2 = 中（默认）｜3 = 高
+const RELIEF_QUALITY := 2
 const FACES: Array = [
 	[Vector3i.UP, [Vector3(0,1,0), Vector3(0,1,1), Vector3(1,1,1), Vector3(1,1,0)]],
 	[Vector3i.DOWN, [Vector3(0,0,1), Vector3(0,0,0), Vector3(1,0,0), Vector3(1,0,1)]],
@@ -157,9 +160,12 @@ func rebuild() -> void:
 	for child in props.get_children():
 		props.remove_child(child)
 		child.queue_free()
-	var vertices := PackedVector3Array()
-	var normals := PackedVector3Array()
-	var colors := PackedColorArray()
+	var relief: HarborBlockRelief = RELIEF_SCRIPT.new(model)
+	relief.div_cap = RELIEF_QUALITY
+	relief.plain = RELIEF_QUALITY == 0
+	# 碰撞网格：始终是**规整立方**，与形制几何解耦。
+	# 这样 pick() 的 cell 反算与法线判定完全不受视觉改造影响。
+	var solid := PackedVector3Array()
 	visible_faces = 0
 	for cell: Vector3i in model.cells:
 		var item: Dictionary = model.cells[cell]
@@ -167,42 +173,54 @@ func rebuild() -> void:
 		if model.definition(kind).get("mesh") != "cube":
 			_add_prop(cell, item)
 			continue
-		var base_color := Color(str(model.definition(kind).get("color", "ffffff")))
-		var variation: float = float(posmod(cell.x * 71 + cell.z * 29 + cell.y * 11, 11)) / 150.0
-		base_color = base_color.lightened(variation)
+		var variation: float = float(posmod(cell.x * 71 + cell.z * 29 + cell.y * 11, 11)) / 70.0 - 0.04
+		var base_color := Color(str(model.definition(kind).get("color", "ffffff"))).lightened(variation)
+		var top_color := base_color
+		var side_color := base_color * 0.90
+		var bottom_color := base_color * 0.72
+		if kind == "grass":
+			side_color = Color("adad87").lightened(variation) * 0.92
+		if kind == "stone" and cell.y < 0:
+			var deep := Color("93a99f").lightened(variation + float(cell.y + 3) * 0.06)
+			top_color = deep
+			side_color = deep * 0.90
+			bottom_color = deep * 0.72
+		relief.add_block(cell, kind, top_color, side_color, bottom_color)
 		for face in FACES:
 			var offset: Vector3i = face[0]
 			var neighbor: Dictionary = model.get_cell(cell + offset)
 			if not neighbor.is_empty() and model.definition(str(neighbor["kind"])).get("mesh") == "cube":
 				continue
 			visible_faces += 1
-			var color := base_color
-			if kind == "grass" and offset != Vector3i.UP:
-				color = Color("adad87").lightened(variation)
-			if kind == "stone" and cell.y < 0:
-				color = Color("93a99f").lightened(variation + float(cell.y + 3) * 0.06)
 			for i in [0, 2, 1, 0, 3, 2]:
-				vertices.append(Vector3(cell) + face[1][i])
-				normals.append(Vector3(offset))
-				colors.append(color)
-	if vertices.is_empty():
+				solid.append(Vector3(cell) + face[1][i])
+	if solid.is_empty():
 		terrain.mesh = null
 		ground_collision.shape = null
 		return
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = vertices
-	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_COLOR] = colors
+	arrays[Mesh.ARRAY_VERTEX] = relief.vertices()
+	arrays[Mesh.ARRAY_NORMAL] = relief.normals()
+	arrays[Mesh.ARRAY_COLOR] = relief.colors()
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	var material := _material(Color.WHITE)
 	material.vertex_color_use_as_albedo = true
 	mesh.surface_set_material(0, material)
 	terrain.mesh = mesh
-	var shape := mesh.create_trimesh_shape()
+	var shape := _solid_shape(solid)
 	shape.backface_collision = true
 	ground_collision.shape = shape
+
+# 碰撞用**未形制化的立方网格**：视觉怎么改都不影响 pick() 的格子反算与法线判定。
+func _solid_shape(vertices: PackedVector3Array) -> ConcavePolygonShape3D:
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh.create_trimesh_shape()
 
 func _add_prop(cell: Vector3i, item: Dictionary) -> void:
 	var kind := str(item["kind"])
@@ -235,9 +253,14 @@ func _visual(kind: String) -> Node3D:
 		return (scenes[kind] as PackedScene).instantiate() as Node3D
 	var instance := MeshInstance3D.new()
 	var box := BoxMesh.new()
-	box.size = Vector3(0.98, model.item_height(kind), 0.98)
+	var height := float(model.item_height(kind))
+	var thickness := height
+	if model.definition(kind).get("mesh") == "cube":
+		thickness = height * float(RELIEF_SCRIPT.relief_of(model.definition(kind)).get("thickness", 1.0))
+	box.size = Vector3(0.98, thickness, 0.98)
 	instance.mesh = box
-	instance.position.y = box.size.y * 0.5
+	# 顶面对齐：厚度 <1 的件（如木栈道）表现为自顶面向下的架空板
+	instance.position.y = height - thickness * 0.5
 	instance.material_override = _material(Color(str(model.definition(kind).get("color", "ffffff"))))
 	return instance
 
