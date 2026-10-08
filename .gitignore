@@ -15,3 +15,8 @@ course/site-single/
 *.key
 *.blend1
 *.blend2
+
+# strategy/concept-art/ 与 Dev Driven/concept-art/ 内容逐字节相同（12/12 md5 一致），
+# 后者已入库。为避免同一批图在仓库里出现两份可各自漂移的副本（违反唯一源纪律），
+# 此处跟踪 Dev Driven 那份即可。图片仍在本地可用，勿删。
+strategy/concept-art/
