@@ -7,6 +7,75 @@ var failed: int = 0
 func _initialize() -> void:
 	call_deferred("_run")
 
+## 模型清单必须与磁盘上的 GLB 一致：曾经出现过清单记 15980 字节、实际 240684 字节的资产，
+## 导致面数/体积结论全部失真。这里按实物重算 bytes 与三角数。
+func _check_manifest() -> void:
+	var dir := DirAccess.open("res://assets/models")
+	check(dir != null, "model directory exists")
+	if dir == null: return
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://assets/models/manifest.json"))
+	check(raw is Dictionary, "manifest parses")
+	if not (raw is Dictionary): return
+	var assets: Array = (raw as Dictionary).get("assets", []) as Array
+	var on_disk := 0
+	for entry_name in DirAccess.get_files_at("res://assets/models"):
+		if entry_name.ends_with(".glb"): on_disk += 1
+	check(assets.size() == on_disk and on_disk > 0, "manifest covers every GLB on disk")
+	var mismatched := 0
+	var no_bounds := 0
+	var detail := ""
+	for entry: Dictionary in assets:
+		var asset_id := str(entry.get("id", ""))
+		var path := "res://assets/models/" + str(entry.get("file", asset_id + ".glb"))
+		if not FileAccess.file_exists(path):
+			mismatched += 1
+			detail = asset_id + " 文件缺失"
+			continue
+		var file := FileAccess.open(path, FileAccess.READ)
+		var bytes: PackedByteArray = file.get_buffer(file.get_length())
+		file.close()
+		var stats := _glb_stats(bytes)
+		if stats.is_empty() or stats.has("error"):
+			mismatched += 1
+			detail = "%s GLB 解析失败：%s" % [asset_id, str(stats.get("error", "unknown"))]
+		elif int(stats["bytes"]) != int(entry.get("bytes", -1)):
+			mismatched += 1
+			detail = "%s 字节记 %s 实际 %s" % [asset_id, entry.get("bytes"), stats["bytes"]]
+		elif int(stats["triangles"]) != int(entry.get("triangles", -1)):
+			mismatched += 1
+			detail = "%s 三角记 %s 实际 %s（GLB %d 字节）" % [asset_id, entry.get("triangles"), stats["triangles"], bytes.size()]
+		var bounds: Dictionary = entry.get("bounds", {}) as Dictionary
+		if (bounds.get("godot_size", []) as Array).size() != 3:
+			no_bounds += 1
+	check(mismatched == 0, "manifest bytes and triangles match the real GLBs" + (" (" + detail + ")" if mismatched > 0 else ""))
+	check(no_bounds == 0, "every manifest entry carries real bounds")
+
+func _glb_stats(bytes: PackedByteArray) -> Dictionary:
+	if bytes.size() < 20 or bytes.slice(0, 4).get_string_from_ascii() != "glTF":
+		return {}
+	# GLB 布局：magic(4) + version(4) + total(4) + [json 段长度(4) + 段类型(4)] …
+	var length := bytes.decode_u32(12)
+	if bytes.decode_u32(16) != 0x4E4F534A or 20 + length > bytes.size():
+		return {"error": "length"}
+	var parser := JSON.new()
+	if parser.parse(bytes.slice(20, 20 + length).get_string_from_utf8()) != OK:
+		return {"error": "json:%s" % [parser.get_error_message()]}
+	var document: Variant = parser.data
+	if not (document is Dictionary): return {"error": "not-object"}
+	var data: Dictionary = document as Dictionary
+	var triangles := 0
+	for mesh in data.get("meshes", []):
+		for primitive in (mesh as Dictionary).get("primitives", []):
+			var primitive_dict: Dictionary = primitive as Dictionary
+			var accessors: Array = data.get("accessors", []) as Array
+			if primitive_dict.has("indices"):
+				var index: Dictionary = accessors[int(primitive_dict["indices"])] as Dictionary
+				triangles += int(index.get("count", 0)) / 3
+			elif (primitive_dict.get("attributes", {}) as Dictionary).has("POSITION"):
+				var positions: Dictionary = accessors[int((primitive_dict["attributes"] as Dictionary)["POSITION"])] as Dictionary
+				triangles += int(positions.get("count", 0)) / 3
+	return {"bytes": bytes.size(), "triangles": triangles}
+
 func check(condition: bool, label: String) -> void:
 	if condition:
 		passed += 1
@@ -16,6 +85,7 @@ func check(condition: bool, label: String) -> void:
 		push_error("FAIL " + label)
 
 func _run() -> void:
+	_check_manifest()
 	var model := Model.new()
 	model.reset(240910, false)
 	var initial := JSON.stringify(model.to_document())

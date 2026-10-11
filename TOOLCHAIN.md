@@ -5,6 +5,9 @@
 - 起点：`origin/main` 的 `ac03d3f`；工作分支 `integrate/main-design-20261010`。主线 `strategy/` 文档保持原样，不用试验分支文档覆盖。
 - 采用 `ltld` 的 `core/LocationProfile`、唯一地点注册表、多格占位、四态光照、光斑与地点资产；采用 `cursor_work` 的连接签名与生成适配器。没有引入第二套 `locations.json` / `location_profile.gd`。
 - 主线 `layer` / `relief` 保留；`lamp` 是 built，`wood` / `brick` 也是 built。地点构件子集限制新建材，完整定义集用于旧档兼容。
+- 分支策略（2026-10-11）：`integrate/main-design-20261010` 作为主线推进，`ltld` / `cursor_work` 转为技术验证与设计探索分支。已按能力择取：ltld 的 `core/` 渲染底座与四地系统、cursor_work 的连接签名与生成适配器均已化入主线；两套同名 `HarborLocationProfile` 只保留 ltld 一份，第二份 `locations.json` 不引入。计划中的后续：① 用 cursor_work 的天空/水体/天体整套替换 ltld 的 `daylight.gd`；② 将 `world_model` 统一到 ltld 的探索（schema v2 + 地点槽 + 地形路径），并补主线已修的旧档迁移与边界校验；③ ltld 水面折射化入并补 depth 遮挡保护；④ 新增日落色值/高度/经度的玩家可调面板。
+- 从 ltld 收进的实验记录：`docs/experiment-notes/ltld-control-manifest.md`（防复发清单，含已知偏离：A-1 族的 `fog_disabled` 当前未满足）、`docs/experiment-notes/ltld-optimization-spec-2026-09-27.md`（渲染演进与踩坑，§3 是采纳 cursor 天体方案的依据）。
+- 资产清单回归：模型测试新增「manifest 的 bytes/三角数必须与磁盘 GLB 一致、每条都要有 bounds」（曾出现清单记 15980 字节、实际 240684 字节的失真）。实测当前 44 条全部一致，无需刷新工具。
 - 三类构件重构（2026-10-11）：界面分类改由 `layer` 唯一推导——地形=天然岩土与地貌，自然=植物与动物，建筑=一切人造物。木栈道、陶砖、浮标、灯移入「建筑」；原先没有对应分页、玩家选不到的塞舌尔巨石/楔石（核心）、象龟（生物）、Cape Cod 三座灯塔（光源建筑）分别归入地形/自然/建筑。`stone` 是全岛生成的天然基岩，改名为岩石 / 花岗岩礁 / 白浮岩 / 花岗岩基岩 / 冰碛砾石，不再叫读来像人造地基的「石基」；`id` 不变，旧档无需迁移。建材栏按件数自适应宽度（圣托里尼建筑 11 件），只有前 9 件有数字快捷键。主线教程站中涉及旧分类的章节待候选合入后同步。
 - 新设计先落泉州地形切片：受限随机生成、内部重试、独立 mudflat 地形件、跨材质顶点交融、平整建造接口、刺桐邻接聚丛。其余三地保留为试验实现，不视为通过主线新地形验收。
 - `schema_version=2` 保持三维坐标记录结构，接受旧 v1 文档；只读旧档中保存的实体，不重新生成旧地形。新增 `geo_meta_version` / `generator_version`，旧档默认为 0；三个旧槽只迁移到泉州且不覆盖已有槽。
