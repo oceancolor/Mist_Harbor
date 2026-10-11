@@ -15,8 +15,9 @@ def preview_url(base: str) -> str:
     parts = urlsplit(base)
     if parts.scheme not in {"http", "https"} or not parts.netloc:
         raise ValueError("Preview must be an HTTP(S) URL, not a local file")
-    query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != "qa"]
-    query.append(("qa", "1"))
+    query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True)
+             if key not in {"qa", "nomenu", "learning", "seed", "location"}]
+    query.extend([("qa", "1"), ("nomenu", "1"), ("learning", "1"), ("seed", "240910"), ("location", "quanzhou")])
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
@@ -27,7 +28,11 @@ def artifact_directory(value: str | None = None) -> Path:
 def expected_model_count() -> int:
     """Derive the GLB count from the build palette so new assets never break the check."""
     palette = json.loads((PROJECT / "data" / "palette.json").read_text(encoding="utf-8"))
-    return sum(1 for item in palette.get("items", []) if str(item.get("mesh", "cube")) != "cube")
+    items = {item["id"]: item for item in palette["items"]}
+    location = json.loads((PROJECT / "data/locations/quanzhou/palette.json").read_text(encoding="utf-8"))
+    items.update({item["id"]: item for item in location["items"]})
+    return sum(1 for item in items.values() if str(item.get("mesh", "cube")) != "cube"
+               and not str(item.get("mesh", "")).startswith("proc:"))
 
 
 def main() -> int:
@@ -71,6 +76,7 @@ def main() -> int:
                 print(("PASS " if result else "FAIL ") + label, flush=True)
 
             def click(key):
+                page.wait_for_function("(key) => !!JSON.parse(window.harborState).buttons[key]", arg=key, timeout=20000)
                 snap = state()
                 x, y, w, h = snap["buttons"][key]
                 rect = page.locator("canvas").bounding_box()
@@ -85,6 +91,8 @@ def main() -> int:
             page.mouse.move(1100, 640)
             page.wait_for_timeout(4000)
             page.screenshot(path=str(out / "mist-harbor-desktop.png"), full_page=True)
+            click("category-建筑")
+            click("item-cottage")
             before = state()["placed"]
             placed = False
             for x, y in [(720, 420), (660, 480), (810, 410), (740, 520), (900, 480)]:
@@ -107,13 +115,16 @@ def main() -> int:
             click("rotate")
             check("Rotation button changes orientation", lambda: state()["rotation"] == 1)
             click("category-自然")
-            check("Nature category uses tree material", lambda: state()["selected"] == "tree")
-            click("item-flower")
-            check("Flower module selectable", lambda: state()["selected"] == "flower")
+            check("Nature category uses Quanzhou growth material", lambda: state()["selected"] == "zayton")
+            click("category-建筑")
+            click("item-lamp")
+            check("Lamp is selectable as a built material", lambda: state()["selected"] == "lamp")
             click("demolish")
             check("Demolition mode enabled", lambda: state()["demolish"])
             page.keyboard.press("b")
             check("Keyboard returns to building", lambda: not state()["demolish"])
+            click("night")
+            check("Day advances to sunset", lambda: state()["phase"] == 2)
             click("night")
             check("Day/night toggles", lambda: state()["night"])
             page.mouse.move(1100, 640)
@@ -157,6 +168,9 @@ def main() -> int:
                 json.dumps({"state": state(), "checks": checks, "errors": logs}, ensure_ascii=False, indent=2),
                 encoding="utf-8")
         finally:
+            if not page.is_closed():
+                page.screenshot(path=str(out / "mist-harbor-last-state.png"), full_page=True)
+                (out / "mist-harbor-last-state.json").write_text(json.dumps(state(), ensure_ascii=False, indent=2), encoding="utf-8")
             browser.close()
     print("BROWSER_RESULT", sum(c["ok"] for c in checks), "/", len(checks), flush=True)
     return 0 if checks and all(c["ok"] for c in checks) else 1

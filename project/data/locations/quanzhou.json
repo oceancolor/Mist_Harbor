@@ -1,0 +1,153 @@
+{
+  "id": "quanzhou",
+  "display_name": "雾港 · 泉州湾",
+  "verb": "连",
+  "tagline": "把散落的屿、桥、厝连成一条活的水道——连通那一刻，灯火从水边一路亮进村里。",
+  "world_seed": 240910,
+  "min_y": -4,
+  "max_y": 20,
+  "max_cells": 12000,
+  "edge": 25,
+  "geo_meta": {
+    "version": 1,
+    "generator_version": 1,
+    "lighting_ref": "quanzhou",
+    "island_outline": {
+      "noise_frequency": 0.12,
+      "shore_jitter": 0.18
+    },
+    "land_distribution": {
+      "land_ratio_range": [
+        0.3,
+        0.5
+      ],
+      "min_landmasses": 2,
+      "min_bay_cells": 8,
+      "mudflat_band_ratio": [
+        0.12,
+        0.3
+      ]
+    },
+    "palette_subset": {
+      "terrain": [
+        "stone",
+        "grass",
+        "mudflat"
+      ],
+      "growth": [
+        "zayton"
+      ],
+      "built": [
+        "wood",
+        "brick",
+        "cottage",
+        "lamp"
+      ]
+    },
+    "rule_overrides": {
+      "terrain_blend_width": 0.35,
+      "relief_scale": 1.0,
+      "growth_density": 0.35
+    }
+  },
+  "has_weather_toggle": true,
+  "water": {
+    "deep_color": "35685C",
+    "shallow_color": "74A98D",
+    "lagoon_radius": 0.0,
+    "shallow_radius": 18.0,
+    "deep_radius": 32.0,
+    "transparency": 0.68,
+    "foam_color": "E0DCC8",
+    "foam_width": 0.6,
+    "wave_scale": 0.75,
+    "wave_speed": 0.5,
+    "wave_normal_strength": 0.55,
+    "lagoon_color": "74A98D"
+  },
+  "fog": {
+    "light_color": "DCDAD0",
+    "density_day": 0.004,
+    "density_night": 0.005,
+    "density_weather": 0.0,
+    "night_floor": "6A7078",
+    "aerial_perspective": 0.62
+  },
+  "day": {
+    "ambient": 0.48,
+    "tonemap_exposure": 0.95,
+    "light_color": "F4F0E2",
+    "light_energy": 0.95,
+    "shadow_blur": 1.5,
+    "shadow_opacity": 0.5,
+    "sun_rotation_x": -65.0,
+    "sun_rotation_y": -30.0,
+    "sky_top": "#4A9BE8",
+    "sky_horizon": "#C8E6FA",
+    "ground_horizon": "74A98D",
+    "fill_light_energy": 0.0
+  },
+  "sunset": {
+    "sun_color": "F78C45",
+    "light_energy": 0.7,
+    "sky_top": "6A6A6E",
+    "sky_horizon": "F69B5A",
+    "ambient": 0.4,
+    "duration_scale": 1.0,
+    "narrative": "洛阳桥落潮",
+    "shadow_blur": 0.6,
+    "shadow_opacity": 0.8
+  },
+  "morning": {
+    "light_color": "E8DCC4",
+    "light_energy": 0.7,
+    "ambient": 0.42,
+    "shadow_blur": 3.0,
+    "shadow_opacity": 0.2,
+    "sky_top": "C4C6C4",
+    "sky_horizon": "DED8CC",
+    "sun_rotation_y": -60
+  },
+  "night": {
+    "light_color": "93A4B8",
+    "light_energy": 0.12,
+    "ambient": 0.22,
+    "sky_top": "1E2634",
+    "sky_horizon": "2A3444"
+  },
+  "wind_direction_deg": 18.0,
+  "far_islands": [
+    {
+      "x": 0,
+      "z": -64,
+      "width": 22,
+      "height": 4
+    },
+    {
+      "x": -56,
+      "z": -40,
+      "width": 14,
+      "height": 2.5
+    },
+    {
+      "x": 58,
+      "z": -46,
+      "width": 16,
+      "height": 3
+    }
+  ],
+  "camera": {
+    "yaw": 0.72,
+    "zoom": 48.0
+  },
+  "surf": {
+    "breaker_intensity": 0.55,
+    "breaker_period": 7.0,
+    "breaker_dist": 6.0,
+    "breaker_wavespan": 7.0,
+    "whitecap_intensity": 0.08
+  },
+  "cloud_coverage": 0.3,
+  "weather_label": "海雾",
+  "weather_kind": "fog"
+}

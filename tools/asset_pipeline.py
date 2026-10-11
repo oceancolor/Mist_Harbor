@@ -234,6 +234,10 @@ def godot_import() -> None:
         fail(f"Godot import failed; see logs/asset-import.log (exit={result.returncode})")
 
 
+# 地形=天然岩土与地貌，自然=生物，建筑=一切人造物；游戏按 layer 推导分类。
+LAYER_BY_CATEGORY = {"地形": "terrain", "建筑": "built", "自然": "growth"}
+
+
 def register_palette(asset_id: str, name: str | None, category: str | None, color: str | None,
                      height: int | None, tip: str | None, default_height: int | None = None) -> None:
     """Register or refresh a palette entry.
@@ -248,6 +252,7 @@ def register_palette(asset_id: str, name: str | None, category: str | None, colo
 
     if index is None:
         entry = {"id": asset_id, "name": name or asset_id, "category": category or "建筑",
+                 "layer": LAYER_BY_CATEGORY[category or "建筑"],
                  "color": color or "b07d4f", "height": height or default_height or 1,
                  "mesh": asset_id, "tip": tip or f"{name or asset_id}（程序化生成的原创资产）"}
         insert_at = len(items)
@@ -262,6 +267,7 @@ def register_palette(asset_id: str, name: str | None, category: str | None, colo
             entry["name"] = name
         if category:
             entry["category"] = category
+            entry["layer"] = LAYER_BY_CATEGORY[category]
         if color:
             entry["color"] = color
         if tip:
@@ -387,10 +393,36 @@ def list_assets(_: argparse.Namespace) -> None:
               f"{str(meshes.get(asset_id, '-')):>12}  {'(tools/art)' if script.is_file() else '-'}")
 
 
+def ai_draft(args: argparse.Namespace) -> None:
+    import re
+    from asset_providers import GenerationRequest, provider_for
+
+    if not re.fullmatch(r"[a-z][a-z0-9_]{0,47}", args.id):
+        fail("asset id must be a lowercase identifier, not a file path")
+    target = ROOT / ".codebuddy" / "local" / "incoming" / args.id
+    target.mkdir(parents=True, exist_ok=True)
+    output = target / f"draft-{time.time_ns()}.glb"
+    request = GenerationRequest(args.id, args.prompt, args.face_limit, output)
+    receipt = provider_for(args.provider).generate(request, timeout=args.timeout)
+    receipt.pop("model_url", None)
+    receipt["sha256"] = sha256(output.read_bytes()).hexdigest()
+    receipt["stage"] = "draft_requires_blender_contact_qa_and_visual_review"
+    write_json(output.with_suffix(".json"), receipt)
+    print(f"draft saved: {output}; not registered or copied into the game")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     subparsers = parser.add_subparsers(dest="action", required=True)
     subparsers.add_parser("list", help="show manifest assets, triangles and palette registration").set_defaults(func=list_assets)
+    draft_parser = subparsers.add_parser("ai-draft", help="generate a quarantined AI draft; requires provider credentials and may incur fees")
+    draft_parser.add_argument("--id", required=True)
+    draft_parser.add_argument("--provider", choices=["tripo", "hunyuan"], required=True,
+                              help="hunyuan requires an explicitly configured HUNYUAN_3D_BRIDGE_URL service")
+    draft_parser.add_argument("--prompt", required=True)
+    draft_parser.add_argument("--face-limit", type=int, default=None)
+    draft_parser.add_argument("--timeout", type=int, default=900)
+    draft_parser.set_defaults(func=ai_draft)
 
     build_parser = subparsers.add_parser("build", help="author one asset through the remote Blender pilot")
     build_parser.add_argument("--id", required=True)

@@ -1,4 +1,4 @@
-"""Local developer commands for Mist Harbor; Python 3.11+ and Godot 4.4."""
+"""Local developer commands for Mist Harbor; Python 3.11+ and Godot 4.7."""
 from __future__ import annotations
 import argparse
 import json
@@ -22,7 +22,7 @@ def engine(explicit):
     value = explicit or os.environ.get('MIST_HARBOR_GODOT') or os.environ.get('GODOT_BIN') or config.get('godot')
     value = value or shutil.which('godot') or shutil.which('godot4')
     if not value:
-        raise RuntimeError('Specify --godot PATH, MIST_HARBOR_GODOT, or .codebuddy/local/tools.json (Godot 4.4).')
+        raise RuntimeError('Specify --godot PATH, MIST_HARBOR_GODOT, or .codebuddy/local/tools.json (Godot 4.7).')
     executable = Path(value).expanduser()
     if not executable.is_file():
         raise RuntimeError(f'Godot not found: {executable}')
@@ -83,7 +83,13 @@ def main():
             raise RuntimeError('Test failures reported; see logs/model-tests.log and logs/scene-tests.log')
         if model_passed <= 0:
             raise RuntimeError('Model tests reported zero assertions; the suite did not really run')
-        print(f'test summary: model passed={model_passed}, scene failed=0')
+        integration = invoke(binary, ['--script', 'res://tests/test_integration.gd'], 'integration-tests', isolated=True)
+        summary = re.search(r'INTEGRATION_TEST_RESULT passed=(\d+) failed=(\d+)', integration)
+        if summary is None or int(summary.group(1)) <= 0 or int(summary.group(2)):
+            raise RuntimeError('Integration tests did not pass; see logs/integration-tests.log')
+        subprocess.run([sys.executable, str(ROOT / 'tools/sync_location_profiles.py')], check=True)
+        subprocess.run([sys.executable, str(ROOT / 'tools/test_asset_providers.py')], check=True)
+        print(f'test summary: model passed={model_passed}, scene failed=0, integration passed={summary.group(1)}')
     elif args.action == 'export-web':
         web = BUILD
         web.mkdir(exist_ok=True)

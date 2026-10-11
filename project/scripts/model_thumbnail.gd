@@ -28,6 +28,17 @@ const VIEW_DIRECTION := Vector3(0.4957, 0.6594, 0.5652)
 
 var _cache: Dictionary = {}
 var _bounds: Dictionary = {}
+var _meshes: Dictionary = {}
+var _epoch := 0
+
+func configure(palette: Dictionary) -> void:
+	_epoch += 1
+	_queue.clear()
+	_cache.clear()
+	_meshes.clear()
+	for kind in palette:
+		_meshes[kind] = str(palette[kind].get("mesh", "cube"))
+	request(palette.keys())
 var _queue: Array[String] = []
 var _busy := false
 var _viewport: SubViewport
@@ -69,7 +80,11 @@ func _render_next() -> void:
 	_render_next()
 
 func _render_one(kind: String) -> void:
-	var path := "res://assets/models/%s.glb" % [kind]
+	if DisplayServer.get_name() == "headless":
+		return
+	var epoch := _epoch
+	var mesh_id := str(_meshes.get(kind, kind))
+	var path := "res://assets/models/%s.glb" % [mesh_id]
 	if not ResourceLoader.exists(path):
 		return
 	_ensure_stage()
@@ -80,23 +95,37 @@ func _render_one(kind: String) -> void:
 		return
 	var instance: Node = (packed as PackedScene).instantiate()
 	_root.add_child(instance)
-	_frame(kind)
+	var aabb := _mesh_bounds(instance)
+	_frame(mesh_id, aabb)
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	var image := _viewport.get_texture().get_image()
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	_root.remove_child(instance)
 	instance.queue_free()
-	if image == null or image.is_empty() or not _has_content(image):
+	if epoch != _epoch or image == null or image.is_empty() or not _has_content(image):
 		return
 	_cache[kind] = ImageTexture.create_from_image(image)
 	thumbnail_ready.emit(kind)
 
-func _frame(kind: String) -> void:
+func _mesh_bounds(node: Node) -> AABB:
+	var box := AABB()
+	if node is MeshInstance3D and node.mesh != null:
+		box = node.global_transform * node.get_aabb()
+	for child in node.get_children():
+		var child_box := _mesh_bounds(child)
+		if child_box.has_surface():
+			box = box.merge(child_box) if box.has_surface() else child_box
+	return box
+
+func _frame(kind: String, aabb: AABB) -> void:
 	var size_values: Array = _bounds.get(kind, [1.0, 1.0, 1.0])
+	if aabb.has_surface():
+		size_values = [aabb.size.x, aabb.size.y, aabb.size.z]
 	var height := maxf(0.25, float(size_values[1]))
 	var span := maxf(0.3, maxf(float(size_values[0]), float(size_values[2])))
-	var center := Vector3(0, height * 0.5, 0)
+	var center := aabb.get_center() if aabb.has_surface() else Vector3(0, height * 0.5, 0)
 	_camera.size = maxf(span, height) * 1.32
 	_camera.position = center + VIEW_DIRECTION * 20.0
 	_camera.look_at_from_position(_camera.position, center, Vector3.UP)

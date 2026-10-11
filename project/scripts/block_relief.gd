@@ -43,6 +43,8 @@ var _model: HarborWorldModel
 var _verts := PackedVector3Array()
 var _norms := PackedVector3Array()
 var _cols := PackedColorArray()
+var _height_cache: Dictionary = {}
+var _color_cache: Dictionary = {}
 # 全局档位覆盖（由 build_world.gd 设置）：
 #   div_cap >= 0 时限制顶面细分上限；div_cap == 0 或 plain 时退回纯立方（回归对照用）
 var div_cap: int = -1
@@ -63,6 +65,11 @@ func colors() -> PackedColorArray:
 func face_count() -> int:
 	return _verts.size() / 3
 
+func append_geometry(geometry: Dictionary) -> void:
+	_verts.append_array(geometry.vertices)
+	_norms.append_array(geometry.normals)
+	_cols.append_array(geometry.colors)
+
 static func relief_of(definition: Dictionary) -> Dictionary:
 	var result := DEFAULT_RELIEF.duplicate()
 	if definition.has("relief"):
@@ -73,7 +80,7 @@ static func relief_of(definition: Dictionary) -> Dictionary:
 # 生成一格的形制几何。颜色由调用方按现有逻辑算好传入，本文件只负责「按面分配 + AO + 起伏压暗」。
 func add_block(cell: Vector3i, kind: String, top_color: Color, side_color: Color, bottom_color: Color) -> void:
 	var relief := relief_of(_model.definition(kind))
-	var div := maxi(1, int(relief.get("top_div", 2)))
+	var div := 2
 	if div_cap >= 0:
 		div = mini(div, div_cap)
 	if plain or div_cap == 0:
@@ -107,9 +114,9 @@ func add_block(cell: Vector3i, kind: String, top_color: Color, side_color: Color
 		if is_top:
 			nu = div
 			nv = div
-		elif vertical:
-			nu = 1
-			nv = 2
+		elif not is_bottom:
+			nu = 1 if vertical else div
+			nv = div if vertical else 1
 		var points := PackedVector3Array()
 		var shades := PackedColorArray()
 		for i in range(nv + 1):
@@ -117,22 +124,16 @@ func add_block(cell: Vector3i, kind: String, top_color: Color, side_color: Color
 				var point := origin + u_axis * (float(j) / float(nu)) + v_axis * (float(i) / float(nv))
 				var tint := side_color
 				if is_top:
-					var xt := float(i) / float(nv)
-					var zt := float(j) / float(nu)
-					var edge := _edge_weight(xt, zt, opened)
-					point.y = _top_height(cell, xt, zt, relief, opened)
-					tint = shade_top * (1.0 - edge_shade * edge)
+					var edge := _edge_weight(point.x, point.z, opened)
+					tint = blended_color(cell, point.x, point.z, shade_top * (1.0 - edge_shade * edge))
+					point.y = _top_height(cell, point.x, point.z, relief, opened)
 				elif is_bottom:
 					point.y = 1.0 - thickness
 					tint = bottom_color
+				elif point.y > 0.5:
+					point.y = _top_height(cell, point.x, point.z, relief, opened)
 				else:
-					var ht := float(i) / float(nv)
-					var xt := 1.0 if direction.x > 0 else (0.0 if direction.x < 0 else ht)
-					var zt := 1.0 if direction.z > 0 else (0.0 if direction.z < 0 else ht)
-					if j == nu:
-						point.y = _top_height(cell, xt, zt, relief, opened)
-					else:
-						point.y = 1.0 - thickness
+					point.y = 1.0 - thickness
 				points.append(base + point)
 				shades.append(tint)
 		for i in range(nv):
@@ -165,12 +166,60 @@ func _triangle(a: Vector3, b: Vector3, c: Vector3, ca: Color, cb: Color, cc: Col
 #   · 塌落只作用于**暴露边**（被 cube 邻居包住的边保持 1.0，与邻居齐平）
 #   · 起伏用**世界坐标的连续噪声**——相邻格在共享边上取到同一个噪声值，
 #     若按格子哈希，两侧会算出不同高度而露缝（这是必须避开的坑）
-func _top_height(cell: Vector3i, x: float, z: float, relief: Dictionary, opened: Array) -> float:
-	var edge := _edge_weight(x, z, opened)
-	var inner := 1.0 - clampf(_edge_distance(x, z) * 2.0, 0.0, 1.0)
-	var n := _noise2(float(cell.x) + x, float(cell.z) + z)
-	var bump := float(relief.get("top_amp", 0.05)) * (n - 0.5) * 2.0 * inner
-	return 1.0 - float(relief.get("top_slump", 0.10)) * edge + bump
+func _top_height(cell: Vector3i, x: float, z: float, relief: Dictionary, _opened: Array) -> float:
+	if plain or div_cap == 0:
+		return 1.0
+	var key := Vector3(cell.x + x, cell.y, cell.z + z)
+	if not _height_cache.has(key):
+		_height_cache[key] = _calculate_top_height(cell, x, z, relief)
+	return float(_height_cache[key])
+
+func _calculate_top_height(cell: Vector3i, x: float, z: float, relief: Dictionary) -> float:
+	var wx := float(cell.x) + x
+	var wz := float(cell.z) + z
+	var count := 0
+	var slump := 0.0
+	for dx in [-0.001, 0.001]:
+		for dz in [-0.001, 0.001]:
+			var point := Vector3i(floori(wx + dx), cell.y, floori(wz + dz))
+			var item := _model.get_cell(point)
+			var definition := _model.definition(str(item.get("kind", "")))
+			if definition.get("mesh") != "cube":
+				continue
+			if definition.get("layer") == "built" or _model.has_cell(point + Vector3i.UP):
+				return 1.0
+			count += 1
+			slump += float(relief_of(definition).get("top_slump", 0.0))
+	var exposed := 1.0 - float(count) / 4.0
+	var bump := float(relief.get("top_amp", 0.05)) * (_noise2(wx, wz) - 0.5) * 2.0 * sin(PI * x) * sin(PI * z)
+	var scale_value := float(_model.profile.geo_meta.get("rule_overrides", {}).get("relief_scale", 1.0))
+	return 1.0 + scale_value * (bump - slump / maxf(1, count) * exposed)
+
+func blended_color(cell: Vector3i, x: float, z: float, fallback: Color) -> Color:
+	var own := _model.definition(str(_model.get_cell(cell).get("kind", "")))
+	if own.get("layer") != "terrain":
+		return fallback
+	var width := float(_model.profile.geo_meta.get("rule_overrides", {}).get("terrain_blend_width", 0.0))
+	if width <= 0.0:
+		return fallback
+	var wx := float(cell.x) + x
+	var wz := float(cell.z) + z
+	var cache_key := Vector3(wx, cell.y, wz)
+	if _color_cache.has(cache_key):
+		return _color_cache[cache_key]
+	var sum := Color(0, 0, 0, 0)
+	var total := 0.0
+	for cx in range(floori(wx) - 1, floori(wx) + 2):
+		for cz in range(floori(wz) - 1, floori(wz) + 2):
+			var definition := _model.definition(str(_model.get_cell(Vector3i(cx, cell.y, cz)).get("kind", "")))
+			if definition.get("layer") != "terrain" or definition.get("mesh") != "cube":
+				continue
+			var weight := clampf((0.5 + width - absf(wx - cx - 0.5)) / (2.0 * width), 0, 1) * clampf((0.5 + width - absf(wz - cz - 0.5)) / (2.0 * width), 0, 1)
+			sum += Color(str(definition.get("color", "ffffff"))) * weight
+			total += weight
+	var result := sum / total if total > 0.0 else fallback
+	_color_cache[cache_key] = result
+	return result
 
 # 到最近边界的距离（0 = 中心，1 = 边界）——**对称**，保证共享边两侧取到同一值
 static func _edge_distance(x: float, z: float) -> float:
