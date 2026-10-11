@@ -67,10 +67,40 @@ func _run() -> void:
 	_test_light_patches()
 	_test_location_switch(scene)
 	_test_dock_fit(scene)
+	_test_sunset_panel(scene)
 	print("SCENE_SMOKE_RESULT failed=", failures)
 	scene.queue_free()
 	await process_frame
 	quit(1 if failures else 0)
+
+func _test_sunset_panel(scene: Node3D) -> void:
+	scene._show_sunset_panel()
+	check(scene.sunset_panel != null and scene.sunset_panel.visible, "sunset panel opens")
+	var panel_rect: Rect2 = scene.sunset_panel.get_global_rect()
+	var viewport_rect: Rect2 = Rect2(Vector2.ZERO, scene.get_viewport().get_visible_rect().size)
+	check(panel_rect.position.x + panel_rect.size.x <= viewport_rect.size.x + 0.5 and panel_rect.position.x >= 0.0
+		and panel_rect.position.y + panel_rect.size.y <= viewport_rect.size.y + 0.5,
+		"sunset panel stays on screen (rect=%s viewport=%s)" % [panel_rect, viewport_rect.size])
+	var slider: HSlider = null
+	for parts in scene.sunset_sliders.values():
+		if str(parts[2]) == "太阳高度":
+			slider = parts[0]
+	check(slider != null, "sunset panel exposes the sun height slider")
+	if slider == null: return
+	scene._set_sunset_value("sun_x", -9.0)
+	check(scene.model.sunset_tuning.has("sun_x") and scene.model.dirty, "dragging a slider tunes the work")
+	check(scene.model.set_sunset_tuning({"sun_x": -9.0, "light_color": "ff9a5a"}), "valid sunset values accepted")
+	scene.world.apply_sunset_tuning()
+	check(scene.world.daylight.sunset_overrides.has("light_color"), "renderer receives the sunset override")
+	scene.world.set_phase(HarborLocationProfile.Phase.SUNSET, false, false)
+	var sunset_state: Dictionary = scene.world.daylight.state_for(HarborLocationProfile.Phase.SUNSET, false)
+	var daytime_state: Dictionary = scene.world.daylight.state_for(HarborLocationProfile.Phase.DAY, false)
+	check(str(sunset_state["light_color"]) != str(daytime_state["light_color"]), "tuning changes sunset only")
+	check(sunset_state["sky_horizon"] != daytime_state["sky_horizon"], "tuned horizon is distinct from daytime")
+	scene._reset_sunset()
+	check(scene.model.sunset_tuning.is_empty() and scene.world.daylight.sunset_overrides.is_empty(), "restore location default clears tuning")
+	scene.sunset_panel.hide()
+	check(not scene.sunset_panel.visible, "sunset panel closes")
 
 func _test_dock_fit(scene: Node3D) -> void:
 	for location in ["santorini", "seychelles"]:

@@ -50,6 +50,39 @@ func _check_manifest() -> void:
 	check(mismatched == 0, "manifest bytes and triangles match the real GLBs" + (" (" + detail + ")" if mismatched > 0 else ""))
 	check(no_bounds == 0, "every manifest entry carries real bounds")
 
+## 日落调参跟作品走：能存能读、坏值按坏档拒绝、默认取地点配置。
+func _sunset_cases(snapshot: Dictionary) -> void:
+	var tuned := Model.new()
+	tuned.reset(240910, false)
+	check(tuned.sunset_tuning.is_empty(), "new work starts on the location default sunset")
+	check(not tuned.set_sunset_tuning({"light_energy": 99.0}), "out-of-range sunset rejected")
+	check(not tuned.set_sunset_tuning({"sky_top": "not-a-color"}), "bad sunset colour rejected")
+	check(not tuned.set_sunset_tuning({"nope": 1}), "unknown sunset key rejected")
+	check(tuned.sunset_tuning.is_empty(), "rejected sunset tuning does not stick")
+	var values := {"light_color": "ff9a5a", "light_energy": 1.25, "ambient": 0.33,
+		"ambient_color": "ffbf80", "sky_horizon": "ffc98a", "sky_top": "2a3a6a",
+		"sun_x": -6.5, "sun_y": 120.0}
+	check(tuned.set_sunset_tuning(values), "sunset tuning accepted")
+	check(tuned.dirty, "sunset tuning marks the work dirty so it gets saved")
+	var restored := Model.new()
+	check(restored.load_document(tuned.to_document()), "sunset tuning roundtrips")
+	check(restored.sunset_tuning == values, "saved sunset survives a reload")
+	var broken: Dictionary = tuned.to_document().duplicate(true)
+	broken["sunset"] = {"sun_x": -400.0}
+	check(not restored.load_document(broken), "corrupt sunset rejected")
+	broken = tuned.to_document().duplicate(true)
+	broken["sunset"] = "warm"
+	check(not restored.load_document(broken), "non-dictionary sunset rejected")
+	check(restored.sunset_tuning == values, "rejected sunset save preserves live tuning")
+	# 旧档没有 sunset 字段时也能读，并按该地点默认渲染。
+	var legacy_snapshot: Dictionary = snapshot.duplicate(true)
+	legacy_snapshot.erase("sunset")
+	var legacy_model := Model.new()
+	check(legacy_model.load_document(legacy_snapshot), "v1 saves without sunset still load")
+	check(legacy_model.sunset_tuning.is_empty(), "missing sunset falls back to the location default")
+	var profile := HarborLocationRegistry.profile("quanzhou")
+	check(HarborSunsetTuning.merged(profile, {})["light_color"] == profile.sunset_sun_color.to_html(false), "sunset defaults come from the location profile")
+
 func _glb_stats(bytes: PackedByteArray) -> Dictionary:
 	if bytes.size() < 20 or bytes.slice(0, 4).get_string_from_ascii() != "glTF":
 		return {}
@@ -169,6 +202,7 @@ func _run() -> void:
 	check(not other.import_json("{broken"), "malformed JSON rejected")
 	check(not other.import_json(" ".repeat(4000001)), "oversize save rejected")
 	check(JSON.stringify(other.to_document()) == before, "all rejected saves preserve live state")
+	_sunset_cases(snapshot)
 	model.undo()
 	check(model.redo_stack.size() > 0, "redo branch present")
 	model.place(Vector3i(22,0,23),"stone")

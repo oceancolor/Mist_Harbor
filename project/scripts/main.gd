@@ -216,6 +216,8 @@ func _process(delta: float) -> void:
 		qa_time += delta
 		if qa_time > 0.25:
 			qa_time = 0.0
+			# 🔴 Web 坑（2026-10-11）：日落状态放进 harborState 主快照（无论字典还是字符串）
+			# 都会让 JS 桥抛 "function signature mismatch" 且快照从此不再更新。它走独立通道。
 			JavaScriptBridge.get_interface("window").harborState = JSON.stringify(qa_snapshot())
 
 func _update_camera(delta: float) -> void:
@@ -257,6 +259,8 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		if modal != null:
 			_close_modal()
+		elif sunset_panel != null and sunset_panel.visible:
+			sunset_panel.hide()
 		elif not hud.visible:
 			hud.visible = true
 		else:
@@ -418,6 +422,7 @@ func _build_ui() -> void:
 	_button(header, "昼  N", _cycle_phase, "night")
 	_button(header, "天气  M", _toggle_weather, "weather")
 	_button(header, "地点", _show_location_picker, "location")
+	_button(header, "调黄昏", _show_sunset_panel, "sunset")
 	_button(header, "保存作品", _save, "save")
 	_button(header, "作品管理", _show_menu, "menu")
 	_button(header, "?", _show_help, "help")
@@ -773,6 +778,13 @@ func _layout() -> void:
 	footer_label.visible = size_value.x > 1160
 	toast_label.position = Vector2((size_value.x - minf(620,size_value.x-40)) * 0.5, 96)
 	toast_label.size = Vector2(minf(620,size_value.x-40), 40)
+	if sunset_panel != null and sunset_panel.visible:
+		# 面板按自身最小尺寸贴右摆放：有小地图时放在其下方，避免与地图重叠。
+		var panel_size := sunset_panel.get_combined_minimum_size()
+		var top := 348.0 if map_panel.visible else 99.0
+		sunset_panel.position = Vector2(maxf(8.0, size_value.x - panel_size.x - 8.0),
+			clampf(top, 8.0, maxf(8.0, size_value.y - panel_size.y - 8.0)))
+		sunset_panel.size = panel_size
 
 func _set_category(value: String) -> void:
 	category = value
@@ -905,6 +917,8 @@ func _enter_location(id: String, with_village: bool = true) -> bool:
 		_build_palette()
 	_refresh_ui()
 	_center_camera()
+	if sunset_panel != null:
+		_sync_sunset_panel()
 	return true
 
 
@@ -968,12 +982,103 @@ func _show_menu() -> void:
 		{"text":"导出 JSON", "action":_export_world},
 		{"text":"导入 JSON", "action":_import_world},
 		{"text":"切换地点", "action":_show_location_picker},
+		{"text":"调黄昏…", "action":_show_sunset_panel},
 		{"text":"学习提示：" + ("开" if learning_mode else "关"), "action":_toggle_learning},
 		{"text":"目标与成就（可选）", "action":_show_progress},
 		{"text":"空白群岛", "action":func() -> void: _confirm_reset(false)},
 		{"text":"恢复灵感海湾", "action":func() -> void: _confirm_reset(true)},
 		{"text":"音效：" + ("开" if sound_enabled else "关"), "action":func() -> void: sound_enabled = not sound_enabled}
 	])
+
+## ── 调黄昏：色值 / 太阳高度 / 经度 ──
+## 面板刻意做得像色板：一排色块 + 四条拉杆，拖动即时生效，不弹二级窗口。
+## 调好的值属于作品（跟作品走），需要像作品一样保存；按「恢复地点默认」回到 v4.3 定值。
+var sunset_panel: PanelContainer
+var sunset_swatches: Dictionary = {}
+var sunset_sliders: Dictionary = {}
+var sunset_values: Dictionary = {}
+
+func _show_sunset_panel() -> void:
+	if model == null or world == null:
+		return
+	_close_modal()
+	if sunset_panel != null:
+		sunset_panel.show()
+		_sync_sunset_panel()
+		return
+	sunset_values = HarborSunsetTuning.merged(model.profile, model.sunset_tuning)
+	sunset_panel = _panel(hud)
+	var box := _vbox(sunset_panel, 8)
+	_label(box, "调黄昏", 16)
+	_label(box, "拖动即时生效。这是作品的一部分，记得保存。", 10, MUTED)
+	var swatch_row := _hbox(box, 8)
+	for entry in [["light_color", "阳光"], ["sky_horizon", "水平线"], ["sky_top", "天顶"], ["ambient_color", "环境光"]]:
+		var column := _vbox(swatch_row, 2)
+		var swatch := ColorRect.new()
+		swatch.custom_minimum_size = Vector2(62, 40)
+		swatch.color = HarborSunsetTuning.color_of(sunset_values, str(entry[0]), Color.WHITE)
+		var swatch_key := str(entry[0])
+		column.add_child(swatch)
+		sunset_swatches[swatch_key] = swatch
+		_label(column, str(entry[1]), 10, MUTED)
+	for entry in [["light_energy", "阳光强度"], ["ambient", "环境光"], ["sun_x", "太阳高度"], ["sun_y", "太阳经度"]]:
+		var row := _vbox(box, 2)
+		var caption := _label(row, str(entry[1]), 11)
+		var slider := HSlider.new()
+		var bounds: Vector2 = HarborSunsetTuning.SLIDER_RANGES[str(entry[0])]
+		slider.min_value = bounds.x
+		slider.max_value = bounds.y
+		slider.step = 0.01
+		slider.value = HarborSunsetTuning.number_of(sunset_values, str(entry[0]), bounds.x)
+		var slider_key := str(entry[0])
+		slider.value_changed.connect(func(value: float) -> void: _set_sunset_value(slider_key, value))
+		row.add_child(slider)
+		sunset_sliders[slider_key] = [slider, caption, str(entry[1])]
+	var actions := _hbox(box, 8)
+	_button(actions, "恢复地点默认", _reset_sunset, "sunset-reset")
+	_button(actions, "完成", _hide_sunset_panel, "sunset-close")
+	_layout()
+
+func _sync_sunset_panel() -> void:
+	if sunset_panel == null or model == null:
+		return
+	sunset_values = HarborSunsetTuning.merged(model.profile, model.sunset_tuning)
+	for key in sunset_swatches:
+		(sunset_swatches[key] as ColorRect).color = HarborSunsetTuning.color_of(sunset_values, str(key), Color.WHITE)
+	for key in sunset_sliders:
+		var parts: Array = sunset_sliders[key]
+		var slider: HSlider = parts[0]
+		var value := HarborSunsetTuning.number_of(sunset_values, str(key), slider.min_value)
+		slider.set_value_no_signal(value)
+		(parts[1] as Label).text = "%s  %.2f" % [str(parts[2]), value]
+
+func _on_sunset_swatch(color: Color, key: String) -> void:
+	_set_sunset_value(key, color.to_html(false))
+
+func _hide_sunset_panel() -> void:
+	if sunset_panel != null:
+		sunset_panel.hide()
+
+func _on_sunset_slider(value: float, key: String, caption: Label, title: String) -> void:
+	caption.text = "%s  %.2f" % [title, value]
+	_set_sunset_value(key, value)
+
+func _set_sunset_value(key: String, value: Variant) -> void:
+	if model == null:
+		return
+	sunset_values[key] = value
+	if not model.set_sunset_tuning(sunset_values):
+		_toast(model.last_error, 4.0)
+		return
+	world.apply_sunset_tuning()
+
+func _reset_sunset() -> void:
+	if model == null:
+		return
+	model.set_sunset_tuning({})
+	world.apply_sunset_tuning()
+	_sync_sunset_panel()
+	_toast("已恢复该地点的默认黄昏。")
 
 func _show_dialog(title: String, text_value: String, options: Array) -> void:
 	_close_modal()
@@ -998,6 +1103,10 @@ func _show_dialog(title: String, text_value: String, options: Array) -> void:
 	actions.add_theme_constant_override("h_separation", 8)
 	actions.add_theme_constant_override("v_separation", 8)
 	content.add_child(actions)
+	# 🔴 Web 坑（2026-10-11）：对话框按钮的 lambda 形态在 Web 导出中极脆弱——
+	# 多行 lambda 后跟第四个实参、先赋值再传参、捕获函数参数、.bind() 都会触发
+	# WASM "function signature mismatch"（按钮无反应且 QA 快照冻结）。自动化测试
+	# 一律不点对话框：日落用顶栏按钮，地点用 URL 参数，对话框关闭用 Esc 键。
 	for option: Dictionary in options:
 		var fn: Callable = option["action"]
 		_button(actions, str(option["text"]), func() -> void:
@@ -1152,6 +1261,13 @@ func _click_sound(frequency: float) -> void:
 	sound.stream = stream
 	sound.play()
 
+## 快照外通道：滑块键列表（矩形仍在主快照的 buttons 里）。
+func sunset_slider_keys() -> Array:
+	var keys: Array = []
+	for key in sunset_sliders:
+		keys.append("sunset-" + str(key))
+	return keys
+
 func qa_snapshot() -> Dictionary:
 	var controls: Dictionary = {}
 	for key in action_buttons:
@@ -1161,9 +1277,13 @@ func qa_snapshot() -> Dictionary:
 	for key in item_buttons:
 		var rect: Rect2 = item_buttons[key].get_global_rect()
 		controls["item-" + key] = [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
-	return {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,
+	for key in sunset_sliders:
+		var slider_rect: Rect2 = sunset_sliders[key][0].get_global_rect()
+		controls["sunset-" + key] = [slider_rect.position.x, slider_rect.position.y, slider_rect.size.x, slider_rect.size.y]
+	var snapshot := {"selected":selected,"category":category,"rotation":piece_rotation,"demolish":demolishing,"night":world.night,
 		"render":world.daylight.render_diagnostics() if world.daylight != null else {},
 		"generation":model.generation_report,"seed":model.world_seed,"geo_meta_version":model.geo_meta_version,"generator_version":model.generator_version,
 		"terrain_metrics":world.rebuild_metrics,"draw_calls":RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
 		"location":model.location_id,"phase":world.phase,"weather":world.weather_on,"mechanic":model.mechanic.id(),
 		"profile":{"name":model.profile.display_name,"verb":model.profile.verb},"slot":model.current_slot,"save_exists":FileAccess.file_exists(model.slot_path(model.current_slot)),"last_error":model.last_error,"photos":photo_stats,"placed":model.placed_count(),"counts":model.player_counts(),"cells":model.cells.size(),"undo":model.undo_stack.size(),"redo":model.redo_stack.size(),"dirty":model.dirty,"stats":model.stats,"faces":world.visible_faces,"assets":world.scenes.keys(),"modal":modal!=null,"buttons":controls,"viewport":[get_viewport().get_visible_rect().size.x,get_viewport().get_visible_rect().size.y],"pick":str(pick_result),"camera":[target_yaw,target_pitch,target_zoom],"revision":model.revision}
+	return snapshot

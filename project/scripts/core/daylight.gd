@@ -691,9 +691,13 @@ func apply_water() -> void:
 		curtain_material.albedo_color = profile.water_deep_color.darkened(0.06)
 
 
+## 玩家可调的日落覆盖（`HarborSunsetTuning`）。由 build_world 从作品模型灌入；
+## 只影响日落这一态，其余三态永远走地点配置。
+var sunset_overrides: Dictionary = {}
+
 func state_for(target_phase: int, target_weather: bool) -> Dictionary:
 	var params := profile.light_params(target_phase)
-	return {
+	var state := {
 		"light_color": params["light_color"],
 		"light_energy": params["light_energy"],
 		"ambient": params["ambient"],
@@ -721,6 +725,11 @@ func state_for(target_phase: int, target_weather: bool) -> Dictionary:
 			else 0.85 if target_phase == HarborLocationProfile.Phase.SUNSET
 			else 0.30 if target_phase == HarborLocationProfile.Phase.DAWN else 0.50),
 	}
+	if target_phase == HarborLocationProfile.Phase.SUNSET and not sunset_overrides.is_empty():
+		var fields := HarborSunsetTuning.state_fields(profile, sunset_overrides)
+		for key in fields:
+			state[key] = fields[key]
+	return state
 
 
 func apply_phase(target_phase: int, target_weather: bool, animate: bool = true) -> void:

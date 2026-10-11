@@ -254,6 +254,19 @@ func redo() -> bool:
 	return true
 
 
+## 调整日落：这是作品的一部分（跟作品走），因此会置脏；只接受校验通过的值。
+func set_sunset_tuning(values: Dictionary) -> bool:
+	var error := HarborSunsetTuning.error_for(values)
+	if not error.is_empty():
+		last_error = error
+		return false
+	var next_values := (values as Dictionary).duplicate(true)
+	if JSON.stringify(next_values) == JSON.stringify(sunset_tuning):
+		return true
+	sunset_tuning = next_values
+	_touch()
+	return true
+
 func player_counts() -> Dictionary:
 	var result: Dictionary = {}
 	for value in cells.values():
@@ -273,6 +286,8 @@ func placed_count() -> int:
 var geo_meta_version: int = 0
 var generator_version: int = 0
 var generation_report: Dictionary = {}
+## 玩家可调的日落覆盖（只覆盖日落这一态）；空字典 = 用地点默认。跟作品走。
+var sunset_tuning: Dictionary = {}
 
 func reset(seed_value: int = -1, with_village: bool = true) -> bool:
 	last_error = profile.geo_error()
@@ -293,6 +308,7 @@ func reset(seed_value: int = -1, with_village: bool = true) -> bool:
 	undo_stack.clear()
 	redo_stack.clear()
 	stats = {"rotated": 0, "undone": 0, "saved": 0, "removed": 0}
+	sunset_tuning = {}
 	geo_meta_version = int(profile.geo_meta.get("version", 0))
 	generator_version = int(profile.geo_meta.get("generator_version", 0))
 	generation_report = generated.get("metrics", {}).duplicate(true)
@@ -346,6 +362,7 @@ func to_document() -> Dictionary:
 		"generator_version": generator_version,
 		"cells": entries,
 		"stats": stats.duplicate(),
+		"sunset": sunset_tuning.duplicate(true),
 	}
 
 
@@ -371,6 +388,17 @@ func load_document(document: Variant) -> bool:
 		if not _integer(document.get(field, 0), 0, 2147483647):
 			last_error = "存档生成版本无效：" + field
 			return false
+	var next_sunset: Dictionary = {}
+	var saved_sunset: Variant = document.get("sunset", {})
+	if saved_sunset != null:
+		if not saved_sunset is Dictionary:
+			last_error = "日落参数格式错误。"
+			return false
+		var sunset_error := HarborSunsetTuning.error_for(saved_sunset)
+		if not sunset_error.is_empty():
+			last_error = sunset_error
+			return false
+		next_sunset = (saved_sunset as Dictionary).duplicate(true)
 	var entries: Variant = document.get("cells")
 	if not entries is Array or entries.size() > max_cells:
 		last_error = "存档格子数量超过安全上限。"
@@ -433,6 +461,7 @@ func load_document(document: Variant) -> bool:
 	world_seed = int(document["seed"])
 	geo_meta_version = int(document.get("geo_meta_version", 0))
 	generator_version = int(document.get("generator_version", 0))
+	sunset_tuning = next_sunset
 	generation_report = {}
 	undo_stack.clear()
 	redo_stack.clear()

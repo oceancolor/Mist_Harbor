@@ -110,11 +110,24 @@ func _process(delta: float) -> void:
 # ── 昼夜 / 天气：唯一一条分支，四地共用 ──
 
 func set_phase(target_phase: int, target_weather: bool = false, animate: bool = true) -> void:
+	_apply_sunset_tuning()
 	weather_on = target_weather and model.profile.has_weather_toggle
 	daylight.apply_phase(target_phase, weather_on, animate)
 	_apply_night_strength()
 	_refresh_decor(true)
 
+
+## 玩家调日落时实时生效：灌进渲染层，若正停在日落态就立刻重算（不播过渡动画）。
+func _apply_sunset_tuning() -> void:
+	if daylight == null:
+		return
+	daylight.sunset_overrides = model.sunset_tuning.duplicate(true) if model != null else {}
+
+func apply_sunset_tuning() -> void:
+	_apply_sunset_tuning()
+	if daylight != null and daylight.phase == HarborLocationProfile.Phase.SUNSET:
+		daylight.apply_phase(HarborLocationProfile.Phase.SUNSET, weather_on, false)
+		_apply_night_strength()
 
 func set_night(value: bool, animate: bool = true) -> void:
 	set_phase(HarborLocationProfile.Phase.NIGHT if value else HarborLocationProfile.Phase.DAY, weather_on, animate)
