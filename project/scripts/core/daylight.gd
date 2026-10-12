@@ -168,6 +168,33 @@ uniform float depth_guard = 1.0;   // 0 = 关闭保护（兼容性退路），1 
 varying vec3 world_pos;
 varying float shore_d;
 
+vec2 fade2(vec2 t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); }
+vec2 hash_grad(vec2 cell) {
+	float n = sin(dot(cell, vec2(127.1, 311.7))) * 43758.5453;
+	return vec2(cos(n), sin(n * 1.6183));
+}
+// 梯度噪声（cursor_work 移植）：同一倍频内有连续的坡面结构，叠加后是"涌浪上的细波纹"，
+// 而不是 value noise 那种一块块独立的斑。fragment 用它做波面明暗与掠射扰动。
+float perlin(vec2 p) {
+	vec2 cell = floor(p);
+	vec2 f = fract(p);
+	vec2 u = fade2(f);
+	float n00 = dot(hash_grad(cell), f);
+	float n10 = dot(hash_grad(cell + vec2(1.0, 0.0)), f - vec2(1.0, 0.0));
+	float n01 = dot(hash_grad(cell + vec2(0.0, 1.0)), f - vec2(0.0, 1.0));
+	float n11 = dot(hash_grad(cell + vec2(1.0, 1.0)), f - vec2(1.0, 1.0));
+	return mix(mix(n00, n10, u.x), mix(n01, n11, u.x), u.y);
+}
+float fbm(vec2 p) {
+	float value = 0.0;
+	float amp = 0.55;
+	for (int i = 0; i < 4; i++) {
+		value += amp * perlin(p);
+		p *= 2.02;
+		amp *= 0.5;
+	}
+	return value;
+}
 float hash21(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float vnoise(vec2 p) {
 	vec2 i = floor(p); vec2 f = fract(p);
@@ -243,8 +270,10 @@ void fragment() {
 	float grazing = pow(clamp(1.0 - abs(normalize(cam_dir_w).y), 0.0, 1.0), 4.0);
 	// 波面法线细节（cursor_work 移植改良）：细尺度噪声扰动掠射项与整体明度——
 	// 中景水面出现随波流动的明暗变化，不再是均匀"泳池色块"。
-	float slope_a = vnoise(world_pos.xz * vec2(0.50, 0.42) + vec2(TIME * 0.28, -TIME * 0.16)) - 0.5;
-	float slope_b = vnoise(world_pos.xz * vec2(0.36, 0.55) + vec2(-TIME * 0.20, TIME * 0.24)) - 0.5;
+	// 波面细节走 fbm（cursor_work 的噪声结构）：低频给出涌浪走向，高频是细波纹。
+	vec2 flow = world_pos.xz + vec2(TIME * 0.10, -TIME * 0.07);
+	float slope_a = fbm(flow * vec2(0.50, 0.42) + vec2(TIME * 0.28, -TIME * 0.16));
+	float slope_b = fbm(flow * vec2(0.36, 0.55) + vec2(-TIME * 0.20, TIME * 0.24)) * 0.85;
 	float grazing_local = clamp(grazing * 0.78 + (slope_a * 0.16 + slope_b * 0.12) * dist_fade, 0.0, 1.0);
 	color = mix(color, sky_refl_color, grazing_local);
 	color *= 1.0 + (slope_a + slope_b) * 0.05 * dist_fade;
@@ -297,6 +326,8 @@ void fragment() {
 	ALBEDO = color * tint * water_light;
 }
 """
+
+const WATER_SUBDIV := 192
 
 var profile: HarborLocationProfile
 var phase: int = HarborLocationProfile.Phase.DAY
@@ -354,6 +385,9 @@ func setup(location_profile: HarborLocationProfile) -> void:
 	# 岸线采样超出 shore_map 范围时 shader 侧自动取远海色带；水下视线由不透明平面兜底。
 	var ocean := PlaneMesh.new()
 	ocean.size = Vector2(800, 800)
+	# vertex swell needs tessellation: PlaneMesh defaults to 0 subdivisions
+	ocean.subdivide_width = WATER_SUBDIV
+	ocean.subdivide_depth = WATER_SUBDIV
 	water_material.shader = _shader(WATER_SHADER)
 	# 🔴 折射的 depth 遮挡保护只在能读到深度纹理的后端启用：实测 Web（gl_compatibility）
 	# 下 hint_depth_texture 恒为 0，若强行开启会把折射整体关掉（画面反而变亮失真）。
@@ -494,6 +528,9 @@ func render_diagnostics() -> Dictionary:
 		"sky_tex_samples": _sky_tex_samples,
 		"sun_elevation_deg": snappedf(rad_to_deg(asin(clampf(-fwd.y, -1.0, 1.0))), 0.1),
 		"water_deep": str(water_material.get_shader_parameter("deep_color")),
+		# 海面顶点数：细分是顶点涌浪能成形的前提（PlaneMesh 默认 0 细分 = 4 顶点）。
+		"water_vertices": (water.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() if water != null and water.mesh != null else 0,
+		"water_light": water_material.get_shader_parameter("water_light"),
 		"water_tint": str(water_material.get_shader_parameter("tint")),
 		"water_lagoon_radius": water_material.get_shader_parameter("lagoon_radius"),
 		"water_shallow_radius": water_material.get_shader_parameter("shallow_radius"),
