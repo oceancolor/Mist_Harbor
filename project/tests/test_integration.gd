@@ -47,6 +47,7 @@ func _run() -> void:
 	_test_state()
 	_test_piece_classes()
 	_test_daylight_schedule()
+	_test_edge_sink()
 	_test_geometry()
 	print("INTEGRATION_TEST_RESULT passed=", passed, " failed=", failed)
 	quit(1 if failed else 0)
@@ -97,6 +98,31 @@ func _test_piece_classes() -> void:
 
 ## 水光调度：状态导出、逐相位水光量、天体方向（择取 cursor_work 的调度架构，
 ## 水体与天体渲染仍是主线方案）。
+## 边缘径向压低（ltld 的 EDGE_SINK 探索）：只沉自然地形，玩家搭建永不被压低。
+func _test_edge_sink() -> void:
+	var model := HarborWorldModel.new("quanzhou")
+	check(model.reset(240910, true), "edge sink fixture")
+	# 只测下沉语义本身：完整 rebuild 需要渲染实例（光斑等），放到场景测试里做。
+	var world := HarborBuildWorld.new()
+	world.model = model
+	var limit := float(model.edge + HarborWorldModel.SCENIC_BAND) - HarborBuildWorld.EDGE_SINK_START
+	check(world.edge_sink(Vector3i(0, 0, 0), true) == 0.0, "inland terrain never sinks")
+	var outer := Vector3i(int(limit) + 4, 0, 0)
+	check(world.edge_sink(outer, true) > 0.5, "natural terrain sinks past the scenic band")
+	check(world.edge_sink(outer, false) == 0.0, "player pieces never sink, even at the edge")
+	var column_a := world.edge_sink(Vector3i(outer.x, 0, 0), true)
+	var column_b := world.edge_sink(Vector3i(outer.x, 3, 0), true)
+	check(is_equal_approx(column_a, column_b), "a column sinks as one piece (no cracks)")
+	check(world.edge_sink(Vector3i(outer.x + 2, 0, 0), true) >= column_a, "sinking grows towards the world edge")
+	# 风景带里的自然地形（岛礁/沙洲）照常下沉；玩家只能在可建造区放置，
+	# 那里永不下沉——因此不会出现"自然沉了、玩家没沉"的悬空格。
+	check(model.set_natural(Vector3i(int(limit) + 4, 0, 0), "stone"), "scenery can still be written in the scenic band")
+	check(world.edge_sink(Vector3i(int(limit) + 4, 0, 0), true) > 0.0, "scenery column at the edge sinks")
+	var buildable := Vector3i(model.edge - 1, 0, 0)
+	check(model.place(buildable, "stone"), "player builds inside the buildable area")
+	check(world.edge_sink(buildable, false) == 0.0, "player terrain inside the bounds never sinks")
+	world.free()
+
 func _test_daylight_schedule() -> void:
 	var daylight := HarborDaylight.new()
 	root.add_child(daylight)

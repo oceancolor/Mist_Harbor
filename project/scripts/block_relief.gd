@@ -65,8 +65,17 @@ func colors() -> PackedColorArray:
 func face_count() -> int:
 	return _verts.size() / 3
 
-func append_geometry(geometry: Dictionary) -> void:
-	_verts.append_array(geometry.vertices)
+## 追加一格的缓存几何。`sink` 是整列下沉量（边缘地形淡出用）：缓存内容不变，
+## 只在写入时整体下移，因此相邻格同量下沉不会产生裂缝，也不影响缓存命中。
+func append_geometry(geometry: Dictionary, sink: float = 0.0) -> void:
+	if is_zero_approx(sink):
+		_verts.append_array(geometry.vertices)
+		_norms.append_array(geometry.normals)
+		_cols.append_array(geometry.colors)
+		return
+	var offset := Vector3(0.0, -sink, 0.0)
+	for vertex: Vector3 in geometry.vertices:
+		_verts.append(vertex + offset)
 	_norms.append_array(geometry.normals)
 	_cols.append_array(geometry.colors)
 

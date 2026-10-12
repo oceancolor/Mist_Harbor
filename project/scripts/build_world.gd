@@ -193,6 +193,8 @@ func rebuild() -> void:
 			_add_prop(cell, item)
 			continue
 		var base_color := Color(str(entry.get("color", "ffffff")))
+		var natural := bool(item.get("natural", false))
+		var sink := edge_sink(cell, natural)
 		for part in model.footprint_cells(cell, kind, int(item.get("rot", 0))):
 			var variation: float = float(posmod(part.x * 71 + part.z * 29 + part.y * 11, 11)) / 150.0
 			var color := base_color.lightened(variation)
@@ -202,7 +204,7 @@ func rebuild() -> void:
 				block.add_block(part, kind, color, color.darkened(0.1), color.darkened(0.28))
 				_terrain_cache[part] = {"vertices": block.vertices(), "normals": block.normals(), "colors": block.colors()}
 				blocks_rebuilt += 1
-			relief.append_geometry(_terrain_cache[part])
+			relief.append_geometry(_terrain_cache[part], sink)
 			for face in FACES:
 				var offset: Vector3i = face[0]
 				if model.has_cell(part + offset) and str(model.definition(str(model.get_cell(part + offset).get("kind", "stone"))).get("mesh", "cube")) == "cube":
@@ -215,7 +217,8 @@ func rebuild() -> void:
 					shaded = Color("93a99f").lightened(variation + float(part.y + 3) * 0.06)
 				for i in [0, 2, 1, 0, 3, 2]:
 					var corner: Vector3 = face[1][i]
-					vertices.append(Vector3(part) + corner)
+					# 碰撞与视觉同量下沉：拾取点始终落在玩家看到的地面上。
+					vertices.append(Vector3(part) + corner - Vector3(0.0, sink, 0.0))
 					normals.append(Vector3(offset))
 					# 水下染色（§5 方案 B，流体折射配套）：海平面以下的顶点向深水色
 					# 渐变——石基/滩涂的水下部分呈"浸在水中"的观感，被水面折射
@@ -264,6 +267,8 @@ func _rebuild_shore_foam() -> void:
 		var item: Dictionary = model.get_cell(cell)
 		if str(model.definition(str(item.get("kind", "stone"))).get("mesh", "cube")) != "cube":
 			continue
+		# 岸线泡沫跟随所在列的边缘下沉，否则会悬在沉下去的地形上方。
+		var foam_sink := edge_sink(cell, bool(item.get("natural", false)))
 		for direction in [Vector3i.RIGHT, Vector3i.LEFT, Vector3i.FORWARD, Vector3i.BACK]:
 			if model.has_cell(cell + direction):
 				continue   # 邻居有实体 = 不是水线边
@@ -292,7 +297,7 @@ func _rebuild_shore_foam() -> void:
 				c = b + Vector3(0, 0, foam_width)
 				d = a + Vector3(0, 0, foam_width)
 			for vertex in [a, b, c, a, c, d]:
-				vertices.append(vertex)
+				vertices.append(vertex - Vector3(0.0, foam_sink, 0.0))
 	if vertices.is_empty():
 		shore_foam.mesh = null
 		return
@@ -411,6 +416,22 @@ func _visual_top(part: Vector3i, kind: String) -> float:
 
 
 ## 放在压低过的滩涂上的道具/幽灵要跟着下沉，避免悬空。
+## 边缘径向压低（ltld 的 EDGE_SINK 探索，按主线标准实现）：
+## 可建造区外缘之外，自然地形整列缓缓沉入海面，岛缘不再露出"边界墙"或水下剖面。
+## 🔴 与 ltld 的差别：只压**自然地形**。玩家放置的地形块（哪怕是同种 stone）
+## 永远不下沉——否则玩家在边缘的搭建会被地形压低（ltld 的实际缺陷）。
+## 下沉量只由 (x,z) 决定，同一列所有格同量下沉，因此块与块之间不会裂开。
+const EDGE_SINK_START := 6.0
+const EDGE_SINK_DEPTH := 4.5
+
+func edge_sink(cell: Vector3i, natural: bool) -> float:
+	if not natural:
+		return 0.0
+	var limit := float(model.edge + HarborWorldModel.SCENIC_BAND) - EDGE_SINK_START
+	var radial := Vector2(float(cell.x), float(cell.z)).length()
+	var t := clampf((radial - limit) / (EDGE_SINK_START + 2.0), 0.0, 1.0)
+	return smoothstep(0.0, 1.0, t) * EDGE_SINK_DEPTH
+
 func _ground_sink(cell: Vector3i) -> float:
 	var ground := cell + Vector3i.DOWN
 	if not model.has_cell(ground):
@@ -419,7 +440,7 @@ func _ground_sink(cell: Vector3i) -> float:
 	if not bool(item.get("natural", false)):
 		return 0.0
 	var kind := str(item["kind"])
-	return float(ground.y) + 1.0 - _visual_top(ground, kind)
+	return float(ground.y) + 1.0 - _visual_top(ground, kind) + edge_sink(ground, true)
 
 
 func _add_prop(cell: Vector3i, item: Dictionary) -> void:
