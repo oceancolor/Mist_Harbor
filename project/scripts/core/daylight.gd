@@ -152,6 +152,9 @@ uniform vec3 far_sea_color : source_color = vec3(0.12, 0.22, 0.26);
 // sand_reach ≤ 0 关闭（每地配置）。
 uniform vec3 sand_color : source_color = vec3(0.91, 0.89, 0.8);
 uniform float sand_reach = 0.0;
+// 水体总光量（cursor_work 的逐相位调度：晨/昼/日落/夜各自的水面亮度系数）。
+// 默认 1.0 = 不改变现有观感；由 daylight.water_light_for_phase() 每态写入。
+uniform float water_light = 1.0;
 // 流体折射（§2/§5 方案 B 定稿，cursor_work 移植改良）：水体不透明（R-ENG-19），
 // 近岸以屏幕纹理折射"透视"水底——沙底/石基带着波幅畸变透出来；离岸变深回归
 // 水色；远海完全水色与天际衔接。水下幕帘共享本材质，同样折射其后方的水下世界。
@@ -291,7 +294,7 @@ void fragment() {
 	total_foam *= dist_fade;
 	color = mix(color, foam_color, clamp(total_foam, 0.0, 0.85));
 	color += glitter_color * glint * glitter_strength * dist_fade;
-	ALBEDO = color * tint;
+	ALBEDO = color * tint * water_light;
 }
 """
 
@@ -719,6 +722,9 @@ func apply_water() -> void:
 ## 只影响日落这一态，其余三态永远走地点配置。
 var sunset_overrides: Dictionary = {}
 
+func set_sunset_overrides(value: Dictionary) -> void:
+	sunset_overrides = value.duplicate(true) if value is Dictionary else {}
+
 func state_for(target_phase: int, target_weather: bool) -> Dictionary:
 	var params := profile.light_params(target_phase)
 	var state := {
@@ -729,6 +735,8 @@ func state_for(target_phase: int, target_weather: bool) -> Dictionary:
 		"shadow_blur": params["shadow_blur"],
 		"shadow_opacity": params["shadow_opacity"],
 		"sun_x": params["sun_rotation_x"],
+		# 经度与高度同源写进状态：天体方向、场景光照、状态导出共用一份数值。
+		"sun_rotation_y": params.get("sun_rotation_y", profile.sun_rotation_y),
 		"sky_top": params["sky_top"],
 		"sky_horizon": params["sky_horizon"],
 		"fog_density": profile.fog_density_for(target_phase, target_weather),
@@ -748,12 +756,23 @@ func state_for(target_phase: int, target_weather: bool) -> Dictionary:
 		"glitter": (0.35 if target_phase == HarborLocationProfile.Phase.NIGHT
 			else 0.85 if target_phase == HarborLocationProfile.Phase.SUNSET
 			else 0.30 if target_phase == HarborLocationProfile.Phase.DAWN else 0.50),
+		"water_light": water_light_for_phase(target_phase),
+		# 天体方向由高度/经度直接给出（cursor_work 调度）：夜态用月亮方向。
+		"celestial": _celestial_for(target_phase, params),
 	}
 	if target_phase == HarborLocationProfile.Phase.SUNSET and not sunset_overrides.is_empty():
 		var fields := HarborSunsetTuning.state_fields(profile, sunset_overrides)
 		for key in fields:
 			state[key] = fields[key]
+		state["celestial"] = _celestial_for(target_phase, state)
 	return state
+
+func _celestial_for(target_phase: int, params: Dictionary) -> Vector3:
+	var direction := celestial_direction(float(params.get("sun_rotation_x", -48.0)),
+		float(params.get("sun_rotation_y", profile.sun_rotation_y)))
+	if target_phase == HarborLocationProfile.Phase.NIGHT:
+		return moon_direction(direction)
+	return direction
 
 
 func apply_phase(target_phase: int, target_weather: bool, animate: bool = true) -> void:
@@ -772,15 +791,15 @@ func apply_phase(target_phase: int, target_weather: bool, animate: bool = true) 
 	_to = state_for(phase, weather_on)
 	if _tween != null and _tween.is_running():
 		_tween.kill()
-	var duration := 0.6
+	var duration := QUICK_BLEND_SEC
 	if phase == HarborLocationProfile.Phase.SUNSET:
-		duration = 2.2 * profile.sunset_duration_scale
+		duration = PHASE_BLEND_SEC * profile.sunset_duration_scale
 	_tween = create_tween()
-	_tween.tween_method(_apply_interpolated, 0.0, 1.0, duration)
+	_tween.tween_method(_apply_environment_blend, 0.0, 1.0, duration)
 
 
 func _apply_interpolated(t: float) -> void:
-	_apply_state(_lerp_state(_from, _to, t))
+	_apply_environment_blend(t)
 
 
 func _current_state() -> Dictionary:
@@ -815,6 +834,11 @@ func _lerp_state(a: Dictionary, b: Dictionary, t: float) -> Dictionary:
 			result[key] = (value_a as Color).lerp(value_b as Color, t)
 		elif value_b is float or value_b is int:
 			result[key] = lerpf(float(value_a), float(value_b), t)
+		elif value_b is Vector3:
+			# 天体方向走球面插值并归一化：过渡期间日/月不会缩到原点再弹出。
+			var from_direction := (value_a as Vector3).normalized()
+			var to_direction := (value_b as Vector3).normalized()
+			result[key] = from_direction.slerp(to_direction, t).normalized()
 		else:
 			result[key] = value_b
 	return result
@@ -848,9 +872,13 @@ func _apply_state(state: Dictionary) -> void:
 		.lerp(state.get("sky_horizon", Color.WHITE), 0.55) \
 		.lerp(state.get("fog_color", Color(0.8, 0.8, 0.8)), 0.25)
 	water_material.set_shader_parameter("sky_refl_color", sky_refl)
-	# 日/月天体：方向取太阳直射 forward，盘色直接用该态光源色（日落金橙/夜淡蓝=月色）。
-	# 旋转刚写入，读取 basis 拿世界直射方向。
-	var forward := -sun.global_transform.basis.z
+	water_material.set_shader_parameter("water_light", float(state.get("water_light", 1.0)))
+	# 日/月天体：方向取调度给出的单位向量（高度/经度算出，夜态为月亮方向）；
+	# 缺失时回退到太阳节点的世界直射方向，保证与 DirectionalLight 一致。
+	var forward: Vector3 = state.get("celestial", Vector3.ZERO)
+	if forward.length_squared() < 0.0001:
+		forward = -sun.global_transform.basis.z
+	forward = forward.normalized()
 	sky_material.set_shader_parameter("sun_dir", forward)
 	sky_material.set_shader_parameter("sun_disk_color", state.get("light_color", Color.WHITE))
 	sky_material.set_shader_parameter("cel_disk", float(state.get("cel_disk", 1.0)))
@@ -866,6 +894,60 @@ func _apply_state(state: Dictionary) -> void:
 
 func is_night() -> bool:
 	return phase == HarborLocationProfile.Phase.NIGHT
+
+
+## ── 以下为 cursor_work 的环境调度架构（择取，不替换水体与天体渲染）──
+##
+## 保留 ltld 的水体 shader（折射/岸沫/碎浪/波光/沙底）与方向空间天体；
+## 这里只引入它的调度方式：与实现无关的相位状态导出、统一的混合入口、
+## 逐相位的水光量，以及由高度/经度直接算出天体方向（便于断言与复用）。
+
+## 日落过渡基准时长（cursor_work 的 2.5s 手感），其余相位仍是快速切换。
+const PHASE_BLEND_SEC := 2.5
+const QUICK_BLEND_SEC := 0.6
+## 逐相位水面总光量：晨 0.78 / 昼 1.0 / 日落 0.88 / 夜 0.45。
+## ⚠️ 工程初值（v4.3 未定义水面亮度），仅作调度骨架，观感待用户验收。
+const WATER_LIGHT_BY_PHASE := [0.78, 1.0, 0.88, 0.45]
+
+## 当前环境的完整状态（字段名沿用 cursor_work，便于与唯一数值源逐项对照）。
+func environment_state() -> Dictionary:
+	var current := _current_state()
+	return {
+		"phase": HarborLocationProfile.PHASE_IDS[phase] if phase >= 0 and phase < 4 else "day",
+		"background": current.get("sky_horizon", Color.WHITE),
+		"sky_top": current.get("sky_top", Color.WHITE),
+		"ambient": current.get("ambient_color", Color.WHITE),
+		"ambient_energy": float(current.get("ambient", 0.4)),
+		"sun": current.get("light_color", Color.WHITE),
+		"sun_energy": float(current.get("light_energy", 1.0)),
+		"sun_rotation_x": sun.rotation_degrees.x,
+		"sun_rotation_y": sun.rotation_degrees.y,
+		"fog": current.get("fog_color", Color.WHITE),
+		"fog_density": environment.fog_density,
+		"water_light": float(water_material.get_shader_parameter("water_light")),
+		"weather": weather_on,
+	}
+
+func water_light_for_phase(target_phase: int) -> float:
+	return WATER_LIGHT_BY_PHASE[target_phase] if target_phase >= 0 and target_phase < 4 else 1.0
+
+## 天体方向（世界单位向量）：由高度角与方位角直接算出，方向空间——
+## 不依赖节点 transform，测试可直接断言，也与日落调参的高度/经度同源。
+static func celestial_direction(elevation_deg: float, azimuth_deg: float) -> Vector3:
+	var elevation := deg_to_rad(elevation_deg)
+	var azimuth := deg_to_rad(azimuth_deg)
+	return Vector3(sin(azimuth) * cos(elevation), sin(elevation), cos(azimuth) * cos(elevation)).normalized()
+
+## 月亮：与太阳相对的方位、固定仰角（工程初值）——夜间由它决定月盘与月辉方向。
+static func moon_direction(sun_direction: Vector3) -> Vector3:
+	var flat := Vector2(sun_direction.x, sun_direction.z)
+	if flat.length_squared() < 0.0001:
+		flat = Vector2(0.0, 1.0)
+	flat = -flat.normalized()
+	return Vector3(flat.x, 0.42, flat.y).normalized()
+
+func _apply_environment_blend(weight: float) -> void:
+	_apply_state(_lerp_state(_from, _to, weight))
 
 
 func night_strength() -> float:

@@ -121,7 +121,7 @@ func set_phase(target_phase: int, target_weather: bool = false, animate: bool = 
 func _apply_sunset_tuning() -> void:
 	if daylight == null:
 		return
-	daylight.sunset_overrides = model.sunset_tuning.duplicate(true) if model != null else {}
+	daylight.set_sunset_overrides(model.sunset_tuning if model != null else {})
 
 func apply_sunset_tuning() -> void:
 	_apply_sunset_tuning()

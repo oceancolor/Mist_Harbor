@@ -46,6 +46,7 @@ func _run() -> void:
 	print("TERRAIN_BATCH seeds=20 attempts=", attempts, " ms=", Time.get_ticks_msec() - start)
 	_test_state()
 	_test_piece_classes()
+	_test_daylight_schedule()
 	_test_geometry()
 	print("INTEGRATION_TEST_RESULT passed=", passed, " failed=", failed)
 	quit(1 if failed else 0)
@@ -93,6 +94,40 @@ func _test_piece_classes() -> void:
 			check(int(tabs[tab]) > 0, location + " offers at least one " + tab + " piece")
 		if model.palette.has("wood"):
 			check(model.palette.wood.category == "建筑" and model.palette.wood.get("mesh") == "cube", location + " boardwalk is built, still a cube")
+
+## 水光调度：状态导出、逐相位水光量、天体方向（择取 cursor_work 的调度架构，
+## 水体与天体渲染仍是主线方案）。
+func _test_daylight_schedule() -> void:
+	var daylight := HarborDaylight.new()
+	root.add_child(daylight)
+	var location := "quanzhou"
+	daylight.setup(HarborLocationRegistry.profile(location))
+	for phase_index in range(4):
+		daylight.apply_phase(phase_index, false, false)
+		var state := daylight.environment_state()
+		check(str(state["phase"]) == HarborLocationProfile.PHASE_IDS[phase_index], "%s phase %d export keeps its id" % [location, phase_index])
+		for key in ["background", "sky_top", "ambient", "sun", "fog"]:
+			check(state[key] is Color, "%s phase %d exports a real %s colour" % [location, phase_index, key])
+		check(float(state["fog_density"]) > 0.0 and float(state["ambient_energy"]) > 0.0, "%s phase %d exports fog and ambient energy" % [location, phase_index])
+		check(is_equal_approx(float(state["water_light"]), daylight.water_light_for_phase(phase_index)), "%s phase %d water light matches the schedule" % [location, phase_index])
+		var expected := daylight.state_for(phase_index, false)["celestial"] as Vector3
+		var direction := daylight.celestial_direction(float(daylight.state_for(phase_index, false)["sun_x"]), float(state["sun_rotation_y"]))
+		check(expected.is_equal_approx(direction if phase_index != HarborLocationProfile.Phase.NIGHT else daylight.moon_direction(direction)), "%s phase %d celestial direction is derived from elevation and azimuth" % [location, phase_index])
+		check(is_equal_approx(expected.length(), 1.0), "%s phase %d celestial direction stays normalized" % [location, phase_index])
+		var sky_direction: Vector3 = daylight.sky_material.get_shader_parameter("sun_dir")
+		check(sky_direction.is_equal_approx(expected), "%s phase %d sky shader uses the scheduled direction" % [location, phase_index])
+	var water_lights := []
+	for phase_index in range(4):
+		water_lights.append(daylight.water_light_for_phase(phase_index))
+	check(water_lights.max() > water_lights.min(), "water light differs between phases")
+	daylight.set_sunset_overrides({"sun_x": -6.0, "sun_y": 96.0, "light_color": "ff9d5c"})
+	daylight.apply_phase(HarborLocationProfile.Phase.SUNSET, false, false)
+	var sunset := daylight.environment_state()
+	check(is_equal_approx(float(sunset["sun_rotation_x"]), -6.0), "sunset elevation override reaches the environment state")
+	check(str((sunset["sun"] as Color).to_html(false)).to_lower() == "ff9d5c", "sunset colour override reaches the environment state")
+	daylight.apply_phase(HarborLocationProfile.Phase.DAY, false, false)
+	check(not is_equal_approx(float(daylight.environment_state()["sun_rotation_x"]), -6.0), "sunset override never leaks into other phases")
+	daylight.queue_free()
 
 func _test_state() -> void:
 	for location in HarborLocationRegistry.ids():
