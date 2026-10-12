@@ -156,6 +156,12 @@ uniform float sand_reach = 0.0;
 // 近岸以屏幕纹理折射"透视"水底——沙底/石基带着波幅畸变透出来；离岸变深回归
 // 水色；远海完全水色与天际衔接。水下幕帘共享本材质，同样折射其后方的水下世界。
 uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap, repeat_disable;
+// 🔴 折射的 depth 遮挡保护（2026-10-12）：screen_tex 里含所有先于水面绘制的几何，
+// 包括露在水面之上、比水面更靠近相机的岛体与建筑。不加判断地采样会把这些前景
+// 当成"水底"透出来（前景被画进水里）。这里用深度纹理比较：只有当该屏幕位置上
+// 已绘制的场景比水面更远（在水面之后/水下）时才允许折射；更近的一律不折。
+uniform sampler2D depth_tex : hint_depth_texture, filter_nearest;
+uniform float depth_guard = 1.0;   // 0 = 关闭保护（兼容性退路），1 = 开启
 varying vec3 world_pos;
 varying float shore_d;
 
@@ -220,6 +226,12 @@ void fragment() {
 	vec3 refracted = textureLod(screen_tex, SCREEN_UV + refract_off, 0.0).rgb;
 	vec3 underwater = refracted * (lagoon_color * 1.35 + vec3(0.06));
 	float refr_gate = (1.0 - smoothstep(2.0, 26.0, shore_d)) * dist_fade;
+	// 前景保护：已绘制场景比水面更近（露出的岛体/建筑/船只）→ 该像素不能折射。
+	// 本作是正交相机，NDC 深度与视图深度线性对应，可直接比较 raw 深度与 FRAGCOORD.z。
+	if (depth_guard > 0.5) {
+		float scene_raw = textureLod(depth_tex, SCREEN_UV, 0.0).r;
+		refr_gate *= smoothstep(0.0, 0.0015, scene_raw - FRAGCOORD.z);
+	}
 	float refr_murk = clamp(0.4 + shore_d * 0.025, 0.4, 0.85);
 	color = mix(color, mix(underwater, color, refr_murk), refr_gate);
 	color = mix(color, sky_refl_color, smoothstep(160.0, 290.0, view_dist));
@@ -340,6 +352,11 @@ func setup(location_profile: HarborLocationProfile) -> void:
 	var ocean := PlaneMesh.new()
 	ocean.size = Vector2(800, 800)
 	water_material.shader = _shader(WATER_SHADER)
+	# 🔴 折射的 depth 遮挡保护只在能读到深度纹理的后端启用：实测 Web（gl_compatibility）
+	# 下 hint_depth_texture 恒为 0，若强行开启会把折射整体关掉（画面反而变亮失真）。
+	# Compatibility 维持现状（折射照旧，前景误采的风险已知，见 TOOLCHAIN）。
+	var method := RenderingServer.get_current_rendering_method()
+	water_material.set_shader_parameter("depth_guard", 0.0 if method == "gl_compatibility" else 1.0)
 	water = MeshInstance3D.new()
 	water.mesh = ocean
 	water.position.y = -0.23
@@ -426,7 +443,14 @@ func _shader(code: String) -> Shader:
 var _curtain_debug_material: StandardMaterial3D
 
 func debug_water_override(_mode: int = 1) -> void:
-	## 渲染诊断用：水体强制成不透明洋红；幕帘换纯洋红无光照材质（排除 shader 因素）。
+	## 渲染诊断用。mode 1：水体强制成不透明洋红（排除 shader 因素）。
+	## mode 2：只关掉折射的 depth 遮挡保护，用于 A/B 对比「前景是否被画进水里」。
+	if _mode == 2:
+		water_material.set_shader_parameter("depth_guard", 0.0)
+		return
+	if _mode == 3:
+		water_material.set_shader_parameter("depth_guard", 1.0)
+		return
 	water_material.set_shader_parameter("deep_color", Color(1, 0, 1))
 	water_material.set_shader_parameter("shallow_color", Color(1, 0, 1))
 	water_material.set_shader_parameter("lagoon_color", Color(1, 0, 1))
